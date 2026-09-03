@@ -1,0 +1,2291 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>USM — Usman Seller Metrics</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+<style>
+/* ============================= TOKENS ============================= */
+:root[data-theme="dark"]{
+  --bg:#0A0C0F; --bg-elevated:#111419; --surface:#151920; --surface-2:#1B2029; --surface-3:#212733;
+  --border:#242A34; --border-strong:#323A48; --hover:#1D2229;
+  --text:#F1F2F4; --text-2:#9CA4B2; --text-3:#666F7E;
+  --accent:#F2762E; --accent-2:#FF9552; --accent-soft:rgba(242,118,46,.14); --accent-border:rgba(242,118,46,.35);
+  --green:#3ECF8E; --green-soft:rgba(62,207,142,.13); --green-border:rgba(62,207,142,.35);
+  --red:#F26363; --red-soft:rgba(242,99,99,.14); --red-border:rgba(242,99,99,.35);
+  --amber:#F2B94D; --amber-soft:rgba(242,185,77,.14);
+  --blue:#5B9DF2; --blue-soft:rgba(91,157,242,.14);
+  --shadow-sm:0 1px 2px rgba(0,0,0,.4);
+  --shadow-md:0 6px 20px rgba(0,0,0,.45);
+  --shadow-lg:0 20px 60px rgba(0,0,0,.55);
+  --row-even:rgba(255,255,255,.014); --row-odd:transparent;
+}
+:root[data-theme="light"]{
+  --bg:#F5F6F8; --bg-elevated:#FFFFFF; --surface:#FFFFFF; --surface-2:#F4F5F7; --surface-3:#ECEEF1;
+  --border:#E4E7EB; --border-strong:#D3D8DF; --hover:#F1F3F5;
+  --text:#161A20; --text-2:#5B6472; --text-3:#8A93A1;
+  --accent:#E8590C; --accent-2:#F2762E; --accent-soft:rgba(232,89,12,.09); --accent-border:rgba(232,89,12,.3);
+  --green:#0F9D63; --green-soft:rgba(15,157,99,.09); --green-border:rgba(15,157,99,.3);
+  --red:#D93F3F; --red-soft:rgba(217,63,63,.09); --red-border:rgba(217,63,63,.3);
+  --amber:#C6860A; --amber-soft:rgba(198,134,10,.1);
+  --blue:#2B6FD9; --blue-soft:rgba(43,111,217,.09);
+  --shadow-sm:0 1px 2px rgba(20,20,30,.06);
+  --shadow-md:0 6px 20px rgba(20,20,30,.08);
+  --shadow-lg:0 20px 60px rgba(20,20,30,.14);
+  --row-even:rgba(20,20,30,.018); --row-odd:transparent;
+}
+*{box-sizing:border-box;}
+html,body{height:100%;}
+body{
+  margin:0; background:var(--bg); color:var(--text);
+  font-family:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
+  font-size:13.5px; -webkit-font-smoothing:antialiased; overflow:hidden;
+  transition:background .25s ease, color .25s ease;
+}
+.mono{ font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-feature-settings:'tnum' 1,'zero' 1; font-variant-numeric:tabular-nums; }
+::selection{ background:var(--accent-soft); color:var(--accent-2); }
+::-webkit-scrollbar{ width:10px; height:10px; }
+::-webkit-scrollbar-track{ background:transparent; }
+::-webkit-scrollbar-thumb{ background:var(--border-strong); border-radius:8px; border:2px solid var(--bg); background-clip:padding-box; }
+::-webkit-scrollbar-thumb:hover{ background:var(--text-3); }
+button{ font-family:inherit; }
+input,select{ font-family:inherit; }
+a{ color:inherit; }
+:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; border-radius:4px; }
+
+/* ============================= LAYOUT ============================= */
+#app{ height:100vh; display:flex; flex-direction:column; }
+
+/* --- Top nav --- */
+.topbar{
+  height:54px; flex:0 0 54px; display:flex; align-items:center; gap:16px;
+  padding:0 16px; background:var(--bg-elevated); border-bottom:1px solid var(--border); -webkit-app-region:drag;
+}
+.brand{ display:flex; align-items:center; gap:10px; user-select:none; }
+.brand-mark{ width:30px; height:30px; flex:0 0 30px; filter:drop-shadow(0 2px 5px var(--accent-soft)); }
+.brand-lockup{ display:flex; flex-direction:column; justify-content:center; line-height:1.05; gap:2px; }
+.brand-text{
+  font-weight:800; font-size:17.5px; letter-spacing:.01em;
+  background:linear-gradient(120deg,var(--accent-2),var(--accent));
+  -webkit-background-clip:text; background-clip:text; color:transparent;
+}
+.brand-text .u{ color:var(--text); }
+.brand-text .p{ color:var(--accent); }
+.brand-sub{ font-size:9.5px; color:var(--text-3); font-weight:700; letter-spacing:.07em; text-transform:uppercase; white-space:nowrap; }
+.topbar-spacer{ flex:1; }
+.topbar-search{ position:relative; width:230px; }
+.topbar-search input{
+  width:100%; height:32px; background:var(--surface-2); border:1px solid var(--border); border-radius:7px;
+  color:var(--text); padding:0 10px 0 30px; font-size:12.5px;
+}
+.topbar-search input::placeholder{ color:var(--text-3); }
+.topbar-search svg{ position:absolute; left:9px; top:50%; transform:translateY(-50%); color:var(--text-3); }
+.topbar-search kbd{ position:absolute; right:7px; top:50%; transform:translateY(-50%); font-size:10px; color:var(--text-3); background:var(--surface-3); border:1px solid var(--border-strong); border-radius:4px; padding:1px 5px; }
+.icon-btn{
+  width:32px; height:32px; border-radius:7px; display:flex; align-items:center; justify-content:center;
+  background:transparent; border:1px solid transparent; color:var(--text-2); cursor:pointer; transition:.15s;
+}
+.icon-btn:hover{ background:var(--hover); color:var(--text); border-color:var(--border); }
+.avatar{
+  width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--accent),#C2410C);
+  display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:#fff;
+}
+
+/* --- Body layout --- */
+.body-row{ flex:1; display:flex; min-height:0; }
+
+/* --- Sidebar --- */
+.sidebar{ width:222px; flex:0 0 222px; background:var(--bg-elevated); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:14px 10px; overflow-y:auto; transition:width .18s ease, flex-basis .18s ease; }
+.sidebar.collapsed{ width:60px; flex-basis:60px; }
+.sidebar.collapsed .side-label, .sidebar.collapsed .side-group-title, .sidebar.collapsed .side-hint{ display:none; }
+.sidebar.collapsed .side-btn{ justify-content:center; padding:0; width:40px; }
+.side-group{ margin-bottom:16px; }
+.side-group-title{ font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text-3); padding:0 8px; margin-bottom:6px; }
+.side-btn{
+  width:100%; height:34px; display:flex; align-items:center; gap:10px; padding:0 9px; border-radius:8px;
+  background:transparent; border:1px solid transparent; color:var(--text-2); font-size:12.7px; font-weight:500;
+  cursor:pointer; margin-bottom:2px; transition:.13s; text-align:left; white-space:nowrap;
+}
+.side-btn svg{ flex:0 0 16px; width:16px; height:16px; }
+.side-btn:hover{ background:var(--hover); color:var(--text); }
+.side-btn:active{ transform:scale(.98); }
+.side-btn.primary{ background:var(--accent-soft); color:var(--accent-2); border-color:var(--accent-border); font-weight:600; }
+.side-btn.primary:hover{ background:var(--accent-soft); filter:brightness(1.12); }
+.side-btn[disabled]{ opacity:.4; cursor:not-allowed; }
+.side-btn[disabled]:hover{ background:transparent; color:var(--text-2); }
+.side-btn .badge{ margin-left:auto; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:20px; background:var(--surface-3); color:var(--text-3); }
+.side-btn .badge.on{ background:var(--green-soft); color:var(--green); }
+.side-hint{ font-size:10.5px; color:var(--text-3); padding:8px 9px 0; line-height:1.5; }
+.sidebar-toggle{ margin-top:auto; }
+
+/* --- Main --- */
+.main{ flex:1; min-width:0; display:flex; flex-direction:column; background:var(--bg); }
+.main-toolbar{
+  flex:0 0 48px; display:flex; align-items:center; gap:8px; padding:0 16px; border-bottom:1px solid var(--border);
+  background:var(--bg-elevated);
+}
+.main-toolbar .filename{ display:flex; align-items:center; gap:7px; font-size:12px; color:var(--text-2); }
+.main-toolbar .filename svg{ color:var(--accent); flex:0 0 14px; }
+.chip{ font-size:11px; font-weight:600; padding:3px 8px; border-radius:20px; background:var(--surface-2); color:var(--text-2); border:1px solid var(--border); }
+.chip.green{ background:var(--green-soft); color:var(--green); border-color:var(--green-border); }
+.main-toolbar-spacer{ flex:1; }
+.select-mini{
+  height:28px; background:var(--surface-2); border:1px solid var(--border); border-radius:6px; color:var(--text);
+  font-size:12px; padding:0 8px; cursor:pointer;
+}
+.btn{
+  height:30px; padding:0 12px; border-radius:7px; font-size:12.5px; font-weight:600; cursor:pointer; display:inline-flex;
+  align-items:center; gap:6px; border:1px solid var(--border-strong); background:var(--surface-2); color:var(--text); transition:.13s;
+}
+.btn svg{ width:14px; height:14px; }
+.btn:hover{ background:var(--hover); border-color:var(--text-3); }
+.btn:active{ transform:scale(.97); }
+.btn.accent{ background:var(--accent); border-color:var(--accent); color:#fff; box-shadow:var(--shadow-sm); }
+.btn.accent:hover{ background:var(--accent-2); border-color:var(--accent-2); }
+.btn.ghost{ background:transparent; border-color:transparent; }
+.btn.ghost:hover{ background:var(--hover); }
+.btn.danger{ color:var(--red); }
+.btn.danger:hover{ background:var(--red-soft); border-color:var(--red-border); }
+.btn.sm{ height:26px; padding:0 9px; font-size:11.5px; }
+.btn[disabled]{ opacity:.42; cursor:not-allowed; pointer-events:none; }
+
+/* --- content area --- */
+.content{ flex:1; min-height:0; position:relative; }
+
+/* --- Empty state --- */
+.empty-wrap{ height:100%; display:flex; align-items:center; justify-content:center; padding:30px; }
+.dropzone{
+  width:100%; max-width:620px; border:2px dashed var(--border-strong); border-radius:16px; padding:52px 34px;
+  text-align:center; background:var(--surface); transition:.18s; position:relative; overflow:hidden;
+}
+.dropzone.dragging{ border-color:var(--accent); background:var(--accent-soft); transform:scale(1.01); }
+.dropzone-icon{ width:62px; height:62px; margin:0 auto 18px; border-radius:16px; background:var(--accent-soft); display:flex; align-items:center; justify-content:center; color:var(--accent); animation:float 3.2s ease-in-out infinite; }
+@keyframes float{ 0%,100%{ transform:translateY(0); } 50%{ transform:translateY(-6px); } }
+.dropzone h2{ margin:0 0 6px; font-size:17px; font-weight:700; letter-spacing:-.01em; }
+.dropzone p{ margin:0 0 22px; font-size:12.5px; color:var(--text-2); line-height:1.6; }
+.dropzone .or{ font-size:11px; color:var(--text-3); margin:14px 0; text-transform:uppercase; letter-spacing:.06em; }
+.dropzone .accepts{ margin-top:18px; font-size:11px; color:var(--text-3); }
+.file-input-hidden{ display:none; }
+
+/* --- Table --- */
+.table-wrap{ height:100%; display:flex; flex-direction:column; }
+.grid-scroll{ flex:1; overflow:auto; position:relative; }
+.grid-head{
+  display:flex; position:sticky; top:0; z-index:5; background:linear-gradient(180deg,var(--accent) 0%, var(--accent) 100%);
+  box-shadow:0 1px 0 rgba(0,0,0,.15);
+}
+.grid-head .c{
+  padding:9px 12px; font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.04em; color:#fff;
+  white-space:nowrap; border-right:1px solid rgba(255,255,255,.14); display:flex; align-items:center; gap:4px; cursor:pointer; user-select:none;
+}
+.grid-head .c:hover{ background:rgba(255,255,255,.08); }
+.grid-head .c svg{ width:11px; height:11px; opacity:.85; }
+.grid-body{ position:relative; }
+.grow{ display:flex; position:absolute; left:0; right:0; border-bottom:1px solid var(--border); transition:background .1s; }
+.grow:hover{ background:var(--hover) !important; }
+.grow.even{ background:var(--row-even); }
+.grow .c{ padding:0 12px; font-size:12px; display:flex; align-items:center; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; border-right:1px solid var(--border); color:var(--text); }
+.grow .heat{ position:absolute; left:0; top:0; bottom:0; width:3px; }
+.grow .oid{ font-weight:600; }
+.grow .oid.multi{ position:relative; }
+.grow .oid.multi .pill{ background:var(--green-soft); color:var(--green); border:1px solid var(--green-border); padding:2px 7px; border-radius:5px; font-weight:700; font-size:11px; }
+.grow .multi-order-cell{ background:var(--green-soft); }
+.grow .status-pill{ font-size:10.5px; font-weight:700; padding:2px 7px; border-radius:5px; text-transform:capitalize; }
+.status-shipped{ background:var(--green-soft); color:var(--green); }
+.status-pending, .status-unshipped{ background:var(--amber-soft); color:var(--amber); }
+.status-cancelled{ background:var(--red-soft); color:var(--red); }
+.status-partiallyshipped{ background:var(--blue-soft); color:var(--blue); }
+.status-sold{ background:var(--green-soft); color:var(--green); }
+.grow .multi-order-cell{ background:#C6EFCE !important; color:#006100; }
+.grow .multi-order-cell .pill{ background:transparent; color:#006100; border-color:rgba(0,97,0,.16); }
+.num{ justify-content:flex-end; text-align:right; font-family:'JetBrains Mono',monospace; font-variant-numeric:tabular-nums; font-size:11.7px; }
+.num.pos{ color:var(--green); }
+.num.neg{ color:var(--red); }
+.cm-cell{ font-weight:700; }
+
+/* column widths */
+.col-date{ width:90px; } .col-oid{ width:150px; } .col-vendor{ width:130px; } .col-status{ width:108px; }
+.col-shop{ width:100px; } .col-product{ width:190px; } .col-size{ width:100px; } .col-color{ width:74px; }
+.col-qty{ width:52px; } .col-exwh{ width:90px; } .col-revenue{ width:90px; } .col-netsale{ width:90px; }
+.col-list{ width:90px; } .col-tax{ width:80px; } .col-fee{ width:80px; } .col-expense{ width:88px; }
+.col-shipfee{ width:92px; } .col-fbafee{ width:84px; } .col-off{ width:70px; } .col-cm{ width:96px; }
+
+/* loading skeleton */
+.skel-row{ display:flex; padding:10px 12px; gap:16px; border-bottom:1px solid var(--border); }
+.skel{ height:12px; border-radius:4px; background:linear-gradient(90deg,var(--surface-2) 25%,var(--surface-3) 50%,var(--surface-2) 75%); background-size:200% 100%; animation:shimmer 1.4s infinite; }
+@keyframes shimmer{ 0%{ background-position:200% 0; } 100%{ background-position:-200% 0; } }
+
+/* --- Status bar --- */
+.statusbar{
+  flex:0 0 26px; height:26px; display:flex; align-items:center; gap:14px; padding:0 14px; font-size:11px;
+  background:var(--bg-elevated); border-top:1px solid var(--border); color:var(--text-2);
+}
+.statusbar .dot{ width:5px; height:5px; border-radius:50%; background:var(--text-3); }
+.statusbar b{ color:var(--text); font-weight:600; }
+.statusbar .fba-tag{ font-weight:700; }
+.statusbar .fba-tag.on{ color:var(--green); }
+.statusbar .fba-tag.off{ color:var(--text-3); }
+.statusbar-spacer{ flex:1; }
+
+/* ============================= MODALS ============================= */
+.modal-overlay{
+  position:fixed; inset:0; background:rgba(0,0,0,.55); backdrop-filter:blur(2px); display:flex; align-items:center;
+  justify-content:center; z-index:100; animation:fadeIn .15s ease;
+}
+@keyframes fadeIn{ from{ opacity:0; } to{ opacity:1; } }
+.modal{
+  width:100%; max-width:520px; max-height:82vh; background:var(--bg-elevated); border:1px solid var(--border);
+  border-radius:14px; box-shadow:var(--shadow-lg); display:flex; flex-direction:column; animation:modalIn .16s cubic-bezier(.2,.8,.2,1);
+}
+.modal.wide{ max-width:760px; }
+@keyframes modalIn{ from{ opacity:0; transform:translateY(10px) scale(.98); } to{ opacity:1; transform:translateY(0) scale(1); } }
+.modal-head{ display:flex; align-items:center; padding:16px 18px; border-bottom:1px solid var(--border); gap:10px; }
+.modal-head h3{ margin:0; font-size:14.5px; font-weight:700; letter-spacing:-.01em; }
+.modal-head p{ margin:1px 0 0; font-size:11.5px; color:var(--text-2); }
+.modal-body{ padding:18px; overflow-y:auto; flex:1; }
+.modal-foot{ display:flex; justify-content:flex-end; gap:8px; padding:14px 18px; border-top:1px solid var(--border); }
+.field{ margin-bottom:14px; }
+.field label{ display:block; font-size:11.5px; font-weight:600; color:var(--text-2); margin-bottom:6px; }
+.field input[type=text], .field input[type=number], .field select{
+  width:100%; height:34px; background:var(--surface-2); border:1px solid var(--border); border-radius:7px;
+  color:var(--text); padding:0 10px; font-size:12.5px;
+}
+.field .help{ font-size:10.8px; color:var(--text-3); margin-top:5px; line-height:1.5; }
+.radio-group{ display:flex; gap:8px; }
+.radio-opt{
+  flex:1; border:1px solid var(--border); background:var(--surface-2); border-radius:8px; padding:10px; cursor:pointer;
+  text-align:center; font-size:11.5px; font-weight:600; color:var(--text-2); transition:.13s;
+}
+.radio-opt.active{ border-color:var(--accent); background:var(--accent-soft); color:var(--accent-2); }
+.code-block{ background:var(--surface-2); border:1px solid var(--border); border-radius:8px; padding:10px 12px; font-size:10.8px; font-family:'JetBrains Mono',monospace; color:var(--text-2); white-space:pre-wrap; line-height:1.6; max-height:150px; overflow-y:auto; }
+.mini-table{ width:100%; border-collapse:collapse; font-size:12px; }
+.mini-table th{ text-align:left; font-size:10px; text-transform:uppercase; letter-spacing:.04em; color:var(--text-3); padding:6px 8px; border-bottom:1px solid var(--border); }
+.mini-table td{ padding:4px 6px; border-bottom:1px solid var(--border); }
+.mini-table input{ width:100%; height:28px; background:var(--surface-2); border:1px solid var(--border); border-radius:5px; color:var(--text); padding:0 7px; font-size:11.7px; }
+.mini-table tr:hover td{ background:var(--hover); }
+.row-del{ width:24px; height:24px; border-radius:5px; border:none; background:transparent; color:var(--text-3); cursor:pointer; display:flex; align-items:center; justify-content:center; }
+.row-del:hover{ background:var(--red-soft); color:var(--red); }
+.theme-toggle-row{ display:flex; gap:8px; }
+.theme-opt{ flex:1; border:1px solid var(--border); background:var(--surface-2); border-radius:9px; padding:12px; text-align:center; cursor:pointer; font-size:12px; font-weight:600; color:var(--text-2); }
+.theme-opt.active{ border-color:var(--accent); color:var(--accent-2); background:var(--accent-soft); }
+.section-divider{ font-size:10.5px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-3); margin:20px 0 10px; padding-top:14px; border-top:1px solid var(--border); }
+.section-divider:first-child{ margin-top:0; padding-top:0; border-top:none; }
+
+/* ============================= TOASTS ============================= */
+.toast-wrap{ position:fixed; bottom:38px; right:16px; display:flex; flex-direction:column-reverse; gap:8px; z-index:200; }
+.toast{
+  min-width:280px; max-width:360px; background:var(--bg-elevated); border:1px solid var(--border); border-radius:10px;
+  box-shadow:var(--shadow-md); padding:11px 13px; display:flex; gap:10px; align-items:flex-start; animation:toastIn .18s cubic-bezier(.2,.8,.2,1);
+  position:relative; overflow:hidden;
+}
+@keyframes toastIn{ from{ opacity:0; transform:translateX(24px); } to{ opacity:1; transform:translateX(0); } }
+.toast .ic{ flex:0 0 18px; margin-top:1px; }
+.toast.success .ic{ color:var(--green); }
+.toast.error .ic{ color:var(--red); }
+.toast.info .ic{ color:var(--blue); }
+.toast .msg{ font-size:12px; line-height:1.45; color:var(--text); flex:1; }
+.toast .msg b{ display:block; font-size:12.5px; margin-bottom:1px; }
+.toast .close{ cursor:pointer; color:var(--text-3); background:none; border:none; padding:0; }
+.toast .bar{ position:absolute; bottom:0; left:0; height:2px; background:var(--accent); animation:shrink 3.6s linear forwards; }
+.toast.success .bar{ background:var(--green); }
+.toast.error .bar{ background:var(--red); }
+@keyframes shrink{ from{ width:100%; } to{ width:0%; } }
+
+/* misc */
+.spin{ animation:spin 0.8s linear infinite; }
+@keyframes spin{ to{ transform:rotate(360deg); } }
+.hidden{ display:none !important; }
+
+/* --- Precision table alignment: header and every value stay under the exact same column --- */
+.grid-scroll{overflow:auto;overflow-x:auto;position:relative;}
+.grid-head,.grow{min-width:1908px;width:1908px;}
+.grid-head .c,.grow .c{flex:0 0 auto;box-sizing:border-box;}
+.grid-body{min-width:1908px;position:relative;}
+.grow{right:auto;}
+.multi-order-cell{background:#dff5e8 !important;}
+.grow .oid.multi .pill{background:#dff5e8;color:#146c43;border:1px solid #9adbb6;}
+
+@media (max-width:880px){
+  .sidebar{ position:absolute; z-index:50; height:calc(100% - 54px - 26px); box-shadow:var(--shadow-lg); }
+  .sidebar:not(.mobile-open){ display:none; }
+  .topbar-search{ width:150px; }
+  .topbar{gap:8px;padding:0 10px;}
+  .brand-sub{display:none;}
+}
+@media (max-width:640px){
+  body{font-size:13px;}
+  .topbar-search{width:120px;}
+  .avatar{display:none;}
+  .main-toolbar{padding:0 10px;overflow:auto;}
+  .main-toolbar .filename{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+  .modal{max-width:calc(100vw - 18px);max-height:90vh;border-radius:12px;}
+  .modal.wide{max-width:calc(100vw - 18px);}
+  .modal-body{padding:14px;}
+  .modal-foot{padding:12px 14px;}
+}
+.issue-btn{position:relative;}
+.issue-btn .badge{background:var(--red-soft);color:var(--red);}
+.source-missing{color:var(--red)!important;font-weight:700;}
+.source-ok{color:var(--green)!important;}
+.data-issue{font-size:10.5px;color:var(--red);line-height:1.4;margin-top:4px;}
+.lookup-result{border:1px solid var(--border);background:var(--surface-2);border-radius:8px;padding:10px 12px;margin-top:10px;}
+.lookup-result b{color:var(--text);}
+
+.panel-mini{border:1px solid var(--border);background:var(--surface-2);border-radius:12px;padding:12px 14px}.panel-mini-title{font-size:11px;text-transform:uppercase;letter-spacing:.08em;color:var(--text-3);margin-bottom:8px}.metric-line{display:flex;justify-content:space-between;gap:12px;padding:5px 0;color:var(--text-2);font-size:12px}.metric-line b{color:var(--text);font-weight:700}.grid2{display:grid;grid-template-columns:1fr 1fr;gap:10px}.auto-sync-row{display:flex;align-items:center;gap:10px;padding:12px;border:1px solid var(--border);background:var(--surface-2);border-radius:12px}.auto-sync-row>span{display:flex;flex-direction:column;gap:3px;flex:1}.auto-sync-row small{color:var(--text-3);font-size:11px}.switch{position:relative;width:42px;height:24px;display:inline-block;flex:0 0 auto}.switch input{display:none}.slider{position:absolute;inset:0;background:var(--surface-3);border:1px solid var(--border-strong);border-radius:99px;cursor:pointer;transition:.2s}.slider:before{content:"";position:absolute;width:18px;height:18px;left:2px;top:2px;background:var(--text-2);border-radius:50%;transition:.2s}.switch input:checked+.slider{background:var(--accent-soft);border-color:var(--accent-border)}.switch input:checked+.slider:before{transform:translateX(18px);background:var(--accent)}.error-box{margin-top:10px;padding:10px 12px;border-radius:10px;background:var(--red-soft);border:1px solid var(--red-border);font-size:12px}.table-wrap{overflow:auto;border:1px solid var(--border);border-radius:10px}.table-wrap .mini-table{margin:0;border:0}</style>
+
+<style id="upf-frontend-layout-fix">
+/* =====================================================================
+   USMAN PROFIT FORGE — FRONTEND LAYOUT ONLY
+   Purpose: prevent sidebar label/badge clipping and keep the shell
+   responsive across desktop/tablet/mobile without changing app logic.
+   ===================================================================== */
+
+/* Desktop/tablet shell: give the navigation enough horizontal room for
+   long actions such as "Link Shipping Fee Sheet" and status badges. */
+@media (min-width: 881px){
+  .body-row{position:relative;min-width:0;}
+  .sidebar{
+    width:282px;
+    flex:0 0 282px;
+    min-width:282px;
+    overflow-x:hidden;
+  }
+  .side-btn{
+    min-width:0;
+  }
+  .side-label{
+    min-width:0;
+    flex:1 1 auto;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .side-btn .badge{
+    flex:0 0 auto;
+    max-width:92px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+}
+
+/* Keep the collapsed desktop state exactly compact and centered. */
+@media (min-width: 881px){
+  .sidebar.collapsed{
+    width:60px;
+    flex-basis:60px;
+    min-width:60px;
+  }
+  .sidebar.collapsed .side-btn{
+    width:40px;
+    min-width:40px;
+  }
+}
+
+/* Tablet/mobile: overlay sidebar is anchored to the actual app body area
+   instead of the viewport, so top/bottom positions remain exact. */
+@media (max-width:880px){
+  .body-row{position:relative;min-width:0;}
+  .sidebar{
+    position:absolute;
+    top:0;
+    left:0;
+    bottom:0;
+    width:282px;
+    max-width:min(282px, calc(100vw - 18px));
+    flex:0 0 282px;
+    min-width:0;
+    height:auto;
+    overflow-x:hidden;
+    overflow-y:auto;
+    box-shadow:var(--shadow-lg);
+    z-index:50;
+  }
+  .side-btn{
+    min-width:0;
+  }
+  .side-label{
+    min-width:0;
+    flex:1 1 auto;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+  .side-btn .badge{
+    flex:0 0 auto;
+    max-width:92px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+  }
+
+  /* Main area must be allowed to shrink beside the overlay sidebar. */
+  .main{min-width:0;width:100%;}
+}
+
+/* Very narrow phones: prioritize readable labels and keep the sidebar
+   inside the viewport. The existing mobile-open behavior is preserved. */
+@media (max-width:480px){
+  .sidebar{
+    width:calc(100vw - 18px);
+    max-width:calc(100vw - 18px);
+    padding-left:9px;
+    padding-right:9px;
+  }
+  .side-btn{
+    gap:9px;
+    padding-left:8px;
+    padding-right:8px;
+  }
+  .side-btn .badge{
+    max-width:82px;
+    font-size:9px;
+  }
+}
+
+/* Prevent the top navigation from forcing horizontal overflow on small
+   screens while preserving all existing controls. */
+@media (max-width:640px){
+  .topbar{min-width:0;overflow:hidden;}
+  .topbar-spacer{min-width:0;}
+  .topbar-search{flex:1 1 auto;min-width:80px;}
+  .brand{flex:0 1 auto;min-width:0;}
+  .brand-text{white-space:nowrap;}
+}
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- ===== TOP NAV ===== -->
+  <div class="topbar">
+    <button class="icon-btn" id="sidebarToggleBtn" title="Toggle sidebar">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><line x1="4" y1="6" x2="20" y2="6"/><line x1="4" y1="12" x2="20" y2="12"/><line x1="4" y1="18" x2="20" y2="18"/></svg>
+    </button>
+    <div class="brand">
+      <svg class="brand-mark" viewBox="0 0 32 32" fill="none" aria-hidden="true">
+        <defs><linearGradient id="usmGrad" x1="0" y1="0" x2="32" y2="32"><stop offset="0%" stop-color="var(--accent-2)"/><stop offset="100%" stop-color="var(--accent)"/></linearGradient></defs>
+        <rect x="1" y="1" width="30" height="30" rx="9" fill="url(#usmGrad)"/>
+        <rect x="8" y="16" width="3.4" height="7" rx="1.3" fill="#fff"/>
+        <rect x="14.3" y="11" width="3.4" height="12" rx="1.3" fill="#fff" fill-opacity=".92"/>
+        <rect x="20.6" y="6.5" width="3.4" height="16.5" rx="1.3" fill="#fff" fill-opacity=".85"/>
+      </svg>
+      <div class="brand-lockup">
+        <div class="brand-text">USM</div>
+        <div class="brand-sub" id="fileVendorTag">Usman Seller Metrics</div>
+      </div>
+    </div>
+    <div class="topbar-spacer"></div>
+    <div class="topbar-search">
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+      <input type="text" id="searchInput" placeholder="Search order, SKU, product…">
+      <kbd>⌘K</kbd>
+    </div>
+    <button class="icon-btn" id="themeToggleBtn" title="Toggle theme"></button>
+    <button class="icon-btn" id="shortcutsBtn" title="Keyboard shortcuts">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+    </button>
+    <div class="avatar">U</div>
+  </div>
+
+  <div class="body-row">
+    <!-- ===== SIDEBAR ===== -->
+    <div class="sidebar" id="sidebar">
+      <div class="side-group">
+        <div class="side-group-title">Data</div>
+        <button class="side-btn" data-action="openFile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="side-label">Upload Report</span></button>
+        <button class="side-btn" data-action="removeReport" id="removeReportBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg><span class="side-label">Remove Report</span></button>
+        <button class="side-btn primary" data-action="processReport" id="processBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span class="side-label">Process Report</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">FBA Fee</div>
+        <button class="side-btn" data-action="openGoogleFba"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="side-label">Link FBA Fee Sheet</span><span class="badge" id="fbaSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="openExpense"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M6 2h12v20H6z"/><path d="M9 6h6M9 10h6M9 14h6M9 18h4"/></svg><span class="side-label">Manual Expense</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Google Sheets</div>
+        <button class="side-btn" data-action="openGoogleExwh"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M4 4h16v16H4z"/><path d="M8 8h8M8 12h8M8 16h5"/></svg><span class="side-label">Link Ex-WH Cost Sheet</span><span class="badge" id="exwhSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="openGoogleShipping"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="side-label">Link Shipping Fee Sheet</span><span class="badge" id="shippingSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="openGoogleSku"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span class="side-label">Link SKU / Product Sheet</span><span class="badge" id="skuSheetBadge">Not linked</span></button><button class="side-btn" data-action="refreshAllGoogle" id="refreshAllGoogleBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0 1 5"/><polyline points="20 4 20 11 13 11"/></svg><span class="side-label">Sync All Sheets</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Export</div>
+        <button class="side-btn" data-action="downloadReport"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="side-label">Download Report</span></button>
+        <button class="side-btn" data-action="openPushSheets"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><polyline points="12 12 12 20"/><polyline points="9 15 12 12 15 15"/></svg><span class="side-label">Push to Google Sheets</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Masters</div>
+        <button class="side-btn" data-action="openManualSku"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/><line x1="12.5" y1="12" x2="16.5" y2="12"/><line x1="14.5" y1="10" x2="14.5" y2="14"/></svg><span class="side-label">Manual SKU</span><span class="badge" id="manualSkuBadge">0 saved</span></button>
+        <button class="side-btn" data-action="openProductMapping"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span class="side-label">Product Mapping / SKU Lookup</span></button>
+      </div>
+      <div class="side-group" style="margin-bottom:0;">
+        <div class="side-group-title">Preferences</div>
+        <button class="side-btn" data-action="openSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="side-label">Settings</span></button>
+      </div>
+      <div class="side-hint" id="sideHint">Drop a report anywhere to begin.</div>
+    </div>
+
+    <!-- ===== MAIN ===== -->
+    <div class="main">
+      <div class="main-toolbar" id="mainToolbar">
+        <div class="filename hidden" id="filenameTag">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span id="filenameText"></span>
+        </div>
+        <span class="chip hidden" id="rowCountChip"></span><button class="btn sm danger hidden issue-btn" id="issueBtn" data-action="showIssues">Issues <span class="badge" id="issueBadge">0</span></button>
+        <span class="chip green hidden" id="processedChip">Processed</span><span class="chip hidden" id="formulaNote">Fee = Net Sale × 15% · CM = List Price − SUM(Ex-WH + Fee + Expense + Shipping Fee + FBA Fee + Off) · Sale Tax blank</span><span class="chip hidden" id="liveSyncChip"></span>
+        <div class="main-toolbar-spacer"></div>
+        <select class="select-mini hidden" id="statusFilter">
+          <option value="all">All orders</option>
+          <option value="sold">Sold</option>
+        </select>
+      </div>
+      <div class="content" id="content"><!-- filled by render() --></div>
+    </div>
+  </div>
+
+  <!-- ===== STATUS BAR ===== -->
+  <div class="statusbar" id="statusBar">
+    <span><b id="sbOrders">0</b> orders processed</span>
+    <span class="dot"></span>
+    <span><b id="sbMulti">0</b> multi-item orders</span>
+    <span class="dot"></span>
+    <span><b id="sbCancelled">0</b> cancelled orders</span>
+    <div class="statusbar-spacer"></div>
+    <span>FBA Fee status: <span class="fba-tag off" id="sbFbaStatus">Not Set</span></span><span class="dot"></span><span>Data issues: <b id="sbIssues">0</b></span>
+  </div>
+
+  <input type="file" id="fileInput" class="file-input-hidden" accept=".txt,.csv">
+  <div id="modalRoot"></div>
+  <div class="toast-wrap" id="toastWrap"></div>
+</div>
+
+<script>
+/* =====================================================================
+   USMAN PROFIT FORGE — application logic
+   ===================================================================== */
+(function(){
+"use strict";
+
+/* ---------------------------- ICONS ---------------------------- */
+const ICONS = {
+  upload:'<svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  sun:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="4"/><path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M6.34 17.66l-1.41 1.41M19.07 4.93l-1.41 1.41"/></svg>',
+  moon:'<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>',
+  check:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  alert:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>',
+  info:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg>',
+  x:'<svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  plus:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>',
+  trash:'<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6"/><path d="M14 11v6"/></svg>',
+  sort:'<svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3"><path d="M8 9l4-4 4 4M8 15l4 4 4-4"/></svg>',
+  spinner:'<svg class="spin" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M21 12a9 9 0 1 1-6.219-8.56"/></svg>'
+};
+
+/* ---------------------------- STATE ---------------------------- */
+const STATUS_ALIASES = { pending:'Pending', unshipped:'Unshipped', shipped:'Shipped', cancelled:'Cancelled',
+  partiallyshipped:'PartiallyShipped', 'partially shipped':'PartiallyShipped' };
+
+const state = {
+  theme:'dark',
+  rawRows: null,        // parsed straight from file (array of objects)
+  fileName: null,
+  orders: [],            // processed output rows (matches column spec)
+  isDragging:false,
+  isLoading:false,
+  isProcessed:false,
+  search:'',
+  statusFilter:'all',
+  sortBy:'date', sortDir:'asc',
+  fbaFee:null,
+  fbaApplied:false,
+  cancelledCount:0,
+  issueCount:0,
+  issues:[],
+  costMaster:[],
+  productMapping:[],
+  manualSkuRows:[], // user-entered SKU/Product/Size/Color rows — a fallback when a SKU isn't worth adding to the Google SKU sheet
+  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Cotton Passion', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'' },
+  google:{
+    exwhUrl:'', shippingUrl:'', fbaUrl:'', skuUrl:'',
+    exwhRows:[], shippingRows:[], fbaRows:[], skuRows:[],
+    exwhUpdated:null, shippingUpdated:null, fbaUpdated:null, skuUpdated:null,
+    liveUrl:'', liveRows:[], liveUpdated:null, liveHash:'', liveMeta:{lastRun:null,lastStatus:'never',scanned:0,added:0,updated:0,deleted:0,unchanged:0,error:'',autoSync:false,intervalSec:30},
+    liveSnapshot:[],
+    lastChanged:{}
+  },
+  modal:null,
+  toasts:[],
+  sidebarCollapsed:false,
+  _nextCostId:15, _nextMapId:15, _nextManualSkuId:1
+};
+
+let toastSeq = 1;
+
+/* ---------------------------- HELPERS ---------------------------- */
+function $(sel,root){ return (root||document).querySelector(sel); }
+function $all(sel,root){ return Array.from((root||document).querySelectorAll(sel)); }
+function fmtMoney(n){ const v = Number(n)||0; const s = state.settings.currency + Math.abs(v).toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2}); return v<0 ? '-'+s : s; }
+function fmtNum(n){ return (Number(n)||0).toLocaleString(); }
+function esc(s){ return String(s==null?'':s).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])); }
+function uid(){ return Math.random().toString(36).slice(2,9); }
+
+function getField(row, keys){
+  for(const k of keys){
+    for(const rk of Object.keys(row)){
+      if(rk.trim().toLowerCase() === k.toLowerCase()) return row[rk];
+    }
+  }
+  return '';
+}
+function toNum(v){
+  if(v===null || v===undefined || String(v).trim()==='') return 0;
+  const raw = String(v).trim().replace(/[$£€₨,]/g,'');
+  const n = Number(raw.replace(/[^0-9.\-]/g,''));
+  return Number.isFinite(n) ? n : 0;
+}
+function hasValue(v){ return !(v===null || v===undefined || String(v).trim()===''); }
+function formatMoneyRaw(v){ return Number(v||0).toFixed(2); }
+function formatDate(v){
+  if(!v) return '—';
+  const raw = String(v).trim();
+  const d = new Date(raw);
+  if(isNaN(d.getTime())) return raw.slice(0,10);
+  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  return String(d.getUTCDate()).padStart(2,'0')+'/'+months[d.getUTCMonth()]+'/'+d.getUTCFullYear();
+}
+
+const STORAGE_KEY = 'UsmanProfitForge.config.v3';
+function persistConfig(){
+  try{
+    localStorage.setItem(STORAGE_KEY, JSON.stringify({
+      theme:state.theme, settings:state.settings, costMaster:state.costMaster,
+      productMapping:state.productMapping, manualSkuRows:state.manualSkuRows, google:state.google,
+      nextCostId:state._nextCostId, nextMapId:state._nextMapId, nextManualSkuId:state._nextManualSkuId
+    }));
+  }catch(err){ console.warn('Could not persist local config', err); }
+}
+function loadConfig(){
+  try{
+    const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
+    if(!saved) return;
+    if(saved.theme) state.theme = saved.theme;
+    if(saved.settings) state.settings = Object.assign(state.settings, saved.settings);
+    if(Array.isArray(saved.costMaster)){
+      state.costMaster = saved.costMaster.map((c,i)=>({
+        id:Number(c.id)||i+1,
+        sku:String(c.sku||''),
+        product:String(c.product||''),
+        exWhCost:Number.isFinite(Number(c.exWhCost)) ? Number(c.exWhCost) : (Number(c.cost)||0),
+        expense:Number(c.expense)||0,
+        shippingFee:Number(c.shippingFee)||0
+      }));
+    }
+    if(Array.isArray(saved.productMapping)){
+      state.productMapping = saved.productMapping.map((m,i)=>({
+        id:Number(m.id)||i+1,
+        sku:String(m.sku||''),
+        product:String(m.product||''),
+        size:String(m.size||''),
+        color:String(m.color||'White')
+      }));
+    }
+    if(Array.isArray(saved.manualSkuRows)){
+      state.manualSkuRows = saved.manualSkuRows.map((m,i)=>({
+        id:Number(m.id)||i+1,
+        sku:String(m.sku||''),
+        product:String(m.product||''),
+        size:String(m.size||''),
+        color:String(m.color||'White')
+      }));
+    }
+    state.fbaFee = null;
+    if(saved.google) state.google = Object.assign(state.google, saved.google);
+      // Backward compatibility for older configs.
+      state.google.exwhUrl = state.google.exwhUrl || ''; state.google.shippingUrl = state.google.shippingUrl || ''; state.google.fbaUrl = state.google.fbaUrl || ''; state.google.skuUrl = state.google.skuUrl || '';
+      state.google.exwhRows = Array.isArray(state.google.exwhRows)?state.google.exwhRows:[];
+      state.google.shippingRows = Array.isArray(state.google.shippingRows)?state.google.shippingRows:[];
+      state.google.fbaRows = Array.isArray(state.google.fbaRows)?state.google.fbaRows:[];
+      state.google.skuRows = Array.isArray(state.google.skuRows)?state.google.skuRows:[];
+      state.google.liveRows = Array.isArray(state.google.liveRows)?state.google.liveRows:[];
+      state.google.liveSnapshot = Array.isArray(state.google.liveSnapshot)?state.google.liveSnapshot:[];
+      state.google.liveMeta = Object.assign({lastRun:null,lastStatus:'never',scanned:0,added:0,updated:0,deleted:0,unchanged:0,error:'',autoSync:false,intervalSec:30}, state.google.liveMeta||{});
+    if(Number.isFinite(saved.nextCostId)) state._nextCostId = saved.nextCostId;
+    if(Number.isFinite(saved.nextMapId)) state._nextMapId = saved.nextMapId;
+    if(Number.isFinite(saved.nextManualSkuId)) state._nextManualSkuId = saved.nextManualSkuId;
+    // Defensive ID repair for older saved configurations.
+    state._nextCostId = Math.max(state._nextCostId, ...state.costMaster.map(c=>Number(c.id)||0).concat([0])) + 0;
+    state._nextMapId = Math.max(state._nextMapId, ...state.productMapping.map(m=>Number(m.id)||0).concat([0])) + 0;
+    state._nextManualSkuId = Math.max(state._nextManualSkuId, ...state.manualSkuRows.map(m=>Number(m.id)||0).concat([0])) + 0;
+    // Ensure vendor is fixed by the business rules even for older saved configs.
+    state.settings.vendorName = 'Cotton Passion';
+  }catch(err){ console.warn('Could not load local config', err); }
+}
+function normStatus(v){
+  const raw = String(v||'').trim();
+  const key = raw.toLowerCase().replace(/\s+/g,'');
+  return STATUS_ALIASES[key] || (raw ? raw : 'Unknown');
+}
+
+function toast(type, title, msg){
+  const t = { id: toastSeq++, type, title, msg };
+  state.toasts.push(t);
+  renderToasts();
+  setTimeout(()=>{ state.toasts = state.toasts.filter(x=>x.id!==t.id); renderToasts(); }, 3600);
+}
+
+/* ---------------------------- THEME ---------------------------- */
+function applyTheme(){
+  document.documentElement.setAttribute('data-theme', state.theme);
+  $('#themeToggleBtn').innerHTML = state.theme==='dark' ? ICONS.sun : ICONS.moon;
+}
+function toggleTheme(){ state.theme = state.theme==='dark' ? 'light' : 'dark'; applyTheme(); persistConfig(); }
+
+/* ---------------------------- FILE PARSING ---------------------------- */
+function handleFile(file){
+  if(!file) return;
+  const okExt = /\.(txt|csv)$/i.test(file.name);
+  if(!okExt){ toast('error','Unsupported file','Please upload a .txt or .csv Amazon order report.'); return; }
+  const reader = new FileReader();
+  reader.onload = function(e){
+    const text = e.target.result;
+    let parsed;
+    try{
+      const firstLine = String(text).split(/\r?\n/,1)[0] || '';
+      const delimiter = firstLine.includes('\t') ? '\t' : ',';
+      parsed = Papa.parse(text, { header:true, skipEmptyLines:true, delimiter });
+    }catch(err){
+      toast('error','Could not read file', String(err.message||err)); return;
+    }
+    if(!parsed.data || !parsed.data.length){
+      toast('error','Empty report','No rows were found in that file.'); return;
+    }
+    state.rawRows = parsed.data;
+    state.fileName = file.name;
+    state.isProcessed = false;
+    state.orders = [];
+    toast('success','Report loaded', file.name + ' — ' + parsed.data.length + ' line item(s) ready to process.');
+    render();
+  };
+  reader.onerror = function(){ toast('error','Read failed','The file could not be read.'); };
+  reader.readAsText(file);
+}
+
+function removeReport(){
+  state.rawRows=null; state.fileName=null; state.orders=[]; state.isProcessed=false; state.isLoading=false; state.cancelledCount=0; state.issueCount=0; state.issues=[]; render(); toast('info','Report removed','The uploaded report was cleared. You can upload a new file now.');
+}
+
+/* ---------------------------- PROCESS PIPELINE ---------------------------- */
+function sameKey(a,b){ return String(a||'').trim().toLowerCase() === String(b||'').trim().toLowerCase(); }
+function findMappingFor(sku, productName){
+  const bySku = state.productMapping.find(m=>m.sku && sameKey(m.sku,sku));
+  if(bySku) return bySku;
+  const byName = state.productMapping.find(m=>m.product && sameKey(m.product,productName));
+  return byName || null;
+}
+function normalizeHeader(h){
+  return String(h||'').trim().toLowerCase().replace(/[\s_\-]+/g,'');
+}
+function getFieldLoose(row, names){
+  const wanted=names.map(normalizeHeader);
+  for(const rk of Object.keys(row||{})){
+    if(wanted.includes(normalizeHeader(rk))) return row[rk];
+  }
+  return '';
+}
+function findPercentDiscount(r, listPrice){
+  const raw=getFieldLoose(r,['discount-percent','discountpercentage','promotion-percent','promotionpercentage','off-percent','offpercentage','item-discount-percent']);
+  if(!hasValue(raw)) return null;
+  const pct=toNum(raw);
+  if(!Number.isFinite(pct) || pct<=0) return 0;
+  return listPrice*pct/100;
+}
+function getPromotionOff(r, listPrice){
+  const pctOff=findPercentDiscount(r,listPrice);
+  if(pctOff!==null) return pctOff;
+  const amountFields=['item-promotion-discount','item-promotion','promotion-discount','discount-amount','discount','off'];
+  for(const name of amountFields){
+    const raw=getField(r,[name]);
+    if(hasValue(raw)) return Math.abs(toNum(raw));
+  }
+  return 0;
+}
+function normText(v){
+  let x=String(v==null?'':v).trim().toLowerCase();
+  // Google/Excel exports can introduce apostrophes, non-breaking spaces and
+  // number-like formatting. Normalize those without changing the visible data.
+  x=x.replace(/[\u2018\u2019\u0060']/g,'').replace(/\u00a0/g,' ');
+  x=x.replace(/\.0+$/,'');
+  return x.replace(/\s+/g,' ');
+}
+function normKey(v){ return normText(v).replace(/[^a-z0-9]+/g,''); }
+function catalogDisplayText(v){ let x=String(v==null?'':v).replace(/[\u2013\u2014]/g,'-').replace(/\u00a0/g,' '); return x.replace(/\s+/g,' ').trim(); }
+function canonicalCatalogText(v){ return catalogDisplayText(v).toLowerCase(); }
+function canonicalCatalogKey(v){ return canonicalCatalogText(v).replace(/[^a-z0-9]+/g,''); }
+function canonicalSize(v){
+  let x=canonicalCatalogText(v);
+  if(!x)return '';
+  x=x.replace(/\b(?:inch|inches|in|deep)\b/g,'').replace(/\s+/g,' ').trim();
+
+  // Blackout-fabric / yard-size normalization. Keep the required display
+  // forms while making equivalent variants match reliably.
+  if(/^1\s*yard\s*110(?:w)?$/i.test(x)||/^yard\s*110(?:w)?$/i.test(x)||/^1yard110w$/i.test(x))return '1 Yard 110';
+  if(/^1\s*yard\s*55(?:w)?$/i.test(x)||/^yard\s*55(?:w)?$/i.test(x)||/^1yard55w$/i.test(x))return '1 Yard 55';
+  if(/^cut\s*by\s*(?:yard\s*)?110(?:w)?$/i.test(x)||/^yards?\s*110(?:w)?$/i.test(x)||/^cut\s*by\s*110$/i.test(x)||/^110w$/i.test(x))return 'Yards 110';
+  if(/^cut\s*by\s*(?:yard\s*)?55(?:w)?$/i.test(x)||/^yards?\s*55(?:w)?$/i.test(x)||/^cut\s*by\s*55$/i.test(x)||/^55w$/i.test(x))return 'Yards 55';
+
+  // Quantity + yard/width variants such as 5yard55w, 5 yard 55w,
+  // 5yards 55W and 5 Yards 110W are the same catalog size.
+  // Required report display: "5 Yard 55" (no trailing W).
+  let m=x.match(/^(\d+(?:\.\d+)?)\s*yards?\s*(\d+)\s*w?$/i) || x.match(/^(\d+(?:\.\d+)?)\s*yard(\d+)w$/i);
+  if(m){
+    const qty=m[1], width=m[2];
+    return qty+' Yard '+width;
+  }
+  m=x.match(/^(\d+(?:\.\d+)?)\s*yard\s*(\d+)$/i);
+  if(m)return m[1]+' Yard '+m[2];
+
+  return x.replace(/[^a-z0-9]+/g,'');
+}
+function canonicalColor(v){ return canonicalCatalogKey(v); }
+function looseProductKey(v){ return canonicalCatalogText(v).replace(/\b(?:qt|plus|hd|fbm|listing|order|id)\b/g,' ').replace(/[^a-z0-9]+/g,''); }
+function sizeKey(v){
+  const canon=canonicalSize(v);
+  const x=canonicalCatalogKey(canon);
+  const m={fullqueen:'fq',fullqueens:'fq',fullslashqueen:'fq',fq:'fq',queenfull:'fq',calking:'calking',californiaking:'calking',california:'calking',ck:'calking',twinxl:'twinxl',txl:'twinxl',king:'king',queen:'queen',full:'full',twin:'twin',calkingbed:'calking','1yard110':'1yard110','1yard55':'1yard55',yards110:'yards110',yards55:'yards55'};
+  if(m[x])return m[x];
+  // Normalize arbitrary yard-width variants to quantity+width.
+  const yard=x.match(/^(\d+(?:\.\d+)?)yard(\d+)$/i);
+  if(yard)return 'yards'+yard[1]+'_'+yard[2]+'w';
+  const yard2=x.match(/^(\d+(?:\.\d+)?)yards(\d+)$/i);
+  if(yard2)return 'yards'+yard2[1]+'_'+yard2[2]+'w';
+  const legacy=x.match(/^((?:\d+)(?:\.\d+)?)yard(\d+)w$/i);
+  if(legacy)return 'yards'+legacy[1]+'_'+legacy[2]+'w';
+  return x;
+}
+function matchUnique(rows,pred){ const hits=rows.filter(pred); return hits.length===1?hits[0]:(hits.length>1?{_ambiguous:true,_count:hits.length,_hits:hits}:null); }
+function firstUsableHit(rows,preds){
+  for(const pred of preds){
+    const hit=matchUnique(rows,pred);
+    if(hit && !hit._ambiguous) return hit;
+    if(hit && hit._ambiguous) return hit;
+  }
+  return null;
+}
+function duplicateEquivalent(hits, field){ const vals=hits.map(x=>Number(x[field])).filter(Number.isFinite); return vals.length&&vals.every(v=>v===vals[0])?vals[0]:null; }
+function duplicateEquivalent(hits,field){const vals=hits.map(x=>Number(x[field])).filter(Number.isFinite);return vals.length&&vals.every(v=>v===vals[0])?vals[0]:null;}
+function googleExwhMatch(product,sku,size='',color=''){
+  const rows=Array.isArray(state.google?.exwhRows)?state.google.exwhRows:[];
+  if(!rows.length)return {value:null,reason:'sheet-empty'};
+  const s=canonicalCatalogKey(sku),p=looseProductKey(product),z=sizeKey(size),c=canonicalColor(color),v=rows.filter(x=>Number.isFinite(Number(x.exWhCost)));
+
+  // 1) SKU is the strongest source. The SKU itself may come from the linked
+  // SKU/Product master, so we do not require the Amazon product title to match.
+  for(const pred of [
+    x=>s&&canonicalCatalogKey(x.sku)===s&&z&&sizeKey(x.size)===z&&c&&canonicalColor(x.color)===c,
+    x=>s&&canonicalCatalogKey(x.sku)===s&&z&&sizeKey(x.size)===z,
+    x=>s&&canonicalCatalogKey(x.sku)===s
+  ]){
+    const h=v.filter(pred);
+    if(h.length===1)return {value:Number(h[0].exWhCost),row:h[0]._row,reason:'sku',sourceDate:h[0].sourceDate||''};
+    if(h.length>1){const n=duplicateEquivalent(h,'exWhCost');if(n!==null)return {value:n,row:h[0]._row,reason:'sku-duplicate-equivalent',sourceDate:h[0].sourceDate||''};}
+  }
+
+  // 2) Exact product/size/color.
+  for(const [pred,reason] of [
+    [x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z&&c&&canonicalColor(x.color)===c,'product-size-color'],
+    [x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z,'product-size'],
+    [x=>p&&looseProductKey(x.product)===p,'product']
+  ]){
+    const h=v.filter(pred);
+    if(h.length===1)return {value:Number(h[0].exWhCost),row:h[0]._row,reason,sourceDate:h[0].sourceDate||''};
+    if(h.length>1){const n=duplicateEquivalent(h,'exWhCost');if(n!==null)return {value:n,row:h[0]._row,reason:reason+'-duplicate-equivalent',sourceDate:h[0].sourceDate||''};}
+  }
+  return {value:null,reason:'missing'};
+}
+function googleShippingMatch(orderId, product='', size='', sku='', color=''){
+  const rows=Array.isArray(state.google?.shippingRows)?state.google.shippingRows:[];
+  if(!rows.length)return {value:null,reason:'sheet-empty'};
+
+  const p=looseProductKey(product), z=sizeKey(size), c=canonicalColor(color), s=canonicalCatalogKey(sku);
+  const valid=rows.filter(x=>Number.isFinite(Number(x.shippingFee)));
+
+  // New source format: Shipping Fee is a stable product/size rule, not an
+  // order-level value. Match the line item itself first so two different
+  // products under the same Amazon Order ID can have different shipping fees.
+  for(const pred of [
+    x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z&&c&&canonicalColor(x.color)===c,
+    x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z,
+    x=>s&&canonicalCatalogKey(x.sku)===s&&z&&sizeKey(x.size)===z
+  ]){
+    const h=valid.filter(pred);
+    if(h.length===1)return {value:Number(h[0].shippingFee),row:h[0]._row,reason:'product-size'};
+    if(h.length>1){
+      const n=duplicateEquivalent(h,'shippingFee');
+      if(n!==null)return {value:n,row:h[0]._row,reason:'product-size-duplicate-equivalent',count:h.length};
+    }
+  }
+
+  // Backward compatibility for the earlier order-ID based Shipping Sheet.
+  // This is used only when the new product/size rule did not resolve a fee.
+  const key=normalizeOrderIdForMatch(orderId);
+  if(key){
+    const h=valid.filter(x=>normalizeOrderIdForMatch(x.orderId)===key);
+    if(h.length===1)return {value:Number(h[0].shippingFee),row:h[0]._row,reason:'legacy-order-id'};
+    if(h.length>1){
+      const n=duplicateEquivalent(h,'shippingFee');
+      if(n!==null)return {value:n,row:h[0]._row,reason:'legacy-order-id-duplicate-equivalent',count:h.length};
+    }
+  }
+  return {value:null,reason:'missing'};
+}
+function normalizeOrderIdForMatch(v){
+  // Google Sheets may return Order ID as text or a number and can preserve
+  // stray spaces/apostrophes/non-breaking spaces. Normalize only for lookup;
+  // never change the report's displayed Order ID.
+  let x=String(v==null?'':v).replace(/\u00a0/g,' ').trim();
+  x=x.replace(/^[']+|[']+$/g,'').replace(/\s+/g,'');
+  x=x.replace(/[\u2010-\u2015\u2212]/g,'-');
+  return x.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
+}
+function googleFbaMatch(orderId, product, sku, size='', color=''){
+  const rows=Array.isArray(state.google?.fbaRows)?state.google.fbaRows:[];
+  if(!rows.length) return {value:null,reason:'sheet-empty'};
+
+  const p=looseProductKey(product), z=sizeKey(size), c=canonicalColor(color), s=canonicalCatalogKey(sku);
+  const valid=rows.filter(x=>Number.isFinite(Number(x.fbaFee)));
+
+  // New source format: FBA Fee is maintained by Product + Size. Prefer the
+  // most specific variant when Color is also present, then Product + Size.
+  for(const pred of [
+    x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z&&c&&canonicalColor(x.color)===c,
+    x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z,
+    x=>s&&canonicalCatalogKey(x.sku)===s&&z&&sizeKey(x.size)===z,
+    x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z&&(!x.size)
+  ]){
+    const h=valid.filter(pred);
+    if(h.length===1)return {value:Number(h[0].fbaFee),row:h[0]._row,reason:'product-size'};
+    if(h.length>1){
+      const n=duplicateEquivalent(h,'fbaFee');
+      if(n!==null)return {value:n,row:h[0]._row,reason:'product-size-duplicate-equivalent',count:h.length};
+    }
+  }
+
+  // Backward compatibility for the earlier Order-ID based FBA Fee Sheet.
+  const oid=normalizeOrderIdForMatch(orderId);
+  if(oid){
+    const orderHits=valid.filter(x=>normalizeOrderIdForMatch(x.orderId)===oid);
+    if(orderHits.length===1)return {value:Number(orderHits[0].fbaFee),row:orderHits[0]._row,reason:'legacy-order-id'};
+    if(orderHits.length>1){
+      const n=duplicateEquivalent(orderHits,'fbaFee');
+      if(n!==null)return {value:n,row:orderHits[0]._row,reason:'legacy-order-id-duplicate-equivalent',count:orderHits.length};
+    }
+  }
+
+  // Final backward-compatible keying for older Product/SKU sheets.
+  let hit=matchUnique(valid,x=>canonicalCatalogKey(x.sku)===s && s);
+  if(hit && !hit._ambiguous) return {value:Number(hit.fbaFee),row:hit._row,reason:'legacy-sku'};
+  if(hit && hit._ambiguous) return {value:null,reason:'ambiguous-sku',count:hit._count};
+  hit=matchUnique(valid,x=>looseProductKey(x.product)===p && p && (!z || !x.size || sizeKey(x.size)===z));
+  if(hit && !hit._ambiguous) return {value:Number(hit.fbaFee),row:hit._row,reason:'legacy-product'};
+  if(hit && hit._ambiguous) return {value:null,reason:'ambiguous-product',count:hit._count};
+  return {value:null,reason:'missing'};
+}
+
+function skuProductMatch(product,size,color){
+  const rows=Array.isArray(state.google?.skuRows)?state.google.skuRows:[];
+  if(!rows.length) return null;
+  const p=normText(product), z=normText(size), c=normText(color);
+  const lp=looseProductKey(product), lz=sizeKey(size), lc=canonicalColor(color);
+
+  // Prefer the exact source row while preserving the source sheet's original
+  // capitalization/spelling for Product, Size and Color.
+  let hit=rows.find(x=>
+    lp && looseProductKey(x.product)===lp &&
+    lz && sizeKey(x.size)===lz &&
+    lc && canonicalColor(x.color)===lc
+  );
+  if(hit) return hit;
+
+  // Then match Product + Size. This is useful when the source sheet has a
+  // blank Color column or the Amazon report does not provide Color.
+  hit=rows.find(x=>lp && looseProductKey(x.product)===lp && lz && sizeKey(x.size)===lz);
+  if(hit) return hit;
+
+  // Product-only fallback is allowed only when it is unambiguous. This keeps
+  // the report populated from the Amazon file instead of inventing a value
+  // when the linked master contains several variants of the same product.
+  const productHits=rows.filter(x=>lp && looseProductKey(x.product)===lp);
+  if(productHits.length===1) return productHits[0];
+
+  // Legacy exact-text fallback for older source sheets.
+  hit=rows.find(x=>normText(x.product)===p && (!z || normText(x.size)===z) && (!c || !normText(x.color) || normText(x.color)===c));
+  return hit || null;
+}
+function localCostFor(sku, productName){
+  const bySku=state.costMaster.find(c=>c.sku && sameKey(c.sku,sku));
+  if(bySku) return bySku;
+  return state.costMaster.find(c=>c.product && sameKey(c.product,productName)) || null;
+}
+function localExpenseFor(sku, productName){
+  const bySku=state.costMaster.find(c=>c.sku && sameKey(c.sku,sku));
+  if(bySku) return Number(bySku.expense)||0;
+  const byProduct=state.costMaster.find(c=>c.product && sameKey(c.product,productName));
+  return byProduct ? Number(byProduct.expense)||0 : 0;
+}
+function rowFromRaw(r, shippingOccurrence=1){
+  const orderId = getField(r,['amazon-order-id','order-id','order id']);
+  let sku = getField(r,['sku','merchant-sku','seller-sku']);
+  const productName = getField(r,['product-name','item-name','title']) || sku || 'Unknown product';
+  const qtyRaw = getField(r,['quantity','quantity-purchased','qty']);
+  const qty = hasValue(qtyRaw) ? toNum(qtyRaw) : 0;
+  const itemPriceRaw = getField(r,['item-price','price']);
+  const statusRaw = getField(r,['order-status','order-item-status','status']);
+  const fulfillment = String(getField(r,['fulfillment-channel','fulfillment channel'])).trim();
+  const purchaseDate = getField(r,['purchase-date','order-date','date']);
+  const rawSize=getFieldLoose(r,['size','product-size','variantsize'])||'';
+  const rawColor=getFieldLoose(r,['color','product-color','variantcolor'])||'';
+  const canonicalRawSize=canonicalSize(rawSize);
+  let mapping = state.google.skuRows.length ? (state.google.skuRows.find(x=>canonicalCatalogKey(x.sku)===canonicalCatalogKey(sku)) || skuProductMatch(productName,rawSize,rawColor)) : null;
+  if(!mapping && sku) mapping = state.manualSkuRows.find(x=>canonicalCatalogKey(x.sku)===canonicalCatalogKey(sku)) || null;
+  if(!mapping) mapping=findMappingFor(sku, productName);
+  if(!sku && mapping?.sku) sku=mapping.sku;
+  const product = (mapping && mapping.product) || productName;
+  const size = (mapping && mapping.size) || canonicalRawSize || '—';
+  const color = (mapping && mapping.color) || rawColor || '—';
+  const listPrice = toNum(itemPriceRaw);
+  const off = Math.min(Math.max(getPromotionOff(r,listPrice),0), Math.max(listPrice,0));
+  const netSale = Math.max(listPrice - off,0);
+  const revenue = netSale;
+  const saleTax = '';
+  const fee = Math.round((netSale * 0.15 + Number.EPSILON)*100)/100;
+  const fulfillmentLower = fulfillment.toLowerCase();
+  const isFba = /^(amazon|fba|fulfillment by amazon)$/i.test(fulfillmentLower) || fulfillmentLower.includes('amazon');
+  // FBM orders never carry an FBA Fee, and Shipping Fee is intentionally left
+  // blank for FBM too (it changes daily and is not tracked here) — so these two
+  // lookups are simply skipped for FBM rows rather than being marked "missing".
+  const shipM=(isFba && state.google.shippingUrl) ? googleShippingMatch(orderId,product,size,sku,color) : {value:null,reason:'not-applicable'};
+  const exM=state.google.exwhUrl ? googleExwhMatch(product,sku,size,color) : {value:null,reason:'not-linked'};
+  const fbaM=(isFba && state.google.fbaUrl) ? googleFbaMatch(orderId,product,sku,size,color) : {value:null,reason:'not-applicable'};
+
+  // Source-first display rule: when SKU/Product mapping is unavailable,
+  // keep the original Amazon values instead of replacing them with blanks.
+  // A later successful Google refresh will reprocess the report and apply the
+  // authoritative source spelling/values without requiring a re-upload.
+  const expenseUnit = localExpenseFor(sku,product);
+  const exWhUnit = exM.value!==null ? exM.value : null;
+  // Shipping Fee and FBA Fee are per-unit rates in the linked sheets (same as
+  // Ex-WH Cost) — multiply by quantity so multi-quantity lines get the right total.
+  const shippingFee = shipM.value!==null ? shipM.value*qty : null;
+  const fbaFee = fbaM.value!==null ? fbaM.value*qty : null;
+  const exWhCost = exWhUnit!==null ? exWhUnit*qty : null;
+  const expense = expenseUnit*qty;
+  // FBM never carries CM at all — Shipping Fee and FBA Fee genuinely don't
+  // apply to FBM, and per business rule CM is an FBA-only figure. It is never
+  // computed for FBM rows, even when Ex-WH Cost is available.
+  const canCm = isFba && exWhCost!==null && Number.isFinite(Number(exWhCost)) && shippingFee!==null && fbaFee!==null && Number.isFinite(Number(shippingFee)) && Number.isFinite(Number(fbaFee));
+  const cm = canCm ? calculateCm({listPrice,exWhCost,fee,expense,shippingFee,off},fbaFee) : null;
+  const issues=[];
+  if(!orderId) issues.push('Missing Order ID');
+  if(state.google.exwhUrl){ if(!['sku','sku-duplicate-equivalent','product-size-color','product-size','product','product-duplicate-equivalent','product-size-duplicate-equivalent'].includes(exM.reason)) issues.push(exM.reason==='not-linked'?'Ex-WH sheet not linked':'Ex-WH Cost missing'); } else issues.push('Ex-WH sheet not linked');
+  if(isFba){
+    if(state.google.shippingUrl){ if(shipM.value===null) issues.push(shipM.reason==='ambiguous-product-size'?'Ambiguous Product/Size in Shipping sheet':'Shipping Fee missing'); } else issues.push('Shipping sheet not linked');
+    if(state.google.fbaUrl){ if(fbaM.value===null) issues.push(fbaM.reason.startsWith('ambiguous')?'Ambiguous FBA match':'FBA Fee missing'); } else issues.push('FBA sheet not linked');
+  }
+  return {
+    _id:uid(), rawSku:sku||'', date:formatDate(purchaseDate), orderId:orderId||'', vendor:'Cotton Passion', status:'Sold', shop:(isFba?'CP FBA':(fulfillmentLower==='merchant'?'CP FBM':'')), product,size,color,qty,
+    exWhUnit,exWhCost,revenue,netSale,listPrice,saleTax,fee,expenseUnit,expense,shippingFee,fbaFee,off,cm,
+    costSource:exM.value!==null?'Google Sheets':'Missing',
+    shippingSource: isFba ? (shipM.value!==null?'Google Sheets':'Missing') : 'Not applicable (FBM)',
+    fbaSource: isFba ? (fbaM.value!==null?'Google Sheets':'Missing') : 'Not applicable (FBM)',
+    issues,
+    raw:{orderId:orderId||'',sku:sku||'',purchaseDate:purchaseDate||'',fulfillmentChannel:fulfillment,productName:productName||'',quantity:qtyRaw||'',itemPrice:itemPriceRaw||'',itemTax:'',shippingPrice:'',itemPromo:getField(r,['item-promotion-discount','item-promotion','promotion-discount','discount-amount','discount','off'])||'',discountPercent:getFieldLoose(r,['discount-percent','discountpercentage','promotion-percent','promotionpercentage','off-percent','offpercentage','item-discount-percent'])||'',itemTaxPresent:false,shippingPresent:shipM.value!==null,status:statusRaw||''}
+  };
+}
+function processReport(){
+  if(!state.rawRows){ toast('error','Nothing to process','Upload an order report first.'); return; }
+  state.isLoading = true; render();
+  window.setTimeout(()=>{
+    try{ processReportCore(true); }
+    catch(err){
+      console.error('Processing error',err);
+      state.isLoading=false; state.isProcessed=false;
+      render();
+      toast('error','Processing failed',String(err && err.message || err));
+    }
+  }, 50);
+}
+function processReportCore(showToast){
+  const rows=[]; let cancelled=0;
+  const shippingOccurrences=new Map();
+  if(!Array.isArray(state.rawRows)) throw new Error('Loaded report data is invalid.');
+  state.rawRows.forEach((r, sourceIndex)=>{
+    if(!r || typeof r !== 'object') return;
+    const status = normStatus(getField(r,['order-status','order-item-status','status']));
+    if(status === 'Cancelled'){ cancelled++; return; }
+    // FBA and FBM orders are both kept in the report now (FBM was previously
+    // skipped entirely). FBA rows are grouped first, FBM rows after — see the
+    // stable sort applied to `rows` below, right before it is stored.
+    const orderIdForShipping=getField(r,['amazon-order-id','order-id','order id']);
+    const shippingKey=normalizeOrderIdForMatch(orderIdForShipping);
+    const shippingOccurrence=(shippingOccurrences.get(shippingKey)||0)+1;
+    if(shippingKey) shippingOccurrences.set(shippingKey,shippingOccurrence);
+    const row=rowFromRaw(r,shippingOccurrence); row.sourceIndex=sourceIndex; rows.push(row);
+  });
+  const counts = {}; rows.forEach(r=> { if(r.orderId) counts[r.orderId]=(counts[r.orderId]||0)+1; });
+  rows.forEach(r=>r.isMulti = !!(r.orderId && counts[r.orderId]>1));
+  // Report order: every FBA line item first (in original file order), then
+  // every FBM line item (in original file order) — Array.sort is stable so
+  // each group keeps its original relative order.
+  rows.sort((a,b)=>{ const ag=a.shop==='CP FBA'?0:1, bg=b.shop==='CP FBA'?0:1; return ag-bg; });
+  state.orders = rows;
+  state.cancelledCount = cancelled;
+  state.issues=[];
+  rows.forEach(r=>{ if(r.issues.length) state.issues.push({orderId:r.orderId||'(missing)',sku:r.rawSku||'(missing)',product:r.product,issues:r.issues}); });
+  state.issueCount=state.issues.length;
+  state.isProcessed = true; state.isLoading = false; state.fbaApplied = state.google.fbaUrl && state.google.fbaRows.length>0;
+  render();
+  if(showToast){
+    const uniqueOrders = new Set(rows.filter(r=>r.orderId).map(r=>r.orderId)).size;
+    const multiCount = new Set(rows.filter(r=>r.isMulti).map(r=>r.orderId)).size;
+    toast(state.issueCount?'info':'success','Report processed', uniqueOrders+' orders · '+rows.length+' line items · '+multiCount+' multi-item · '+cancelled+' cancelled excluded.'+(state.issueCount?' '+state.issueCount+' line(s) need attention.':''));
+  }
+}
+function reprocessIfLoaded(msg){
+  if(state.rawRows && state.isProcessed){ processReportCore(false); if(msg) toast('success','Recalculated',msg); }
+}
+function processReportSync(){ processReportCore(false); }
+
+/* ---------------------------- FBA / CM ---------------------------- */
+function calculateCm(r,fbaFee){
+  const value=r.listPrice - (r.exWhCost + r.fee + r.expense + r.shippingFee + fbaFee + r.off);
+  return Math.round((value + Number.EPSILON)*100)/100;
+}
+function applyFbaToOrders(){
+  if(!state.orders.length) return;
+  state.orders.forEach(r=>{
+    const isFba = r.shop==='CP FBA';
+    if(!isFba){
+      // FBM never carries an FBA Fee, and never carries a CM value at all.
+      r.fbaFee = null; r.fbaSource = 'Not applicable (FBM)'; r.cm = null;
+      return;
+    }
+    const m=googleFbaMatch(r.orderId,r.product,r.rawSku,r.size,r.color);
+    r.fbaFee = m.value!==null ? m.value*r.qty : null; // per-unit rate — scale with quantity, same as rowFromRaw
+    r.fbaSource = m.value!==null?'Google Sheets':'Missing';
+    r.cm = (r.exWhCost!==null && r.shippingFee!==null && r.fbaFee!==null) ? calculateCm(r,r.fbaFee) : null;
+  });
+}
+function clearFba(){
+  state.orders.forEach(r=>{
+    const isFba = r.shop==='CP FBA';
+    r.fbaFee=null;
+    r.fbaSource = isFba ? 'Missing' : 'Not applicable (FBM)';
+    r.cm = null; // FBA rows lose CM until FBA Fee is resolved again; FBM never carries CM at all.
+  });
+  state.google.fbaRows=[]; state.google.fbaUpdated=null; state.google.fbaUrl=''; state.fbaApplied=false; persistConfig(); render();
+  toast('info','FBA link removed','FBA Fee will remain blank until an FBA Google Sheet is linked and synced.');
+}
+/* ---------------------------- DERIVED / FILTER / SORT ---------------------------- */
+function visibleOrders(){
+  let rows = state.orders;
+  if(state.statusFilter!=='all'){
+    rows = rows.filter(r=> r.status.toLowerCase().replace(/\s+/g,'') === state.statusFilter);
+  }
+  if(state.search){
+    const q = state.search.toLowerCase();
+    rows = rows.filter(r=> (r.orderId+r.product+r.vendor+r.shop+r.rawSku).toLowerCase().includes(q));
+  }
+  const dir = state.sortDir==='asc'?1:-1;
+  const key = state.sortBy;
+  rows = rows.slice().sort((a,b)=>{
+    // FBA line items are always grouped before FBM line items in the report;
+    // the user's chosen column sort then applies within each group.
+    const ag = a.shop==='CP FBA' ? 0 : 1, bg = b.shop==='CP FBA' ? 0 : 1;
+    if(ag!==bg) return ag-bg;
+    let av=a[key], bv=b[key];
+    if(typeof av==='number' && typeof bv==='number') return (av-bv)*dir;
+    return String(av).localeCompare(String(bv))*dir;
+  });
+  return rows;
+}
+
+/* ---------------------------- RENDER: SHELL ---------------------------- */
+function render(){
+  renderSidebarState();
+  renderToolbar();
+  renderContent();
+  renderStatusBar();
+}
+
+function renderSidebarState(){
+  const removeBtn=$('#removeReportBtn'); if(removeBtn) removeBtn.disabled=!state.rawRows || state.isLoading;
+  const fbaBadge=$('#fbaSheetBadge'); if(fbaBadge){ fbaBadge.textContent=state.google.fbaUrl ? ('Linked · '+state.google.fbaRows.length) : 'Not linked'; fbaBadge.className='badge'+(state.google.fbaUrl?' on':''); }
+  const exBadge=$('#exwhSheetBadge');
+  const shipBadge=$('#shippingSheetBadge');
+  if(exBadge){ exBadge.textContent=state.google.exwhUrl ? ('Linked · '+state.google.exwhRows.length) : 'Not linked'; exBadge.className='badge'+(state.google.exwhUrl?' on':''); }
+  if(shipBadge){ shipBadge.textContent=state.google.shippingUrl ? ('Linked · '+state.google.shippingRows.length) : 'Not linked'; shipBadge.className='badge'+(state.google.shippingUrl?' on':''); }
+  const skuBadge=$('#skuSheetBadge'); if(skuBadge){ skuBadge.textContent=state.google.skuUrl ? 'Linked' : 'Not linked'; skuBadge.className='badge'+(state.google.skuUrl?' on':''); }
+  const manualSkuBadge=$('#manualSkuBadge'); if(manualSkuBadge){ manualSkuBadge.textContent=state.manualSkuRows.length+' saved'; manualSkuBadge.className='badge'+(state.manualSkuRows.length?' on':''); }
+  const liveBadge=$('#liveSyncBadge'); if(liveBadge){const lm=state.google.liveMeta||{};liveBadge.textContent=state.google.liveUrl?((lm.autoSync?'Auto':'Linked')+' · '+state.google.liveRows.length):'Not linked';liveBadge.className='badge'+(state.google.liveUrl?' on':'');}
+  const liveChip=$('#liveSyncChip'); if(liveChip){const lm=state.google.liveMeta||{};if(state.google.liveUrl){liveChip.className='chip '+(lm.lastStatus==='error'?'danger':'green');liveChip.textContent=(lm.autoSync?'● Auto Sync':'● Live Sync')+(lm.lastRun?' · '+new Date(lm.lastRun).toLocaleTimeString():'');}else liveChip.className='chip hidden';}
+  $('#refreshAllGoogleBtn').disabled = !(state.google.exwhUrl||state.google.shippingUrl||state.google.fbaUrl||state.google.skuUrl) || state.isLoading;
+  $('#processBtn').disabled = !state.rawRows || state.isLoading;
+  const issueBadge=$('#issueBadge'); if(issueBadge){ issueBadge.textContent=state.issueCount ? String(state.issueCount) : 'OK'; issueBadge.className='badge'+(state.issueCount?' issue':' on'); }
+  $('#sideHint').textContent = state.orders.length
+    ? state.orders.length+' line item(s) loaded.'
+    : 'Drop a report anywhere to begin.';
+}
+
+function renderToolbar(){
+  $('#filenameTag').classList.toggle('hidden', !state.fileName);
+  $('#filenameText').textContent = state.fileName || '';
+  const rc = $('#rowCountChip');
+  if(state.orders.length){ rc.classList.remove('hidden'); rc.textContent = state.orders.length+' rows'; }
+  else rc.classList.add('hidden');
+  const ib=$('#issueBtn'); if(ib){ ib.classList.toggle('hidden', !state.issueCount); }
+  $('#processedChip').classList.toggle('hidden', !state.isProcessed);
+  $('#formulaNote').classList.toggle('hidden', !state.isProcessed);
+  $('#statusFilter').classList.toggle('hidden', !state.orders.length);
+}
+
+function renderStatusBar(){
+  const rows = state.orders;
+  const uniqueOrders = new Set(rows.map(r=>r.orderId)).size;
+  const multiCount = new Set(rows.filter(r=>r.isMulti).map(r=>r.orderId)).size;
+  const cancelledCount = state.cancelledCount || 0;
+  $('#sbOrders').textContent = fmtNum(uniqueOrders);
+  $('#sbMulti').textContent = fmtNum(multiCount);
+  $('#sbCancelled').textContent = fmtNum(cancelledCount);
+  const tag = $('#sbFbaStatus');
+  tag.textContent = state.google.fbaUrl && state.google.fbaRows.length ? 'Linked' : 'Not Set';
+  tag.className = 'fba-tag ' + (state.google.fbaUrl && state.google.fbaRows.length ? 'on' : 'off');
+  const si=$('#sbIssues'); if(si) si.textContent=fmtNum(state.issueCount||0);
+}
+
+/* ---------------------------- RENDER: CONTENT ---------------------------- */
+function renderContent(){
+  const c = $('#content');
+  if(state.isLoading){ c.innerHTML = loadingHtml(); return; }
+  if(!state.orders.length){ c.innerHTML = emptyHtml(); wireEmpty(); return; }
+  c.innerHTML = tableHtml();
+  wireTable();
+}
+
+function emptyHtml(){
+  return `
+  <div class="empty-wrap">
+    <div class="dropzone" id="dropzone">
+      <div class="dropzone-icon">${ICONS.upload.replace('width="15" height="15"','width="26" height="26"')}</div>
+      <h2>${state.fileName ? 'Ready to process' : 'Drop your Amazon order report here'}</h2>
+      <p>${state.fileName
+        ? esc(state.fileName)+' is loaded ('+ (state.rawRows?state.rawRows.length:0) +' rows). Click Process Report in the sidebar to build your profit table.'
+        : 'Drag & drop a tab-delimited Seller Central order report (.txt or .csv), or browse your files.'}</p>
+      <button class="btn accent" id="browseBtn" style="margin:0 auto;">${ICONS.upload} Upload Amazon Order Report</button>
+      <div class="accepts">Accepted formats: .txt, .csv (tab-delimited Seller Central export)</div>
+    </div>
+  </div>`;
+}
+function wireEmpty(){
+  const dz = $('#dropzone');
+  if(!dz) return;
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('dragging'); });
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('dragging'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('dragging');
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+  $('#browseBtn').addEventListener('click', ()=> $('#fileInput').click());
+}
+
+function loadingHtml(){
+  let rows = '';
+  for(let i=0;i<10;i++){
+    rows += `<div class="skel-row">${Array.from({length:8}).map(()=>`<div class="skel" style="width:${60+Math.random()*70}px;"></div>`).join('')}</div>`;
+  }
+  return `<div style="padding-top:2px;">
+    <div style="display:flex;align-items:center;gap:8px;padding:14px 16px;color:var(--text-2);font-size:12.5px;">
+      ${ICONS.spinner} Processing report — matching masters, computing margins…
+    </div>
+    ${rows}
+  </div>`;
+}
+
+const COLS = [
+  {key:'date', label:'Date', cls:'col-date'},
+  {key:'orderId', label:'Order ID', cls:'col-oid'},
+  {key:'vendor', label:'Vendor', cls:'col-vendor'},
+  {key:'status', label:'Status', cls:'col-status'},
+  {key:'shop', label:'Shop', cls:'col-shop'},
+  {key:'product', label:'Product', cls:'col-product'},
+  {key:'size', label:'Size', cls:'col-size'},
+  {key:'color', label:'Color', cls:'col-color'},
+  {key:'qty', label:'Qty', cls:'col-qty', num:true},
+  {key:'exWhCost', label:'Ex-WH Cost', cls:'col-exwh', num:true, money:true},
+  {key:'revenue', label:'Revenue', cls:'col-revenue', num:true, money:true},
+  {key:'netSale', label:'Net Sale', cls:'col-netsale', num:true, money:true},
+  {key:'listPrice', label:'List Price', cls:'col-list', num:true, money:true},
+  {key:'saleTax', label:'Sale Tax', cls:'col-tax', num:true, money:true},
+  {key:'fee', label:'Fee', cls:'col-fee', num:true, money:true},
+  {key:'expense', label:'Expense', cls:'col-expense', num:true, money:true},
+  {key:'shippingFee', label:'Shipping Fee', cls:'col-shipfee', num:true, money:true},
+  {key:'fbaFee', label:'FBA Fee', cls:'col-fbafee', num:true, money:true},
+  {key:'off', label:'Off', cls:'col-off', num:true, money:true},
+  {key:'cm', label:'CM', cls:'col-cm', num:true, money:true}
+];
+const ROW_H = 34;
+
+function tableHtml(){
+  const head = COLS.map(c=>`<div class="c ${c.cls}" data-sort="${c.key}">${esc(c.label)} ${state.sortBy===c.key?ICONS.sort:''}</div>`).join('');
+  return `<div class="table-wrap">
+    <div class="grid-scroll" id="gridScroll">
+      <div class="grid-head">${head}</div>
+      <div class="grid-body" id="gridBody"></div>
+    </div>
+  </div>`;
+}
+
+function heatColor(cm, revenue){
+  if(!revenue) return 'var(--border-strong)';
+  const ratio = cm/Math.max(revenue,0.01);
+  if(ratio > 0.15) return 'var(--green)';
+  if(ratio > 0) return 'var(--amber)';
+  return 'var(--red)';
+}
+
+function rowHtml(r, idx){
+  const cells = COLS.map(c=>{
+    if(c.key==='orderId'){
+      return `<div class="c ${c.cls} ${r.isMulti?'multi-order-cell':''}"><span class="oid ${r.isMulti?'multi':''}">${r.isMulti?`<span class="pill">${esc(r.orderId)}</span>`:esc(r.orderId)}</span></div>`;
+    }
+    if(c.key==='status'){
+      const cls = 'status-'+r.status.toLowerCase().replace(/\s+/g,'');
+      return `<div class="c ${c.cls}"><span class="status-pill ${cls}">${esc(r.status)}</span></div>`;
+    }
+    let val = r[c.key];
+    const missing = val===null || val===undefined || val==='';
+    let display = missing ? '<span class="source-missing">—</span>' : (c.money ? fmtMoney(val) : (c.num ? fmtNum(val) : esc(val)));
+    let extra = '';
+    if(c.key==='cm' && !missing){ extra = (val>=0?' pos':' neg')+' cm-cell'; }
+    return `<div class="c ${c.cls} ${c.num?'num':''}${extra}" title="${esc(c.key==='exWhCost'?r.costSource:(c.key==='shippingFee'?r.shippingSource:(c.key==='fbaFee'?r.fbaSource:(r.issues||[]).join(' · '))))}">${display}</div>`;
+  }).join('');
+  return `<div class="grow ${idx%2===0?'even':''}" style="top:${idx*ROW_H}px;height:${ROW_H}px;">
+    <div class="heat" style="background:${heatColor(r.cm,r.revenue)}"></div>${cells}
+  </div>`;
+}
+
+let scrollHandler = null;
+function wireTable(){
+  const rows = visibleOrders();
+  const scroller = $('#gridScroll');
+  const body = $('#gridBody');
+  body.style.height = (rows.length*ROW_H)+'px';
+
+  function draw(){
+    const scrollTop = scroller.scrollTop;
+    const viewH = scroller.clientHeight;
+    const start = Math.max(0, Math.floor(scrollTop/ROW_H) - 6);
+    const end = Math.min(rows.length, Math.ceil((scrollTop+viewH)/ROW_H) + 6);
+    let html = '';
+    for(let i=start;i<end;i++) html += rowHtml(rows[i], i);
+    body.innerHTML = html;
+  }
+  draw();
+  if(scrollHandler) scroller.removeEventListener('scroll', scrollHandler);
+  scrollHandler = ()=> window.requestAnimationFrame(draw);
+  scroller.addEventListener('scroll', scrollHandler);
+
+  $all('.grid-head .c').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const key = el.getAttribute('data-sort');
+      if(state.sortBy===key) state.sortDir = state.sortDir==='asc'?'desc':'asc';
+      else { state.sortBy = key; state.sortDir='asc'; }
+      renderContent();
+    });
+  });
+}
+
+/* ---------------------------- TOASTS ---------------------------- */
+function renderToasts(){
+  const wrap = $('#toastWrap');
+  wrap.innerHTML = state.toasts.map(t=>`
+    <div class="toast ${t.type}" data-id="${t.id}">
+      <div class="ic">${t.type==='success'?ICONS.check:t.type==='error'?ICONS.alert:ICONS.info}</div>
+      <div class="msg"><b>${esc(t.title)}</b>${esc(t.msg||'')}</div>
+      <button class="close" data-dismiss="${t.id}">${ICONS.x}</button>
+      <div class="bar"></div>
+    </div>`).join('');
+  $all('[data-dismiss]', wrap).forEach(b=> b.addEventListener('click', ()=>{
+    const id = Number(b.getAttribute('data-dismiss'));
+    state.toasts = state.toasts.filter(x=>x.id!==id);
+    renderToasts();
+  }));
+}
+
+/* ---------------------------- GOOGLE SHEETS SOURCES ---------------------------- */
+function getGoogleSheetInfo(url){
+  const raw=String(url||'').trim();
+  if(!raw) return null;
+
+  let gid='0';
+  const gidMatches = [
+    raw.match(/[?&#]gid=([0-9]+)/i),
+    raw.match(/[#&]gid=([0-9]+)/i)
+  ].filter(Boolean);
+  if(gidMatches.length) gid=gidMatches[0][1];
+
+  // Normal Google Sheets URL. Supports /edit, /view, /copy, /export and
+  // account-prefixed variants such as /spreadsheets/u/0/d/<ID>/edit.
+  let idMatch = raw.match(/https?:\/\/[^/]*google\.com\/spreadsheets\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]{20,})/i);
+  if(!idMatch) idMatch = raw.match(/\/spreadsheets\/(?:u\/\d+\/)?d\/([a-zA-Z0-9_-]{20,})/i);
+  if(idMatch && idMatch[1]) return {type:'sheet',id:idMatch[1],gid,raw};
+
+  // Published Google Sheet URL: /spreadsheets/d/e/<PUBLISHED_ID>/pub
+  const pubMatch=raw.match(/\/spreadsheets\/d\/e\/([a-zA-Z0-9_-]+)/i);
+  if(pubMatch) return {type:'published',publishedId:pubMatch[1],gid,raw};
+
+  return {type:null,id:null,gid,raw};
+}
+
+function publishedCsvUrl(info){
+  if(!info || info.type!=='published' || !info.publishedId) return null;
+  let out='https://docs.google.com/spreadsheets/d/e/'+encodeURIComponent(info.publishedId)+'/pub?output=csv';
+  if(info.gid) out+='&gid='+encodeURIComponent(info.gid);
+  return out;
+}
+
+function gvizRowsFromPayload(payload){
+  // Google Visualization protocol returns a response object containing
+  // table:{cols,rows}. Error responses contain errors instead of table.
+  if(!payload || typeof payload!=='object'){
+    throw new Error('Google returned an empty or unreadable response.');
+  }
+  if(payload.status && String(payload.status).toLowerCase()!=='ok'){
+    const msg=(Array.isArray(payload.errors)&&payload.errors[0]&&
+      (payload.errors[0].detailed_message||payload.errors[0].message||payload.errors[0].reason))
+      || payload.message || 'Google rejected the sheet query.';
+    throw new Error(String(msg));
+  }
+  const table=payload.table;
+  if(!table || !Array.isArray(table.cols) || !Array.isArray(table.rows)){
+    throw new Error('Google returned no readable table data.');
+  }
+  const headers=table.cols.map((c,i)=>{
+    const label=String(c?.label||c?.id||('Column '+(i+1))).replace(/\u00a0/g,' ').trim();
+    return label||('Column '+(i+1));
+  });
+
+  return table.rows.map(r=>{
+    const out={};
+    const cells=Array.isArray(r?.c)?r.c:[];
+    headers.forEach((h,i)=>{
+      const cell=cells[i];
+      // Prefer v (raw value). Fall back to f (formatted value) so date /
+      // formatted numeric cells are not silently discarded.
+      if(cell && Object.prototype.hasOwnProperty.call(cell,'v')) out[h]=cell.v;
+      else if(cell && Object.prototype.hasOwnProperty.call(cell,'f')) out[h]=cell.f;
+      else out[h]='';
+    });
+    return out;
+  }).filter(r=>Object.values(r).some(hasValue));
+}
+
+function fetchGoogleRowsWithJsonp(url){
+  const info=getGoogleSheetInfo(url);
+  if(!info || info.type!=='sheet' || !info.id){
+    return Promise.reject(new Error('Please paste a valid Google Sheets sharing URL.'));
+  }
+
+  const endpointHosts=['https://docs.google.com','https://spreadsheets.google.com'];
+  const gid=encodeURIComponent(info.gid||'0');
+
+  function attempt(host){
+    return new Promise((resolve,reject)=>{
+      const cb='__upf_gviz_'+Date.now()+'_'+Math.random().toString(36).slice(2);
+      let finished=false;
+      let timer=null;
+      const script=document.createElement('script');
+
+      function cleanup(){
+        if(timer) clearTimeout(timer);
+        try{ delete window[cb]; }catch(e){ window[cb]=undefined; }
+        if(script.parentNode) script.parentNode.removeChild(script);
+      }
+      function finish(err,data){
+        if(finished) return;
+        finished=true;
+        cleanup();
+        err?reject(err):resolve(data);
+      }
+
+      window[cb]=(payload)=>{
+        try{ finish(null,gvizRowsFromPayload(payload)); }
+        catch(err){ finish(err); }
+      };
+
+      const base=host+'/spreadsheets/d/'+encodeURIComponent(info.id)+'/gviz/tq';
+      const qs=[
+        'gid='+gid,
+        'headers=1',
+        'tqx='+encodeURIComponent('out:json;responseHandler:'+cb),
+        'tq='+encodeURIComponent('select *'),
+        '_='+Date.now()
+      ].join('&');
+
+      timer=setTimeout(()=>finish(new Error('Timed out after 25 seconds.')),25000);
+      script.async=true;
+      script.referrerPolicy='no-referrer-when-downgrade';
+      script.onerror=()=>finish(new Error('Google Visualization endpoint could not be loaded from '+host+'.'));
+      script.src=base+'?'+qs;
+      document.head.appendChild(script);
+    });
+  }
+
+  return endpointHosts.reduce((promise,host)=>promise.catch(()=>attempt(host)),Promise.reject(new Error('Starting Google Visualization connection…')));
+}
+
+let upfGoogleChartsLoaderPromise=null;
+function ensureGoogleChartsLoader(){
+  if(window.google?.visualization?.Query) return Promise.resolve();
+  if(upfGoogleChartsLoaderPromise) return upfGoogleChartsLoaderPromise;
+
+  upfGoogleChartsLoaderPromise=new Promise((resolve,reject)=>{
+    const existing=document.querySelector('script[data-upf-google-charts-loader]');
+    const finish=()=>{
+      if(window.google?.charts){
+        try{
+          google.charts.load('current',{packages:['corechart']});
+          google.charts.setOnLoadCallback(()=>resolve());
+        }catch(err){ reject(err); }
+      }else reject(new Error('Google Charts loader did not initialize.'));
+    };
+    if(existing){
+      existing.addEventListener('load',finish,{once:true});
+      existing.addEventListener('error',()=>reject(new Error('Google Charts loader failed to load.')),{once:true});
+      if(window.google?.charts) finish();
+      return;
+    }
+    const s=document.createElement('script');
+    s.src='https://www.gstatic.com/charts/loader.js';
+    s.async=true;
+    s.dataset.upfGoogleChartsLoader='1';
+    s.addEventListener('load',finish,{once:true});
+    s.addEventListener('error',()=>reject(new Error('Google Charts loader failed to load.')),{once:true});
+    document.head.appendChild(s);
+  });
+  return upfGoogleChartsLoaderPromise;
+}
+
+function fetchGoogleRowsWithVisualizationQuery(url){
+  const info=getGoogleSheetInfo(url);
+  if(!info || info.type!=='sheet' || !info.id){
+    return Promise.reject(new Error('Invalid Google Sheets URL.'));
+  }
+  return ensureGoogleChartsLoader().then(()=>new Promise((resolve,reject)=>{
+    try{
+      const sourceUrl='https://docs.google.com/spreadsheets/d/'+encodeURIComponent(info.id)+'/gviz/tq?gid='+
+        encodeURIComponent(info.gid||'0')+'&headers=1&tq='+encodeURIComponent('select *')+'&_='+Date.now();
+      const query=new google.visualization.Query(sourceUrl,{sendMethod:'scriptInjection'});
+      query.setTimeout(25);
+      query.send(response=>{
+        try{
+          if(response.isError()){
+            reject(new Error((response.getMessage()||'Google Visualization query failed')+
+              (response.getDetailedMessage()?': '+response.getDetailedMessage():'')));
+            return;
+          }
+          const table=response.getDataTable();
+          const headers=[];
+          for(let c=0;c<table.getNumberOfColumns();c++){
+            headers.push(String(table.getColumnLabel(c)||table.getColumnId(c)||('Column '+(c+1))).trim()||('Column '+(c+1)));
+          }
+          const rows=[];
+          for(let r=0;r<table.getNumberOfRows();r++){
+            const obj={};
+            for(let c=0;c<table.getNumberOfColumns();c++){
+              let v='';
+              try{
+                const type=table.getColumnType(c);
+                if(type==='date' || type==='datetime' || type==='timeofday'){
+                  const raw=table.getValue(r,c);
+                  v = raw instanceof Date ? raw.toString() : (table.getFormattedValue(r,c)||raw||'');
+                }else{
+                  const raw=table.getValue(r,c);
+                  v=(raw===null||raw===undefined)?(table.getFormattedValue(r,c)||''):raw;
+                }
+              }catch(e){ v=table.getFormattedValue(r,c)||''; }
+              obj[headers[c]]=v;
+            }
+            if(Object.values(obj).some(hasValue)) rows.push(obj);
+          }
+          resolve(rows);
+        }catch(err){ reject(err); }
+      });
+    }catch(err){ reject(err); }
+  }));
+}
+
+async function fetchGoogleRows(url){
+  const raw=String(url||'').trim();
+  const info=getGoogleSheetInfo(raw);
+  if(!info || !info.type) throw new Error('Invalid Google Sheets URL. Paste the link from Google Sheets → Share → Copy link.');
+
+  // Published sheets can be read as CSV when Google exposes public CSV output.
+  if(info.type==='published'){
+    const csvUrl=publishedCsvUrl(info);
+    try{
+      const res=await fetch(csvUrl,{cache:'no-store',redirect:'follow'});
+      if(!res.ok) throw new Error('Published sheet returned HTTP '+res.status+'.');
+      const text=await res.text();
+      if(/^\s*<!doctype html|^\s*<html/i.test(text)) throw new Error('Google returned HTML instead of CSV data.');
+      const firstLine=(text.split(/\r?\n/,1)[0]||'');
+      const delimiter=firstLine.includes('\t')?'\t':',';
+      const parsed=Papa.parse(text,{header:true,skipEmptyLines:true,delimiter});
+      if(!parsed.errors?.length && Array.isArray(parsed.data) && parsed.data.length) return parsed.data;
+      throw new Error('Published CSV contained no usable rows.');
+    }catch(e){
+      // Fall through to the normal sheet transport. If the published URL is
+      // public, Google Visualization can still expose the underlying sheet.
+    }
+  }
+
+  // Primary transport: direct Google Visualization JSONP. This avoids
+  // browser XHR/CORS restrictions and works from the standalone HTML file.
+  let firstError=null;
+  try{
+    const rows=await fetchGoogleRowsWithJsonp(raw);
+    if(Array.isArray(rows) && rows.length) return rows;
+    throw new Error('The connected tab contains no readable rows.');
+  }catch(err){ firstError=err; }
+
+  // Official Google Visualization Query transport as a second path. This is
+  // particularly useful in Chromium/Edge builds where a direct script
+  // response is affected by redirect or local-file networking behaviour.
+  try{
+    const rows=await fetchGoogleRowsWithVisualizationQuery(raw);
+    if(Array.isArray(rows) && rows.length) return rows;
+    throw new Error('The connected tab contains no readable rows.');
+  }catch(err){
+    const a=String(firstError?.message||'Direct Google connection failed.');
+    const b=String(err?.message||'Visualization Query fallback failed.');
+    throw new Error(a+' | Fallback: '+b+' Make sure the sheet is shared as “Anyone with the link → Viewer”.');
+  }
+}
+
+function firstMatchingValue(row,names){const raw=getFieldLoose(row,names);return hasValue(raw)?raw:'';}
+function parseSheetDateValue(v){
+  if(!hasValue(v)) return null;
+  const raw=String(v).trim();
+  if(/^\d{1,2}[-\/]\d{1,2}[-\/]\d{4}$/.test(raw)){
+    const parts=raw.split(/[-\/]/).map(Number);
+    const [a,b,y]=parts;
+    // Prefer DD/MM/YYYY for slash format; for dash format YYYY-MM-DD is also supported.
+    if(raw.includes('/') && y>=1900) { const d=new Date(Date.UTC(y,b-1,a)); return isNaN(d.getTime())?null:d; }
+  }
+  if(/^\d{4}[-\/]\d{1,2}[-\/]\d{1,2}$/.test(raw)){
+    const parts=raw.split(/[-\/]/).map(Number); const d=new Date(Date.UTC(parts[0],parts[1]-1,parts[2])); return isNaN(d.getTime())?null:d;
+  }
+  const d=new Date(raw);
+  return isNaN(d.getTime())?null:d;
+}
+function pickLatestDateColumn(rows){
+  if(!rows.length) return null;
+  const keys=[];
+  const seen=new Set();
+  Object.keys(rows[0]||{}).forEach(k=>{
+    if(['sku','product','productname','product-name','name','size','product-size','variantsize','color','product-color','variantcolor','ex-wh-cost','exwhcost','ex-wh','exwh','cost','unit-cost','unitcost'].includes(normalizeHeader(k))) return;
+    const d=parseSheetDateValue(k);
+    if(d && !seen.has(k)){ seen.add(k); keys.push({key:k,date:d}); }
+  });
+  if(!keys.length) return null;
+  const today=new Date(); today.setHours(23,59,59,999);
+  const eligible=keys.filter(x=>x.date.getTime()<=today.getTime());
+  return (eligible.length?eligible:keys).sort((a,b)=>b.date-a.date)[0]||null;
+}
+function normalizeGoogleExwhRows(rows){
+  const out=[]; if(!rows.length) return out;
+  const latest=pickLatestDateColumn(rows);
+  rows.forEach((r,i)=>{
+    const product=firstMatchingValue(r,['product','product-name','productname','name','article-name','article name']);
+    const size=firstMatchingValue(r,['size','product-size','variantsize']);
+    const color=firstMatchingValue(r,['color','product-color','variantcolor']);
+    const sku=firstMatchingValue(r,['sku','merchant-sku','seller-sku']);
+    const directCost=firstMatchingValue(r,['ex-wh-cost','exwhcost','ex-wh','exwh','cost','unit-cost','unitcost']);
+    const datedCost=latest ? r[latest.key] : '';
+    const costRaw=hasValue(directCost)?directCost:datedCost;
+    if((!product&&!sku)||!hasValue(costRaw)) return;
+    out.push({product:catalogDisplayText(product),size:catalogDisplayText(size),color:catalogDisplayText(color),sku:catalogDisplayText(sku),exWhCost:toNum(costRaw),sourceDate:latest?latest.key:'',_row:i+2});
+  });
+  return out;
+}
+function normalizeGoogleShippingRows(rows){
+  const out=[];
+  rows.forEach((r,i)=>{
+    const orderId=firstMatchingValue(r,['order-id','amazon-order-id','amazonorderid','orderid','order']);
+    const product=firstMatchingValue(r,['product','product-name','product name','productname','name','article-name','article name']);
+    const size=firstMatchingValue(r,['size','product-size','product size','variantsize','variant size']);
+    const color=firstMatchingValue(r,['color','product-color','product color','variantcolor','variant color']);
+    const sku=firstMatchingValue(r,['sku','merchant-sku','merchant sku','seller-sku','seller sku']);
+    const shippingRaw=firstMatchingValue(r,['shipping-fee','shipping fee','shippingfee','shipping','shipping-cost','shippingcost','fee']);
+    if((!product&&!sku&&!orderId)||!hasValue(shippingRaw))return;
+    const shippingFee=toNum(shippingRaw);
+    if(!Number.isFinite(shippingFee))return;
+    out.push({orderId:canonicalCatalogText(orderId),product:catalogDisplayText(product),size:catalogDisplayText(size),color:catalogDisplayText(color),sku:catalogDisplayText(sku),shippingFee,_row:i+2});
+  });
+  return out;
+}
+function normalizeGoogleFbaRows(rows){
+  const out=[];
+  rows.forEach((r,i)=>{
+    const orderId=firstMatchingValue(r,['order-id','order id','amazon-order-id','amazon order id','amazonorderid','orderid','order']);
+    const product=firstMatchingValue(r,['product','product-name','product name','productname','name']);
+    const size=firstMatchingValue(r,['size','product-size','product size','variantsize','variant size']);
+    const color=firstMatchingValue(r,['color','product-color','product color','variantcolor','variant color']);
+    const sku=firstMatchingValue(r,['sku','merchant-sku','merchant sku','seller-sku','seller sku']);
+    const feeRaw=firstMatchingValue(r,['fba-fee','fba fee','fbafee','fba','fulfillment-by-amazon-fee','fulfillment by amazon fee','fulfillmentfee','amazon-fba-fee','amazon fba fee','fba fulfillment fee']);
+    // Zero is a valid FBA fee. Check presence, not truthiness.
+    if((!orderId&&!product&&!sku)||!hasValue(feeRaw)) return;
+    const fbaFee=toNum(feeRaw);
+    if(!Number.isFinite(fbaFee)) return;
+    out.push({orderId:canonicalCatalogText(orderId),product:catalogDisplayText(product),size:catalogDisplayText(size),color:catalogDisplayText(color),sku:catalogDisplayText(sku),fbaFee,_row:i+2});
+  });
+  return out;
+}
+
+function normalizeGoogleSkuRows(rows){const out=[];let skippedNoSku=0;rows.forEach((r,i)=>{const sku=firstMatchingValue(r,['sku','merchant-sku','seller-sku']);let product=firstMatchingValue(r,['product','product-name','productname','name']);const size=firstMatchingValue(r,['size','product-size','variantsize']);const color=firstMatchingValue(r,['color','product-color','variantcolor']);if(!sku){skippedNoSku++;return;}if(!product) product=sku;out.push({
+  sku:catalogDisplayText(sku),
+  product:catalogDisplayText(product),
+  size:catalogDisplayText(size),
+  color:catalogDisplayText(color),
+  _row:i+2
+});});out._skippedNoSku=skippedNoSku;return out;}
+/* ---------------------------- DIRECT LIVE SYNC ---------------------------- */
+let liveSyncTimer=null;
+function stableStringify(value){
+  if(value===null || typeof value!=='object') return JSON.stringify(value);
+  if(Array.isArray(value)) return '['+value.map(stableStringify).join(',')+']';
+  return '{'+Object.keys(value).sort().map(k=>JSON.stringify(k)+':'+stableStringify(value[k])).join(',')+'}';
+}
+function simpleHash(text){let h=2166136261;for(let i=0;i<text.length;i++){h^=text.charCodeAt(i);h=Math.imul(h,16777619);}return (h>>>0).toString(16).padStart(8,'0');}
+function normLiveCell(v){return String(v==null?'':v).trim().replace(/\s+/g,' ');}
+function liveHeaders(rows){const set=new Set();(rows||[]).forEach(r=>Object.keys(r||{}).forEach(k=>set.add(String(k))));return [...set].sort();}
+function liveRowFingerprint(row){const o={};Object.keys(row||{}).sort().forEach(k=>o[k]=normLiveCell(row[k]));return simpleHash(stableStringify(o));}
+function liveRowKey(row,index){
+  const val=(names)=>{for(const n of names){const k=Object.keys(row||{}).find(x=>x.trim().toLowerCase()===n);if(k&&normLiveCell(row[k]))return normLiveCell(row[k]).toLowerCase();}return '';};
+  const id=val(['id','row-id','record-id','item-id']), order=val(['order-id','amazon-order-id','amazonorderid','orderid','order']), sku=val(['sku','merchant-sku','seller-sku']), product=val(['product','product-name','productname','name','article-name','article name']), size=val(['size','product-size','variantsize']), color=val(['color','product-color','variantcolor']);
+  if(id)return 'id:'+id;if(order)return 'order:'+order+'|sku:'+sku;if(sku)return 'sku:'+sku+'|size:'+size+'|color:'+color;if(product)return 'product:'+product+'|size:'+size+'|color:'+color;return 'row:'+index;
+}
+function compareLiveRows(previous,current){
+  const prev=Array.isArray(previous)?previous:[],cur=Array.isArray(current)?current:[];const pm=new Map(),cm=new Map();
+  prev.forEach((r,i)=>{const k=liveRowKey(r,i);(pm.get(k)||pm.set(k,[]).get(k)).push(liveRowFingerprint(r));});
+  cur.forEach((r,i)=>{const k=liveRowKey(r,i);(cm.get(k)||cm.set(k,[]).get(k)).push(liveRowFingerprint(r));});
+  let added=0,updated=0,deleted=0,unchanged=0;const keys=new Set([...pm.keys(),...cm.keys()]);
+  keys.forEach(k=>{const p=(pm.get(k)||[]).slice(),c=(cm.get(k)||[]).slice(),used=new Set();let same=0;for(const pf of p){const j=c.findIndex((cf,i)=>!used.has(i)&&cf===pf);if(j>=0){used.add(j);same++;}}unchanged+=same;const pr=p.length-same,cr=c.length-same;if(c.length>p.length)added+=cr;else if(p.length>c.length)deleted+=pr;else updated+=Math.min(pr,cr);});
+  const canonical=cur.map(r=>{const o={};Object.keys(r||{}).sort().forEach(k=>o[k]=normLiveCell(r[k]));return o;});
+  return {scanned:cur.length,added,updated,deleted,unchanged,hash:simpleHash(stableStringify(canonical))};
+}
+function clearLiveTimer(){if(liveSyncTimer){clearInterval(liveSyncTimer);liveSyncTimer=null;}}
+function applyLiveToSkuSource(){
+  // A dedicated "Link SKU / Product Sheet" always wins -- Direct Live Sync
+  // must never silently overwrite it in the background (that was the bug:
+  // the SKU badge kept resetting to whatever Live Sync's own sheet had,
+  // regardless of what was actually linked/synced via the SKU button).
+  if(state.google.skuUrl) return;
+  if(!state.google.liveRows.length) return;
+  state.google.skuRows=normalizeGoogleSkuRows(state.google.liveRows);
+  state.google.skuUpdated=state.google.liveUpdated;
+  if(state.rawRows&&state.isProcessed)processReportSync();
+}
+async function syncLiveMaster({silent=false}={}){
+  const url=String(state.google.liveUrl||'').trim();if(!url){if(!silent)toast('error','Live Sync is not connected','Open Direct Live Sync and paste your Google Sheet URL first.');return false;}if(state.google.liveMeta.syncing)return false;
+  state.google.liveMeta.syncing=true;state.google.liveMeta.lastStatus='syncing';state.google.liveMeta.error='';render();
+  try{const rows=await fetchGoogleRows(url),diff=compareLiveRows(state.google.liveSnapshot,rows),oldHash=state.google.liveHash;state.google.liveRows=rows;state.google.liveSnapshot=rows;state.google.liveHash=diff.hash;state.google.liveUpdated=new Date().toISOString();state.google.liveMeta=Object.assign({},state.google.liveMeta,diff,{lastRun:state.google.liveUpdated,lastStatus:(oldHash&&oldHash!==diff.hash)?'changed':'unchanged',error:'',syncing:false});applyLiveToSkuSource();persistConfig();render();if(!silent){const n=diff.added+diff.updated+diff.deleted;toast(n?'success':'info',n?'Live Sync updated':'Live Sync complete',`Scanned ${diff.scanned.toLocaleString()} rows · +${diff.added} new · ${diff.updated} updated · ${diff.deleted} deleted`);}return true;}
+  catch(err){state.google.liveMeta=Object.assign({},state.google.liveMeta,{lastRun:new Date().toISOString(),lastStatus:'error',error:String(err&&err.message||err),syncing:false});persistConfig();render();if(!silent)toast('error','Live Sync failed',state.google.liveMeta.error);return false;}
+}
+function setLiveAutoSync(enabled){clearLiveTimer();state.google.liveMeta.autoSync=!!enabled;persistConfig();if(enabled&&state.google.liveUrl){const sec=Math.max(10,Number(state.google.liveMeta.intervalSec)||30);liveSyncTimer=setInterval(()=>syncLiveMaster({silent:true}),sec*1000);}render();}
+function liveSyncModalHtml(){
+ const m=state.google.liveMeta||{},rows=state.google.liveRows||[],linked=!!state.google.liveUrl;const status=m.syncing?'Syncing…':(m.lastStatus||'Never');
+ const headers=liveHeaders(rows).slice(0,8);
+ return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Direct Live Sync — Google Sheet</h3><p>Sync the master sheet on demand or keep it monitored automatically. The app stores a local snapshot and detects new, changed and deleted rows.</p></div><span class="badge ${linked?'on':''}">${linked?'Connected':'Not linked'}</span></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="liveSheetUrlInput" value="${esc(state.google.liveUrl||'')}" placeholder="https://docs.google.com/spreadsheets/d/.../edit"><div class="help">Best connection: paste the normal Google Sheets link ending in /edit. Set Share → General access → Anyone with the link → Viewer. This build reads the sheet through Google Visualization on a local trusted app connection; private OAuth is not required for read-only live sync.</div></div><div class="grid2"><div class="panel-mini"><div class="panel-mini-title">Connection</div><div class="metric-line"><span>Status</span><b>${esc(status)}</b></div><div class="metric-line"><span>Last sync</span><b>${m.lastRun?new Date(m.lastRun).toLocaleString():'Never'}</b></div><div class="metric-line"><span>Rows scanned</span><b>${Number(m.scanned||rows.length).toLocaleString()}</b></div></div><div class="panel-mini"><div class="panel-mini-title">Last change set</div><div class="metric-line"><span>New</span><b>${Number(m.added||0).toLocaleString()}</b></div><div class="metric-line"><span>Updated</span><b>${Number(m.updated||0).toLocaleString()}</b></div><div class="metric-line"><span>Deleted</span><b>${Number(m.deleted||0).toLocaleString()}</b></div><div class="metric-line"><span>Unchanged</span><b>${Number(m.unchanged||0).toLocaleString()}</b></div></div></div><div class="section-divider">Auto Sync</div><div class="auto-sync-row"><label class="switch"><input type="checkbox" id="liveAutoSync" ${m.autoSync?'checked':''}><span class="slider"></span></label><span><b>Monitor this sheet automatically</b><small>Re-check every interval and update the local snapshot.</small></span><select id="liveInterval" class="select-mini"><option value="15" ${Number(m.intervalSec)===15?'selected':''}>15 sec</option><option value="30" ${Number(m.intervalSec||30)===30?'selected':''}>30 sec</option><option value="60" ${Number(m.intervalSec||30)===60?'selected':''}>60 sec</option><option value="120" ${Number(m.intervalSec||30)===120?'selected':''}>2 min</option></select></div>${m.error?`<div class="error-box">${esc(m.error)}</div>`:''}<div class="section-divider">Preview</div>${rows.length?`<div class="table-wrap"><table class="mini-table"><tr>${headers.map(h=>`<th>${esc(h)}</th>`).join('')}</tr>${rows.slice(0,6).map(r=>`<tr>${headers.map(h=>`<td class="mono">${esc(r[h]??'')}</td>`).join('')}</tr>`).join('')}</table></div><div class="help">Showing 6 rows. The full sheet is stored in the sync snapshot.</div>`:'<div class="help">No synced rows yet.</div>'}</div><div class="modal-foot"><button class="btn ghost" data-close>Close</button><button class="btn ghost" id="disconnectLiveBtn">Disconnect</button><button class="btn accent" id="syncLiveNowBtn">${ICONS.check} Sync Now</button><button class="btn accent" id="saveLiveBtn">${ICONS.check} Save Connection</button></div></div>`;
+}
+function wireLiveSyncModal(){
+ $('#saveLiveBtn')?.addEventListener('click',async()=>{const url=$('#liveSheetUrlInput').value.trim();state.google.liveUrl=url;state.google.liveMeta.intervalSec=Number($('#liveInterval').value)||30;persistConfig();if(!url){setLiveAutoSync(false);closeModal();toast('info','Live Sync disconnected','The master connection was removed.');return;}const b=$('#saveLiveBtn');b.disabled=true;b.innerHTML=ICONS.spinner+' Connecting…';const ok=await syncLiveMaster();b.disabled=false;b.innerHTML=ICONS.check+' Save Connection';if(ok){setLiveAutoSync($('#liveAutoSync').checked);closeModal();}});
+ $('#syncLiveNowBtn')?.addEventListener('click',async()=>{const b=$('#syncLiveNowBtn');b.disabled=true;b.innerHTML=ICONS.spinner+' Syncing…';await syncLiveMaster();b.disabled=false;b.innerHTML=ICONS.check+' Sync Now';});
+ $('#disconnectLiveBtn')?.addEventListener('click',()=>{state.google.liveUrl='';state.google.liveRows=[];state.google.liveSnapshot=[];state.google.liveHash='';state.google.liveMeta=Object.assign({},state.google.liveMeta,{autoSync:false,lastStatus:'never',error:'',scanned:0,added:0,updated:0,deleted:0,unchanged:0});setLiveAutoSync(false);persistConfig();closeModal();toast('info','Live Sync disconnected','The master connection was removed.');});
+ $('#liveAutoSync')?.addEventListener('change',e=>{state.google.liveMeta.intervalSec=Number($('#liveInterval').value)||30;setLiveAutoSync(e.target.checked);});
+ $('#liveInterval')?.addEventListener('change',e=>{state.google.liveMeta.intervalSec=Number(e.target.value)||30;if($('#liveAutoSync').checked)setLiveAutoSync(true);else persistConfig();});
+}
+
+async function refreshGoogleSource(kind,silent=false){
+  const key={exwh:'exwhUrl',shipping:'shippingUrl',fba:'fbaUrl',sku:'skuUrl'}[kind];const rowKey={exwh:'exwhRows',shipping:'shippingRows',fba:'fbaRows',sku:'skuRows'}[kind];const updatedKey={exwh:'exwhUpdated',shipping:'shippingUpdated',fba:'fbaUpdated',sku:'skuUpdated'}[kind];const url=state.google[key];
+  if(!url){if(!silent)toast('error','No Google Sheet linked','Link the '+kind+' sheet first.');return false;}
+  try{
+    const rows=await fetchGoogleRows(url);
+    const normalized={exwh:normalizeGoogleExwhRows,shipping:normalizeGoogleShippingRows,fba:normalizeGoogleFbaRows,sku:normalizeGoogleSkuRows}[kind](rows);
+    // Fingerprint what we already had vs. what we just fetched, so the toast can
+    // say plainly whether the sheet actually changed — Google's public sheet
+    // feed can lag a live edit by up to roughly a minute, which otherwise looks
+    // identical to "the app isn't picking up my change".
+    const prevHash = simpleHash(stableStringify((state.google[rowKey]||[]).map(x=>{const o=Object.assign({},x);delete o._row;return o;})));
+    const newHash = simpleHash(stableStringify(normalized.map(x=>{const o=Object.assign({},x);delete o._row;return o;})));
+    const changed = prevHash!==newHash;
+    state.google.lastChanged = Object.assign({}, state.google.lastChanged, {[kind]:changed});
+    state.google[rowKey]=normalized;
+    state.google[updatedKey]=new Date().toISOString();
+    persistConfig();
+    if(state.rawRows&&state.isProcessed)processReportSync();
+    render();
+    if(!silent){
+      const skippedNote = (kind==='sku' && normalized._skippedNoSku) ? (' · '+normalized._skippedNoSku+' row(s) skipped (blank SKU)') : '';
+      if(changed) toast('success','Google Sheet synced', normalized.length+' usable row(s) loaded'+skippedNote+'.');
+      else toast('info','Synced — no changes found', normalized.length+' row(s), identical to last sync'+skippedNote+'. If you just edited the sheet, Google can take up to a minute to reflect it — try Sync again shortly.');
+    }
+    return true;
+  }catch(err){
+    console.error('Google Sheet sync failed:',err);
+    // IMPORTANT: never erase the last successful snapshot just because a
+    // sync attempt failed. The report continues using whatever source
+    // rows were already available, while any newly changed sheet values will
+    // take effect automatically on the next successful sync.
+    if(state.rawRows&&state.isProcessed)processReportSync();
+    render();
+    if(!silent){
+      const cached=Array.isArray(state.google[rowKey])?state.google[rowKey].length:0;
+      toast(cached?'info':'error',cached?'Sync failed — previous sheet data kept':'Google Sheet sync failed',
+        String(err&&err.message||err)+(cached?' · '+cached+' previously loaded row(s) remain available.':' · Existing Amazon data will still be shown where no sheet match is available.'));
+    }
+    return false;
+  }
+}
+async function refreshAllGoogle(){
+  const kinds=[['fba','FBA'],['exwh','Ex-WH'],['shipping','Shipping'],['sku','SKU/Product']]; const linked=kinds.filter(([k])=>state.google[{fba:'fbaUrl',exwh:'exwhUrl',shipping:'shippingUrl',sku:'skuUrl'}[k]]);
+  if(!linked.length){toast('error','No Google Sheets linked','Link at least one Google Sheet first.');return;}
+  const btn=$('#refreshAllGoogleBtn');if(btn)btn.disabled=true;const results=[];for(const [k,label] of linked){const ok=await refreshGoogleSource(k,true);results.push(label+': '+(ok?(state.google.lastChanged[k]?'changed':'no changes'):'failed'));}if(btn)btn.disabled=false;render();toast(results.some(x=>x.endsWith('failed'))?'error':'success','All Sheets sync finished',results.join(' · '));
+}
+function googlePreviewHtml(kind){const key={exwh:'exwhRows',shipping:'shippingRows',fba:'fbaRows',sku:'skuRows'}[kind];const rows=state.google[key]||[];if(!rows.length)return '<div class="help" style="margin-top:8px;">No usable rows detected yet.</div>';const head={exwh:['Article / Product','Size','Color','SKU','Ex-WH Cost','Rate Date'],shipping:['Product','Size','Color','Shipping Fee'],fba:['Order ID','Product','Size','Color','SKU','FBA Fee'],sku:['SKU','Product','Size','Color']}[kind];const sample=rows.slice(0,5).map(r=>kind==='exwh'?[r.product||'—',r.size||'—',r.color||'—',r.sku||'—',fmtMoney(r.exWhCost),r.sourceDate||'Direct']:kind==='shipping'?[r.product||'—',r.size||'—',r.color||'—',fmtMoney(r.shippingFee)]:kind==='fba'?[r.orderId||'—',r.product||'—',r.size||'—',r.color||'—',r.sku||'—',fmtMoney(r.fbaFee)]:[r.sku||'—',r.product||'—',r.size||'—',r.color||'—']);return '<div class="section-divider">Preview — '+rows.length+' usable row(s)</div><table class="mini-table"><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+sample.map(row=>'<tr>'+row.map(v=>'<td class="mono">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table>'+ (rows.length>5?'<div class="help">+ '+(rows.length-5)+' more row(s).</div>':'');}
+function googleLinkModalHtml(kind){const key={exwh:'exwhUrl',shipping:'shippingUrl',fba:'fbaUrl',sku:'skuUrl'}[kind];const updatedKey={exwh:'exwhUpdated',shipping:'shippingUpdated',fba:'fbaUpdated',sku:'skuUpdated'}[kind];const url=state.google[key];const titles={exwh:'Link Ex-WH Cost Google Sheet',shipping:'Link Shipping Fee Google Sheet',fba:'Link FBA Fee Google Sheet',sku:'Link SKU / Product Google Sheet'};const helps={exwh:'Recommended: SKU, Product, Size, Color, Ex-WH Cost.',shipping:'Recommended: Product, Size, Color, Shipping Fee. Shipping is a fixed product/size rule.',fba:'Recommended: Product, Size, Color, FBA Fee. FBA is a fixed product/size rule; older Order ID rows remain supported as fallback.',sku:'Required: SKU, Product; Size and Color recommended.'};return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${titles[kind]}</h3><p>Google Sheet is the authoritative source. The app only writes a value when an unambiguous matching row exists.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="googleSheetUrlInput" value="${esc(url)}" placeholder="https://docs.google.com/spreadsheets/d/..."><div class="help">${helps[kind]}</div></div><div class="section-divider">Connection</div><div class="code-block">Recommended: normal /edit Google Sheet link + “Anyone with the link → Viewer”. Published links are supported when Google returns public CSV data. After editing the sheet, use Sync All Sheets or Sync Now.</div><div class="help">Last synced: ${state.google[updatedKey]?new Date(state.google[updatedKey]).toLocaleString():'Never'}</div><div id="googlePreviewArea">${googlePreviewHtml(kind)}</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="saveGoogleSheetBtn">${ICONS.check} Save & Sync</button></div></div>`;}
+async function wireGoogleLinkModal(kind){$('#saveGoogleSheetBtn').addEventListener('click',async()=>{const url=$('#googleSheetUrlInput').value.trim();const key={exwh:'exwhUrl',shipping:'shippingUrl',fba:'fbaUrl',sku:'skuUrl'}[kind];state.google[key]=url;persistConfig();if(!url){const rowKey={exwh:'exwhRows',shipping:'shippingRows',fba:'fbaRows',sku:'skuRows'}[kind];const updatedKey={exwh:'exwhUpdated',shipping:'shippingUpdated',fba:'fbaUpdated',sku:'skuUpdated'}[kind];state.google[rowKey]=[];state.google[updatedKey]=null;if(kind==='fba'){state.fbaApplied=false; if(state.rawRows&&state.isProcessed) processReportSync();}persistConfig();closeModal();render();toast('info','Google Sheet disconnected',kind+' source removed; values will remain blank.');return;}const btn=$('#saveGoogleSheetBtn');btn.disabled=true;btn.innerHTML=ICONS.spinner+' Reading sheet…';const ok=await refreshGoogleSource(kind,true);btn.disabled=false;btn.innerHTML=ICONS.check+' Save & Sync';if(ok){closeModal();toast('success','Google Sheet connected','The '+kind+' source is now live. Sync All Sheets after edits.');}else{render();openModal({exwh:'googleExwh',shipping:'googleShipping',fba:'googleFba',sku:'googleSku'}[kind]);}});}
+/* ---------------------------- MODALS ---------------------------- */
+function closeModal(){ state.modal=null; $('#modalRoot').innerHTML=''; }
+
+function openModal(kind){
+  state.modal = kind;
+  const root = $('#modalRoot');
+  root.innerHTML = `<div class="modal-overlay" id="modalOverlay">${modalBody(kind)}</div>`;
+  $('#modalOverlay').addEventListener('mousedown', (e)=>{ if(e.target.id==='modalOverlay') closeModal(); });
+  wireModal(kind);
+}
+
+function modalBody(kind){
+  if(kind==='fba') return fbaModalHtml();
+  if(kind==='expense') return expenseModalHtml();
+  if(kind==='googleFba') return googleLinkModalHtml('fba');
+  if(kind==='googleSku') return googleLinkModalHtml('sku');
+  if(kind==='issues') return issuesModalHtml();
+  if(kind==='manualSku') return manualSkuModalHtml();
+  if(kind==='mapping') return mappingModalHtml();
+  if(kind==='settings') return settingsModalHtml();
+  if(kind==='pushSheets') return pushSheetsModalHtml();
+  if(kind==='googleExwh') return googleLinkModalHtml('exwh');
+  if(kind==='googleShipping') return googleLinkModalHtml('shipping');
+  if(kind==='liveSync') return liveSyncModalHtml();
+  if(kind==='shortcuts') return shortcutsModalHtml();
+  return '';
+}
+
+/* --- FBA Fee source --- */
+function fbaModalHtml(){ return googleLinkModalHtml('fba'); }
+
+/* --- Manual SKU (replaces the old Cost Master screen — Ex-WH/Shipping/FBA are Google-Sheet-only now) --- */
+function manualSkuModalHtml(){
+  const rows=state.manualSkuRows.map(m=>`<tr data-id="${m.id}">
+    <td><input type="text" data-field="sku" value="${esc(m.sku)}" placeholder="SKU"></td>
+    <td><input type="text" data-field="product" value="${esc(m.product)}" placeholder="Product name"></td>
+    <td style="width:110px;"><input type="text" data-field="size" value="${esc(m.size)}" placeholder="Size"></td>
+    <td style="width:100px;"><input type="text" data-field="color" value="${esc(m.color)}" placeholder="Color"></td>
+    <td style="width:32px;"><button class="row-del" data-del="${m.id}">${ICONS.trash}</button></td>
+  </tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Manual SKU</h3><p>For a SKU you don't want to add to the Google SKU sheet. Saved here permanently and used automatically — no Sync click needed, and a "Sync All Sheets" or Google sheet edit will never remove these.</p></div></div>
+  <div class="modal-body">
+    <div class="section-divider">Saved manual SKUs (${state.manualSkuRows.length})</div>
+    <table class="mini-table"><thead><tr><th>SKU</th><th>Product</th><th>Size</th><th>Color</th><th></th></tr></thead><tbody id="manualSkuTbody">${rows||'<tr><td colspan="5" style="color:var(--text-3);">None added yet — use "Add row" below.</td></tr>'}</tbody></table>
+    <button class="btn sm ghost" id="addManualSkuRow" style="margin-top:10px;">${ICONS.plus} Add row</button>
+    <div class="help" style="margin-top:10px;">Matching order: the linked SKU/Product Google Sheet is checked first; a SKU only falls back to this list when it isn't found there.</div>
+  </div>
+  <div class="modal-foot"><button class="btn ghost" data-close>Close</button><button class="btn accent" id="saveManualSkuBtn">${ICONS.check} Save & Recalculate</button></div></div>`;
+}
+function wireManualSkuModal(){
+  $('#addManualSkuRow').addEventListener('click',()=>{state.manualSkuRows.push({id:state._nextManualSkuId++,sku:'',product:'',size:'',color:''});openModal('manualSku');});
+  $all('#manualSkuTbody [data-del]').forEach(b=>b.addEventListener('click',()=>{state.manualSkuRows=state.manualSkuRows.filter(m=>m.id!==Number(b.getAttribute('data-del')));openModal('manualSku');}));
+  $all('#manualSkuTbody tr').forEach(tr=>{const id=Number(tr.getAttribute('data-id'));$all('input',tr).forEach(inp=>inp.addEventListener('input',()=>{const row=state.manualSkuRows.find(m=>m.id===id);if(row) row[inp.getAttribute('data-field')]=inp.value;}));});
+  $('#saveManualSkuBtn').addEventListener('click',()=>{persistConfig();closeModal();reprocessIfLoaded('Manual SKU list updated across the table.');render();toast('success','Manual SKU saved',state.manualSkuRows.length+' SKU(s) saved.');});
+}
+
+/* --- Product Mapping Master / SKU Lookup --- */
+function mappingModalHtml(){
+  const rows=state.productMapping.map(m=>`<tr data-id="${m.id}">
+    <td><input type="text" data-field="sku" value="${esc(m.sku)}" placeholder="SKU"></td>
+    <td><input type="text" data-field="product" value="${esc(m.product)}" placeholder="Product"></td>
+    <td style="width:100px;"><input type="text" data-field="size" value="${esc(m.size)}"></td>
+    <td style="width:90px;"><input type="text" data-field="color" value="${esc(m.color)}"></td>
+    <td style="width:32px;"><button class="row-del" data-del="${m.id}">${ICONS.trash}</button></td>
+  </tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Product Mapping / SKU Lookup</h3><p>Linked SKU/Product Google Sheet is authoritative when available. Manual mapping is used only when the Google SKU sheet is not linked.</p></div></div>
+  <div class="modal-body">
+    <div class="section-divider">Find SKU from Product / Size / Color</div>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:8px;align-items:end;">
+      <div class="field" style="margin:0;"><label>Product</label><input type="text" id="lookupProduct" placeholder="e.g. Blackout Fabric"></div>
+      <div class="field" style="margin:0;"><label>Size</label><input type="text" id="lookupSize" placeholder="e.g. 2 Yard 110"></div>
+      <div class="field" style="margin:0;"><label>Color</label><input type="text" id="lookupColor" placeholder="e.g. White"></div>
+      <button class="btn accent" id="lookupSkuBtn">Lookup</button>
+    </div>
+    <div id="lookupResult"></div>
+    <div class="section-divider">Manual Product Mapping</div>
+    <table class="mini-table"><thead><tr><th>SKU</th><th>Product</th><th>Size</th><th>Color</th><th></th></tr></thead><tbody id="mapTbody">${rows}</tbody></table>
+    <button class="btn sm ghost" id="addMapRow" style="margin-top:10px;">${ICONS.plus} Add row</button>
+  </div>
+  <div class="modal-foot"><button class="btn ghost" data-close>Close</button><button class="btn accent" id="saveMapBtn">${ICONS.check} Save & Recalculate</button></div></div>`;
+}
+function wireMappingModal(){
+  $('#lookupSkuBtn').addEventListener('click',()=>{
+    const p=$('#lookupProduct').value.trim(),z=$('#lookupSize').value.trim(),c=$('#lookupColor').value.trim();
+    const rows=state.google.skuRows||[];let hit=null;
+    if(rows.length){
+      hit=rows.find(x=>normText(x.product)===normText(p)&&normText(x.size)===normText(z)&&normText(x.color)===normText(c));
+      if(!hit) hit=rows.find(x=>normText(x.product)===normText(p)&&(!z||normText(x.size)===normText(z))&&(!c||normText(x.color)===normText(c)));
+    }
+    if(!hit) hit=state.productMapping.find(x=>normText(x.product)===normText(p)&&(!z||normText(x.size)===normText(z))&&(!c||normText(x.color)===normText(c)));
+    $('#lookupResult').innerHTML=hit?`<div class="lookup-result"><b>SKU:</b> <span class="mono">${esc(hit.sku)}</span> · <b>Product:</b> ${esc(hit.product)} · <b>Size:</b> ${esc(hit.size||'—')} · <b>Color:</b> ${esc(hit.color||'—')}</div>`:`<div class="lookup-result"><span class="source-missing">No exact SKU match found.</span> Link/sync the SKU Product Sheet and confirm Product, Size and Color.</div>`;
+  });
+  $('#addMapRow').addEventListener('click',()=>{state.productMapping.push({id:state._nextMapId++,sku:'',product:'',size:'',color:''});openModal('mapping');});
+  $all('#mapTbody [data-del]').forEach(b=>b.addEventListener('click',()=>{state.productMapping=state.productMapping.filter(m=>m.id!==Number(b.getAttribute('data-del')));openModal('mapping');}));
+  $all('#mapTbody tr').forEach(tr=>{const id=Number(tr.getAttribute('data-id'));$all('input',tr).forEach(inp=>inp.addEventListener('input',()=>{const row=state.productMapping.find(m=>m.id===id);row[inp.getAttribute('data-field')]=inp.value;}));});
+  $('#saveMapBtn').addEventListener('click',()=>{persistConfig();closeModal();reprocessIfLoaded('Product mapping updated across the table.');render();toast('success','Product Mapping saved',state.productMapping.length+' mapping(s) saved.');});
+}
+
+/* --- Manual Expense --- */
+function expenseModalHtml(){
+  const rows=state.costMaster.map(c=>`<tr data-id="${c.id}"><td class="mono">${esc(c.sku)}</td><td>${esc(c.product)}</td><td><input type="number" step="0.01" data-expense value="${Number(c.expense)||0}"></td></tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Manual Expense</h3><p>Enter your own expense per unit. This is the only local cost source; Ex-WH, Shipping and FBA remain Google Sheet only.</p></div></div><div class="modal-body"><table class="mini-table"><thead><tr><th>SKU</th><th>Product</th><th>Expense / Unit</th></tr></thead><tbody id="expenseTbody">${rows||'<tr><td colspan="3">Add SKUs in Product Mapping / SKU Sheet first.</td></tr>'}</tbody></table></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="saveExpenseBtn">${ICONS.check} Save Expense</button></div></div>`;
+}
+function wireExpenseModal(){
+  $all('#expenseTbody tr[data-id]').forEach(tr=>tr.querySelector('[data-expense]').addEventListener('input',e=>{const row=state.costMaster.find(c=>c.id===Number(tr.getAttribute('data-id')));row.expense=parseFloat(e.target.value)||0;}));
+  $('#saveExpenseBtn').addEventListener('click',()=>{persistConfig();closeModal();reprocessIfLoaded('Manual expenses updated.');render();toast('success','Expense saved','Manual expense values were updated.');});
+}
+function issuesModalHtml(){
+  const rows=state.issues.slice(0,250).map(x=>`<tr><td class="mono">${esc(x.orderId)}</td><td class="mono">${esc(x.sku)}</td><td>${esc(x.product)}</td><td class="source-missing">${esc(x.issues.join(' · '))}</td></tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Data Issues</h3><p>${state.issueCount} line(s) need attention. No missing Google-sourced value is invented.</p></div></div><div class="modal-body"><table class="mini-table"><thead><tr><th>Order ID</th><th>SKU</th><th>Product</th><th>Issue</th></tr></thead><tbody>${rows||'<tr><td colspan="4">No issues.</td></tr>'}</tbody></table></div><div class="modal-foot"><button class="btn ghost" data-close>Close</button></div></div>`;
+}
+
+/* --- Settings --- */
+function settingsModalHtml(){
+  const s = state.settings;
+  return `<div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head"><div><h3>Settings</h3><p>Defaults used across processing and calculations.</p></div></div>
+    <div class="modal-body">
+      <div class="field">
+        <label>Theme</label>
+        <div class="theme-toggle-row">
+          <div class="theme-opt ${state.theme==='dark'?'active':''}" data-theme-opt="dark">🌙 Dark</div>
+          <div class="theme-opt ${state.theme==='light'?'active':''}" data-theme-opt="light">☀️ Light</div>
+        </div>
+      </div>
+      <div class="field">
+        <label>Vendor</label>
+        <input type="text" value="Cotton Passion" readonly>
+        <div class="help">Vendor is fixed to Cotton Passion for every non-cancelled order row.</div>
+      </div>
+      <div class="field">
+        <label>Fee (%)</label>
+        <input type="number" value="15" readonly>
+        <div class="help">Fixed rule: Fee = Net Sale × 15%. This is applied to every non-cancelled line.</div>
+      </div>
+      <div class="field"><label>Sale Tax</label><input type="text" value="Blank / not used" readonly><div class="help">Sale Tax is intentionally kept blank because your process does not add sales tax.</div></div>
+      <div class="field">
+        <label>Currency symbol</label>
+        <input type="text" id="setCurrency" value="${esc(s.currency)}" maxlength="3" style="width:70px;">
+      </div>
+      <div class="section-divider">How CM is calculated</div>
+      <div class="code-block">List Price = Amazon item-price
+Off        = discount amount (or List Price × discount %)
+Net Sale   = List Price − Off
+Revenue    = Net Sale
+Fee        = Net Sale × referral %
+CM         = List Price − SUM(Ex-WH Cost, Fee, Expense, Shipping Fee, FBA Fee, Off)</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn ghost" data-close>Cancel</button>
+      <button class="btn accent" id="saveSettingsBtn">${ICONS.check} Save Settings</button>
+    </div>
+  </div>`;
+}
+function wireSettingsModal(){
+  let themeDraft = state.theme;
+  $all('[data-theme-opt]').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      themeDraft = el.getAttribute('data-theme-opt');
+      $all('[data-theme-opt]').forEach(o=>o.classList.toggle('active', o===el));
+    });
+  });
+  $('#saveSettingsBtn').addEventListener('click', ()=>{
+    state.settings.vendorName = 'Cotton Passion';
+    state.settings.referralPercent = 15;
+    state.settings.currency = $('#setCurrency').value || '$';
+    state.theme = themeDraft; applyTheme();
+    persistConfig();
+    closeModal();
+    reprocessIfLoaded('Settings applied — figures recalculated.');
+    render();
+    toast('success','Settings saved','Your defaults have been updated.');
+  });
+}
+
+/* --- Push to Google Sheets --- */
+function pushSheetsModalHtml(){return `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Push to Google Sheets</h3><p>Send the processed FBA report to a selected Google Sheet.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="targetSheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." value="${esc(state.settings.targetSheetUrl||'')}"><div class="help">Paste the destination Google Sheet sharing URL.</div></div><div class="field"><label>Google Apps Script Web App URL</label><input type="text" id="sheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(state.settings.sheetsWebAppUrl)}"><div class="help">The Sheet URL identifies the destination; the Apps Script /exec URL is the secure write bridge.</div></div><div class="section-divider">Apps Script bridge</div><div class="code-block">function doPost(e) {
+  var out = ContentService.createTextOutput().setMimeType(ContentService.MimeType.JSON);
+  try {
+    var raw = (e && e.postData && e.postData.contents) ? e.postData.contents
+            : ((e && e.parameter && e.parameter.payload) ? e.parameter.payload : '');
+    if (!raw) throw new Error('No push payload received.');
+    var p = JSON.parse(raw);
+    if (!p.sheetUrl || !Array.isArray(p.values) || !p.values.length) {
+      throw new Error('Payload missing sheetUrl or values.');
+    }
+    var ss = SpreadsheetApp.openByUrl(p.sheetUrl);
+    var sh = ss.getSheets()[0];
+    sh.clearContents();
+    sh.getRange(1, 1, p.values.length, p.values[0].length).setValues(p.values);
+    out.setContent(JSON.stringify({ success: true, rows: p.values.length }));
+  } catch (err) {
+    out.setContent(JSON.stringify({ success: false, error: String(err && err.message || err) }));
+  }
+  return out;
+}</div><div class="help"><b>Deploy → Web app → Execute as: Me → Who has access: Anyone</b>, then paste its <code>/exec</code> URL above. If you've deployed before and just changed the code, you must create a <b>new deployment version</b> (Deploy → Manage deployments → Edit → New version) — saving the script alone does not update the live /exec endpoint.</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="doPushBtn">${state.orders.length?ICONS.check+' Push now':'No data to push'}</button></div></div>`;}
+function wirePushSheetsModal(){
+  $('#doPushBtn').addEventListener('click', async () => {
+    const sheetUrl = $('#targetSheetUrlInput').value.trim();
+    const url = $('#sheetsUrlInput').value.trim();
+    if(!sheetUrl){ toast('error','Google Sheet URL required','Paste the destination Google Sheet sharing URL.'); return; }
+    if(!url){ toast('error','Apps Script URL required','Paste the deployed Google Apps Script /exec URL.'); return; }
+    if(!state.orders.length){ toast('error','No data','Process a report before pushing.'); return; }
+    state.settings.targetSheetUrl = sheetUrl;
+    state.settings.sheetsWebAppUrl = url;
+    persistConfig();
+    const payload = { sheetUrl, values: [COLS.map(c=>c.label), ...state.orders.map(r=>COLS.map(c=>r[c.key]))] };
+    const btn = $('#doPushBtn');
+    btn.disabled = true; btn.innerHTML = ICONS.spinner+' Pushing…';
+    try{
+      // Intentionally NOT using mode:'no-cors' — that hid every real failure behind a fake
+      // "success" toast. text/plain keeps this a CORS "simple request" (Apps Script can't
+      // answer a preflight OPTIONS call), while still letting us read the real response.
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify(payload)
+      });
+      const text = await res.text();
+      let data = null;
+      try{ data = JSON.parse(text); }catch(parseErr){ /* not JSON — old script or an error page */ }
+      if(data && data.success){
+        closeModal();
+        toast('success','Pushed to Google Sheets', data.rows+' row(s) written to the sheet.');
+      } else if(data && data.success===false){
+        toast('error','Push failed — Apps Script reported an error', String(data.error||'Unknown error from the script.'));
+      } else if(!res.ok){
+        toast('error','Push failed', 'The Apps Script responded with HTTP '+res.status+'. Check that the /exec URL is correct and the deployment is live.');
+      } else {
+        toast('error','Push may have failed', 'The Apps Script did not return a recognized response. Update it to the code shown in this dialog, redeploy as a NEW version, then try again.');
+      }
+    }catch(err){
+      toast('error','Push failed — could not reach the Apps Script', 'This usually means the Web App is not deployed with "Execute as: Me" and "Who has access: Anyone", or the URL is not the /exec link from your latest deployment. ('+String(err.message||err)+')');
+    }finally{
+      btn.disabled = false; btn.innerHTML = ICONS.check+' Push now';
+    }
+  });
+}
+
+
+/* --- Shortcuts --- */
+function shortcutsModalHtml(){
+  const rows = [
+    ['⌘ / Ctrl + O','Open file picker'],
+    ['⌘ / Ctrl + K','Focus search'],
+    ['⌘ / Ctrl + E','Download Report'],
+    ['⌘ / Ctrl + Enter','Process report'],
+    ['Esc','Close modal']
+  ];
+  return `<div class="modal" role="dialog" aria-modal="true">
+    <div class="modal-head"><div><h3>Keyboard shortcuts</h3></div></div>
+    <div class="modal-body">
+      <table class="mini-table">${rows.map(r=>`<tr><td class="mono" style="width:150px;">${r[0]}</td><td>${r[1]}</td></tr>`).join('')}</table>
+    </div>
+    <div class="modal-foot"><button class="btn ghost" data-close>Close</button></div>
+  </div>`;
+}
+
+function wireModal(kind){
+  $all('[data-close]').forEach(b=> b.addEventListener('click', closeModal));
+  if(kind==='fba') wireGoogleLinkModal('fba');
+  if(kind==='expense') wireExpenseModal();
+  if(kind==='googleFba') wireGoogleLinkModal('fba');
+  if(kind==='googleSku') wireGoogleLinkModal('sku');
+  if(kind==='manualSku') wireManualSkuModal();
+  if(kind==='mapping') wireMappingModal();
+  if(kind==='settings') wireSettingsModal();
+  if(kind==='pushSheets') wirePushSheetsModal();
+  if(kind==='googleExwh') wireGoogleLinkModal('exwh');
+  if(kind==='googleShipping') wireGoogleLinkModal('shipping');
+
+  if(kind==='liveSync') wireLiveSyncModal();}
+
+/* ---------------------------- DOWNLOAD REPORT ---------------------------- */
+async function downloadReport(){
+  if(!state.orders.length){ toast('error','Nothing to download','Process a report first.'); return; }
+  const header=COLS.map(c=>c.label);
+  try{
+    if(typeof ExcelJS==='undefined'){
+      if(typeof XLSX==='undefined') throw new Error('Excel export libraries are not available.');
+      const aoa=[header,...state.orders.map(r=>COLS.map(c=>r[c.key]))];
+      const ws=XLSX.utils.aoa_to_sheet(aoa);
+      ws['!freeze']={xSplit:0,ySplit:1};
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'Processed Orders');
+      XLSX.writeFile(wb,'USM_'+(state.fileName?state.fileName.replace(/\.[^.]+$/,''):'export')+'.xlsx');
+      toast('success','Downloaded','Report file created successfully.'); return;
+    }
+    const wb=new ExcelJS.Workbook(); wb.creator='USM'; wb.created=new Date();
+    wb.calcProperties.fullCalcOnLoad=true; wb.calcProperties.forceFullCalc=true;
+    const ws=wb.addWorksheet('Processed Orders',{views:[{state:'frozen',ySplit:1}]});
+    ws.addRow(header); ws.getRow(1).height=22;
+    const orange='F2762E', white='FFFFFF', green='C6EFCE', greenText='006100';
+    ws.autoFilter={from:1,to:header.length,fromRow:1,toRow:1};
+    ws.getRow(1).eachCell(c=>{c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};c.font={bold:true,color:{argb:'FF'+white}};c.alignment={vertical:'middle'};});
+
+    const raw=wb.addWorksheet('Raw Data');
+    const rawHeader=['amazon-order-id','purchase-date','order-status','fulfillment-channel','product-name','sku','quantity','item-price','item-tax','item-promotion-discount','discount-percent','sale-tax-present'];
+    raw.addRow(rawHeader);
+    state.orders.forEach(r=>raw.addRow([r.raw.orderId,r.raw.purchaseDate,r.raw.status,r.raw.fulfillmentChannel,r.raw.productName,r.raw.sku,r.qty,r.raw.itemPrice,r.raw.itemTax,r.raw.itemPromo,r.raw.discountPercent,r.raw.itemTaxPresent?'YES':'']));
+    raw.state='veryHidden';
+
+    const cm=wb.addWorksheet('Cost Master');
+    cm.addRow(['SKU','Product','Expense / Unit']);
+    state.costMaster.forEach(c=>cm.addRow([c.sku,c.product,c.expense||0]));
+    cm.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; cm.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+
+    const gex=wb.addWorksheet('Google Ex-WH');
+    gex.addRow(['Product','Size','SKU','Ex-WH Cost']);
+    (state.google.exwhRows||[]).forEach(r=>gex.addRow([r.product,r.size||'',r.sku,r.exWhCost]));
+    gex.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; gex.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+
+    const gship=wb.addWorksheet('Google Shipping');
+    gship.addRow(['Order ID','Shipping Fee']);
+    (state.google.shippingRows||[]).forEach(r=>gship.addRow([r.orderId,r.shippingFee]));
+    gship.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; gship.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+
+    const pm=wb.addWorksheet('Product Mapping'); pm.addRow(['SKU','Product','Size','Color']);
+    state.productMapping.forEach(m=>pm.addRow([m.sku,m.product,m.size,m.color]));
+    pm.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; pm.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+
+    const fb=wb.addWorksheet('FBA Config'); fb.addRow(['Product','Size','Color','SKU','FBA Fee']);
+    (state.google.fbaRows||[]).forEach(r=>fb.addRow([r.product,r.size||'',r.color||'',r.sku||'',r.fbaFee]));
+    fb.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; fb.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+
+    const cfg=wb.addWorksheet('Config'); cfg.addRows([['Setting','Value'],['Referral Fee %',15],['Sale Tax','BLANK / NOT USED'],['Vendor','Cotton Passion']]);
+    cfg.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; cfg.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+
+    state.orders.forEach(r=>{
+      const row=[r.date,r.orderId,'Cotton Passion','Sold',r.shop,r.product,r.size,r.color,r.qty,r.exWhCost,r.revenue,r.netSale,r.listPrice,'',r.fee,r.expense,r.shippingFee,r.fbaFee,r.off,r.cm];
+      const er=ws.addRow(row);
+      if(r.isMulti){ const c=er.getCell(2); c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC6EFCE'}}; c.font={bold:true,color:{argb:'FF006100'}}; }
+    });
+    ws.columns=COLS.map(c=>({width:c.key==='orderId'?24:Math.max(10,Math.min(28,c.label.length+4))}));
+    ws.getColumn(9).numFmt='#,##0';
+    [10,11,12,13,14,15,16,17,18,19,20].forEach(ci=>ws.getColumn(ci).numFmt='"$"#,##0.00');
+    ws.getColumn(1).width=14; ws.getColumn(2).width=24; ws.getColumn(3).width=18; ws.getColumn(4).width=10; ws.getColumn(5).width=14; ws.getColumn(6).width=24; ws.getColumn(7).width=14; ws.getColumn(8).width=10;
+    [cm,gex,gship,pm,fb,cfg].forEach(sh=>sh.eachRow(row=>row.eachCell(cell=>{cell.alignment={vertical:'middle'};})));
+    const buffer=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    const fname='USM_'+(state.fileName?state.fileName.replace(/\.[^.]+$/,''):'export')+'.xlsx';
+    a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('success','Downloaded',fname+' saved to your device.');
+  }catch(err){ console.error(err); toast('error','Download failed',String(err.message||err)); }
+}
+
+/* ---------------------------- GLOBAL EVENTS ---------------------------- */
+function wireGlobal(){
+  $('#themeToggleBtn').addEventListener('click', toggleTheme);
+  $('#sidebarToggleBtn').addEventListener('click', ()=>{
+    if(window.innerWidth<=880){
+      $('#sidebar').classList.toggle('mobile-open');
+    }else{
+      state.sidebarCollapsed = !state.sidebarCollapsed;
+      $('#sidebar').classList.toggle('collapsed', state.sidebarCollapsed);
+    }
+  });
+  $('#shortcutsBtn').addEventListener('click', ()=> openModal('shortcuts'));
+  $('#fileInput').addEventListener('change', e=>{
+    if(e.target.files && e.target.files[0]) handleFile(e.target.files[0]);
+    e.target.value = '';
+  });
+  $('#searchInput').addEventListener('input', e=>{ state.search = e.target.value; renderContent(); });
+  $('#statusFilter').addEventListener('change', e=>{ state.statusFilter = e.target.value; renderContent(); });
+
+  // whole window drag & drop
+  window.addEventListener('dragover', e=> e.preventDefault());
+  window.addEventListener('drop', e=>{
+    e.preventDefault();
+    if(e.dataTransfer.files && e.dataTransfer.files[0]) handleFile(e.dataTransfer.files[0]);
+  });
+
+  // sidebar actions
+  document.body.addEventListener('click', e=>{
+    const btn = e.target.closest('[data-action]');
+    if(!btn || btn.disabled) return;
+    const action = btn.getAttribute('data-action');
+    if(action==='openFile') $('#fileInput').click();
+    if(action==='removeReport') removeReport();
+    if(action==='processReport') processReport();
+    if(action==='openGoogleFba') openModal('googleFba');
+    if(action==='openGoogleExwh') openModal('googleExwh');
+    if(action==='openGoogleShipping') openModal('googleShipping');
+    if(action==='openGoogleSku') openModal('googleSku');
+    if(action==='refreshAllGoogle') refreshAllGoogle();
+    if(action==='openExpense') openModal('expense');
+    if(action==='showIssues') openModal('issues');
+    if(action==='downloadReport') downloadReport();
+    if(action==='openPushSheets') openModal('pushSheets');
+    if(action==='openManualSku') openModal('manualSku');
+    if(action==='openProductMapping') openModal('mapping');
+    if(action==='openSettings') openModal('settings');
+  });
+
+  // keyboard shortcuts
+  window.addEventListener('keydown', e=>{
+    const mod = e.metaKey || e.ctrlKey;
+    if(mod && e.key.toLowerCase()==='o'){ e.preventDefault(); $('#fileInput').click(); }
+    if(mod && e.key.toLowerCase()==='k'){ e.preventDefault(); $('#searchInput').focus(); }
+    if(mod && e.key.toLowerCase()==='e'){ e.preventDefault(); downloadReport(); }
+    if(mod && e.key==='Enter'){ e.preventDefault(); processReport(); }
+    if(e.key==='Escape' && state.modal){ closeModal(); }
+  });
+}
+
+/* ---------------------------- INIT ---------------------------- */
+function init(){
+  loadConfig();
+  applyTheme();
+  wireGlobal();
+  render();
+  if(state.google.liveMeta && state.google.liveMeta.autoSync && state.google.liveUrl) setLiveAutoSync(true);
+}
+document.addEventListener('DOMContentLoaded', init);
+})();
+</script>
+</body>
+</html>
