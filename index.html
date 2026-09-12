@@ -94,6 +94,10 @@ a{ color:inherit; }
   background:transparent; border:1px solid transparent; color:var(--text-2); cursor:pointer; transition:.15s;
 }
 .icon-btn:hover{ background:var(--hover); color:var(--text); border-color:var(--border); }
+.platform-toggle{ display:flex; align-items:center; background:var(--surface-2); border:1px solid var(--border); border-radius:9px; padding:3px; gap:2px; flex:0 0 auto; }
+.platform-btn{ appearance:none; border:none; background:transparent; color:var(--text-2); font-size:11.5px; font-weight:600; padding:6px 12px; border-radius:6px; cursor:pointer; font-family:inherit; transition:background .15s ease,color .15s ease; white-space:nowrap; }
+.platform-btn:hover{ color:var(--text); }
+.platform-btn.active{ background:var(--accent); color:#fff; }
 .avatar{
   width:30px; height:30px; border-radius:8px; background:linear-gradient(135deg,var(--accent),#C2410C);
   display:flex; align-items:center; justify-content:center; font-weight:700; font-size:12px; color:#fff;
@@ -105,7 +109,7 @@ a{ color:inherit; }
 /* --- Sidebar --- */
 .sidebar{ width:222px; flex:0 0 222px; background:var(--bg-elevated); border-right:1px solid var(--border); display:flex; flex-direction:column; padding:14px 10px; overflow-y:auto; transition:width .18s ease, flex-basis .18s ease; }
 .sidebar.collapsed{ width:60px; flex-basis:60px; }
-.sidebar.collapsed .side-label, .sidebar.collapsed .side-group-title, .sidebar.collapsed .side-hint{ display:none; }
+.sidebar.collapsed .side-label, .sidebar.collapsed .side-group-title, .sidebar.collapsed .side-hint, .sidebar.collapsed .badge{ display:none; }
 .sidebar.collapsed .side-btn{ justify-content:center; padding:0; width:40px; }
 .side-group{ margin-bottom:16px; }
 .side-group-title{ font-size:10px; font-weight:700; letter-spacing:.07em; text-transform:uppercase; color:var(--text-3); padding:0 8px; margin-bottom:6px; }
@@ -123,6 +127,7 @@ a{ color:inherit; }
 .side-btn[disabled]:hover{ background:transparent; color:var(--text-2); }
 .side-btn .badge{ margin-left:auto; font-size:9.5px; font-weight:700; padding:1px 6px; border-radius:20px; background:var(--surface-3); color:var(--text-3); }
 .side-btn .badge.on{ background:var(--green-soft); color:var(--green); }
+.side-btn .badge.warn{ background:var(--red-soft); color:var(--red); }
 .side-hint{ font-size:10.5px; color:var(--text-3); padding:8px 9px 0; line-height:1.5; }
 .sidebar-toggle{ margin-top:auto; }
 
@@ -187,7 +192,12 @@ a{ color:inherit; }
   white-space:nowrap; border-right:1px solid rgba(255,255,255,.14); display:flex; align-items:center; gap:4px; cursor:pointer; user-select:none;
 }
 .grid-head .c:hover{ background:rgba(255,255,255,.08); }
+.tt-editable{ cursor:text; outline:none; }
+.tt-editable:hover{ background:rgba(255,255,255,.05); box-shadow:inset 0 0 0 1px var(--border-strong); }
+.tt-editable:focus{ background:var(--surface-2); box-shadow:inset 0 0 0 1px var(--accent); }
+.tt-editable.tt-pending{ background:var(--accent-soft); box-shadow:inset 0 0 0 1px var(--accent-border); }
 .grid-head .c svg{ width:11px; height:11px; opacity:.85; }
+.grid-head .c.tt-ship-head{ background:var(--accent-2); box-shadow:inset 0 0 0 1px rgba(255,255,255,.35); }
 .grid-body{ position:relative; }
 .grow{ display:flex; position:absolute; left:0; right:0; border-bottom:1px solid var(--border); transition:background .1s; }
 .grow:hover{ background:var(--hover) !important; }
@@ -213,7 +223,7 @@ a{ color:inherit; }
 
 /* column widths */
 .col-date{ width:90px; } .col-oid{ width:150px; } .col-vendor{ width:130px; } .col-status{ width:108px; }
-.col-shop{ width:100px; } .col-product{ width:190px; } .col-size{ width:100px; } .col-color{ width:74px; }
+.col-shop{ width:100px; } .col-product{ width:190px; } .col-size{ width:100px; } .col-color{ width:180px; }
 .col-qty{ width:52px; } .col-exwh{ width:90px; } .col-revenue{ width:90px; } .col-netsale{ width:90px; }
 .col-list{ width:90px; } .col-tax{ width:80px; } .col-fee{ width:80px; } .col-expense{ width:88px; }
 .col-shipfee{ width:92px; } .col-fbafee{ width:84px; } .col-off{ width:70px; } .col-cm{ width:96px; }
@@ -306,10 +316,12 @@ a{ color:inherit; }
 
 /* --- Precision table alignment: header and every value stay under the exact same column --- */
 .grid-scroll{overflow:auto;overflow-x:auto;position:relative;}
-.grid-head,.grow{min-width:1908px;width:1908px;}
+.grid-head,.grow{min-width:1958px;width:1958px;}
 .grid-head .c,.grow .c{flex:0 0 auto;box-sizing:border-box;}
-.grid-body{min-width:1908px;position:relative;}
+.grid-body{min-width:1958px;position:relative;}
 .grow{right:auto;}
+.grid-head.tt-grid,.grow.tt-grid{min-width:1352px;width:1352px;}
+.grid-body.tt-grid{min-width:1352px;}
 .multi-order-cell{background:#dff5e8 !important;}
 .grow .oid.multi .pill{background:#dff5e8;color:#146c43;border:1px solid #9adbb6;}
 
@@ -319,11 +331,14 @@ a{ color:inherit; }
   .topbar-search{ width:150px; }
   .topbar{gap:8px;padding:0 10px;}
   .brand-sub{display:none;}
+  .platform-btn{padding:6px 8px;font-size:10.5px;}
 }
 @media (max-width:640px){
   body{font-size:13px;}
   .topbar-search{width:120px;}
   .avatar{display:none;}
+  .platform-toggle{padding:2px;}
+  .platform-btn{padding:5px 7px;font-size:10px;}
   .main-toolbar{padding:0 10px;overflow:auto;}
   .main-toolbar .filename{max-width:180px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
   .modal{max-width:calc(100vw - 18px);max-height:90vh;border-radius:12px;}
@@ -489,6 +504,10 @@ a{ color:inherit; }
       <input type="text" id="searchInput" placeholder="Search order, SKU, product…">
       <kbd>⌘K</kbd>
     </div>
+    <div class="platform-toggle" id="platformToggle">
+      <button type="button" class="platform-btn active" data-platform="az">Amazon/Walmart</button>
+      <button type="button" class="platform-btn" data-platform="tiktok">TikTok</button>
+    </div>
     <button class="icon-btn" id="themeToggleBtn" title="Toggle theme"></button>
     <button class="icon-btn" id="shortcutsBtn" title="Keyboard shortcuts">
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><path d="M9.09 9a3 3 0 0 1 5.83 1c0 2-3 2-3 4"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
@@ -499,6 +518,7 @@ a{ color:inherit; }
   <div class="body-row">
     <!-- ===== SIDEBAR ===== -->
     <div class="sidebar" id="sidebar">
+     <div id="sidebarAZ">
       <div class="side-group">
         <div class="side-group-title">Data</div>
         <button class="side-btn" data-action="openFile"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="side-label">Upload Report</span></button>
@@ -530,10 +550,47 @@ a{ color:inherit; }
         <button class="side-btn" data-action="openSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="side-label">Settings</span></button>
       </div>
       <div class="side-hint" id="sideHint">Drop a report anywhere to begin.</div>
+     </div>
+     <div id="sidebarTikTok" class="hidden">
+      <div class="side-group">
+        <div class="side-group-title">Data</div>
+        <button class="side-btn" data-action="openFileTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="side-label">Upload Report</span></button>
+        <button class="side-btn" data-action="removeReportTiktok" id="removeReportTiktokBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg><span class="side-label">Remove Report</span></button>
+        <button class="side-btn primary" data-action="processReportTiktok" id="processTiktokBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span class="side-label">Process Report</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Google Sheets</div>
+        <button class="side-btn" data-action="openGoogleShippingTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M3 7h11v10H3z"/><path d="M14 10h4l3 3v4h-7z"/><circle cx="7" cy="18" r="2"/><circle cx="18" cy="18" r="2"/></svg><span class="side-label">Shipping Fee</span><span class="badge" id="tiktokShippingSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="openGoogleSkuTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span class="side-label">Link SKU / Product Sheet</span><span class="badge" id="tiktokSkuSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="openGoogleFbtShippingTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="3" width="15" height="13"/><path d="M16 8h4l3 3v5h-7V8z"/><circle cx="5.5" cy="18.5" r="2.5"/><circle cx="18.5" cy="18.5" r="2.5"/></svg><span class="side-label">FBT Shipping Fee</span><span class="badge" id="tiktokFbtShippingSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="refreshAllGoogleTiktok" id="refreshAllGoogleTiktokBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0 1 5"/><polyline points="20 4 20 11 13 11"/></svg><span class="side-label">Sync All Sheets</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Export</div>
+        <button class="side-btn" data-action="downloadReportTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="side-label">Download Report</span></button>
+        <button class="side-btn" data-action="openPushSheetsTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><polyline points="12 12 12 20"/><polyline points="9 15 12 12 15 15"/></svg><span class="side-label">Push to Google Sheets</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Table</div>
+        <button class="side-btn" data-action="toggleEditTiktok" id="editTiktokBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.12 2.12 0 0 1 3 3L12 15l-4 1 1-4z"/></svg><span class="side-label">Edit Table</span><span class="badge" id="editTiktokBadge">Off</span></button>
+        <button class="side-btn hidden" data-action="saveTiktokEdits" id="saveTiktokBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg><span class="side-label">Save Changes</span><span class="badge" id="saveTiktokBadge">0</span></button>
+        <button class="side-btn hidden" data-action="discardTiktokEdits" id="discardTiktokBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg><span class="side-label">Discard Changes</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Masters</div>
+        <button class="side-btn" data-action="openManualSkuTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/><line x1="12.5" y1="12" x2="16.5" y2="12"/><line x1="14.5" y1="10" x2="14.5" y2="14"/></svg><span class="side-label">Manual SKU</span><span class="badge" id="tiktokManualSkuBadge">0 saved</span></button>
+        <button class="side-btn" data-action="openProductMappingTiktok"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span class="side-label">Product Mapping / SKU Lookup</span></button>
+      </div>
+      <div class="side-group" style="margin-bottom:0;">
+        <div class="side-group-title">Preferences</div>
+        <button class="side-btn" data-action="openSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="side-label">Settings</span></button>
+      </div>
+      <div class="side-hint" id="sideHintTiktok">Drop a TikTok order export anywhere to begin.</div>
+     </div>
     </div>
 
     <!-- ===== MAIN ===== -->
-    <div class="main">
+    <div class="main" id="mainAZ">
       <div class="main-toolbar" id="mainToolbar">
         <div class="filename hidden" id="filenameTag">
           <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
@@ -549,6 +606,18 @@ a{ color:inherit; }
       </div>
       <div class="content" id="content"><!-- filled by render() --></div>
     </div>
+    <div class="main hidden" id="mainTiktok">
+      <div class="main-toolbar" id="mainToolbarTiktok">
+        <div class="filename hidden" id="filenameTagTiktok">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+          <span id="filenameTextTiktok"></span>
+        </div>
+        <span class="chip hidden" id="rowCountChipTiktok"></span><button class="btn sm danger hidden issue-btn" id="issueBtnTiktok" data-action="showIssuesTiktok">Issues <span class="badge" id="issueBadgeTiktok">0</span></button>
+        <span class="chip green hidden" id="processedChipTiktok">Processed</span><span class="chip hidden" id="tiktokFormulaNote">List Price = SKU Subtotal Before Discount + Shipping Fee After Discount · OFF = SKU Seller Discount · only To Ship lines are included</span>
+        <div class="main-toolbar-spacer"></div>
+      </div>
+      <div class="content" id="contentTiktok"><!-- filled by renderContentTiktok() --></div>
+    </div>
   </div>
 
   <!-- ===== STATUS BAR ===== -->
@@ -561,8 +630,16 @@ a{ color:inherit; }
     <div class="statusbar-spacer"></div>
     <span>FBA Fee status: <span class="fba-tag off" id="sbFbaStatus">Not Set</span></span><span class="dot"></span><span>Data issues: <b id="sbIssues">0</b></span>
   </div>
+  <div class="statusbar hidden" id="statusBarTiktok">
+    <span><b id="sbTiktokOrders">0</b> sold orders</span>
+    <span class="dot"></span>
+    <span><b id="sbTiktokExcluded">0</b> excluded (not To Ship)</span>
+    <div class="statusbar-spacer"></div>
+    <span>Data issues: <b id="sbTiktokIssues">0</b></span>
+  </div>
 
   <input type="file" id="fileInput" class="file-input-hidden" accept=".txt,.csv,.xlsx" multiple>
+  <input type="file" id="fileInputTiktok" class="file-input-hidden" accept=".xlsx,.csv,.txt" multiple>
   <div id="modalRoot"></div>
   <div class="toast-wrap" id="toastWrap"></div>
 </div>
@@ -595,6 +672,7 @@ const STATUS_ALIASES = { pending:'Pending', unshipped:'Unshipped', shipped:'Ship
 
 const state = {
   theme:'dark',
+  platform:'az',         // 'az' (Amazon/Walmart) or 'tiktok' — which top-level report mode is active
   rawRows: null,        // parsed straight from file (array of objects), combined across all uploaded files
   files: [],             // [{id, name, rowCount}] — every file currently loaded into the batch
   orders: [],            // processed output rows (matches column spec)
@@ -612,19 +690,49 @@ const state = {
   costMaster:[],
   productMapping:[],
   manualSkuRows:[], // user-entered SKU/Product/Size/Color rows — a fallback when a SKU isn't worth adding to the Google SKU sheet
-  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Cotton Passion', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'' },
+  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Cotton Passion', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'', tiktokSheetsWebAppUrl:'', tiktokTargetSheetUrl:'' },
   google:{
     exwhUrl:'', shippingUrl:'', fbaUrl:'', skuUrl:'',
     exwhRows:[], shippingRows:[], fbaRows:[], skuRows:[],
     exwhUpdated:null, shippingUpdated:null, fbaUpdated:null, skuUpdated:null,
     liveUrl:'', liveRows:[], liveUpdated:null, liveHash:'', liveMeta:{lastRun:null,lastStatus:'never',scanned:0,added:0,updated:0,deleted:0,unchanged:0,error:'',autoSync:false,intervalSec:30},
     liveSnapshot:[],
-    lastChanged:{}
+    lastChanged:{},
+    // TikTok mode has its own SKU/Product master and Shipping Fee sheet — kept
+    // separate from the Amazon/Walmart ones above since Seller SKUs and fee
+    // rules differ per platform.
+    tiktokSkuUrl:'', tiktokShippingUrl:'', tiktokFbtShippingUrl:'',
+    tiktokSkuRows:[], tiktokShippingRows:[], tiktokFbtShippingRows:[],
+    tiktokSkuUpdated:null, tiktokShippingUpdated:null, tiktokFbtShippingUpdated:null
   },
   modal:null,
   toasts:[],
   sidebarCollapsed:false,
-  _nextCostId:15, _nextMapId:15, _nextManualSkuId:1
+  _nextCostId:15, _nextMapId:15, _nextManualSkuId:1,
+  // ------------------------------------------------------------------
+  // TikTok Shop mode — fully separate pipeline from the Amazon/Walmart
+  // state above. A TikTok order export is filtered down to only the
+  // sellable "To Ship" lines (any substatus) and mapped straight to
+  // the 11-column report the seller uses (see TIKTOK_COLS).
+  // ------------------------------------------------------------------
+  tiktok:{
+    rawRows:null,
+    files:[],
+    orders:[],
+    isLoading:false,
+    isProcessed:false,
+    search:'',
+    sortBy:'date', sortDir:'asc',
+    excludedCount:0,
+    issueCount:0,
+    issues:[],
+    manualSkuRows:[],
+    productMapping:[],
+    _nextManualSkuId:1,
+    _nextMapId:1,
+    editMode:false,
+    pendingEdits:{} // key: rowId+'::'+field -> raw typed text, staged until Save is clicked
+  }
 };
 
 let toastSeq = 1;
@@ -666,9 +774,11 @@ const STORAGE_KEY = 'UsmanProfitForge.config.v3';
 function persistConfig(){
   try{
     localStorage.setItem(STORAGE_KEY, JSON.stringify({
-      theme:state.theme, settings:state.settings, costMaster:state.costMaster,
+      theme:state.theme, platform:state.platform, settings:state.settings, costMaster:state.costMaster,
       productMapping:state.productMapping, manualSkuRows:state.manualSkuRows, google:state.google,
-      nextCostId:state._nextCostId, nextMapId:state._nextMapId, nextManualSkuId:state._nextManualSkuId
+      nextCostId:state._nextCostId, nextMapId:state._nextMapId, nextManualSkuId:state._nextManualSkuId,
+      tiktokManualSkuRows:state.tiktok.manualSkuRows, tiktokProductMapping:state.tiktok.productMapping,
+      tiktokNextManualSkuId:state.tiktok._nextManualSkuId, tiktokNextMapId:state.tiktok._nextMapId
     }));
   }catch(err){ console.warn('Could not persist local config', err); }
 }
@@ -677,6 +787,7 @@ function loadConfig(){
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(!saved) return;
     if(saved.theme) state.theme = saved.theme;
+    if(saved.platform==='tiktok'||saved.platform==='az') state.platform = saved.platform;
     if(saved.settings) state.settings = Object.assign(state.settings, saved.settings);
     if(Array.isArray(saved.costMaster)){
       state.costMaster = saved.costMaster.map((c,i)=>({
@@ -706,6 +817,24 @@ function loadConfig(){
         color:String(m.color||'White')
       }));
     }
+    if(Array.isArray(saved.tiktokManualSkuRows)){
+      state.tiktok.manualSkuRows = saved.tiktokManualSkuRows.map((m,i)=>({
+        id:Number(m.id)||i+1,
+        sku:String(m.sku||''),
+        product:String(m.product||''),
+        size:String(m.size||''),
+        color:String(m.color||'')
+      }));
+    }
+    if(Array.isArray(saved.tiktokProductMapping)){
+      state.tiktok.productMapping = saved.tiktokProductMapping.map((m,i)=>({
+        id:Number(m.id)||i+1,
+        sku:String(m.sku||''),
+        product:String(m.product||''),
+        size:String(m.size||''),
+        color:String(m.color||'')
+      }));
+    }
     state.fbaFee = null;
     if(saved.google) state.google = Object.assign(state.google, saved.google);
       // Backward compatibility for older configs.
@@ -717,13 +846,21 @@ function loadConfig(){
       state.google.liveRows = Array.isArray(state.google.liveRows)?state.google.liveRows:[];
       state.google.liveSnapshot = Array.isArray(state.google.liveSnapshot)?state.google.liveSnapshot:[];
       state.google.liveMeta = Object.assign({lastRun:null,lastStatus:'never',scanned:0,added:0,updated:0,deleted:0,unchanged:0,error:'',autoSync:false,intervalSec:30}, state.google.liveMeta||{});
+      state.google.tiktokSkuUrl = state.google.tiktokSkuUrl || ''; state.google.tiktokShippingUrl = state.google.tiktokShippingUrl || ''; state.google.tiktokFbtShippingUrl = state.google.tiktokFbtShippingUrl || '';
+      state.google.tiktokSkuRows = Array.isArray(state.google.tiktokSkuRows)?state.google.tiktokSkuRows:[];
+      state.google.tiktokShippingRows = Array.isArray(state.google.tiktokShippingRows)?state.google.tiktokShippingRows:[];
+      state.google.tiktokFbtShippingRows = Array.isArray(state.google.tiktokFbtShippingRows)?state.google.tiktokFbtShippingRows:[];
     if(Number.isFinite(saved.nextCostId)) state._nextCostId = saved.nextCostId;
     if(Number.isFinite(saved.nextMapId)) state._nextMapId = saved.nextMapId;
     if(Number.isFinite(saved.nextManualSkuId)) state._nextManualSkuId = saved.nextManualSkuId;
+    if(Number.isFinite(saved.tiktokNextManualSkuId)) state.tiktok._nextManualSkuId = saved.tiktokNextManualSkuId;
+    if(Number.isFinite(saved.tiktokNextMapId)) state.tiktok._nextMapId = saved.tiktokNextMapId;
     // Defensive ID repair for older saved configurations.
     state._nextCostId = Math.max(state._nextCostId, ...state.costMaster.map(c=>Number(c.id)||0).concat([0])) + 0;
     state._nextMapId = Math.max(state._nextMapId, ...state.productMapping.map(m=>Number(m.id)||0).concat([0])) + 0;
     state._nextManualSkuId = Math.max(state._nextManualSkuId, ...state.manualSkuRows.map(m=>Number(m.id)||0).concat([0])) + 0;
+    state.tiktok._nextManualSkuId = Math.max(state.tiktok._nextManualSkuId, ...state.tiktok.manualSkuRows.map(m=>Number(m.id)||0).concat([0])) + 0;
+    state.tiktok._nextMapId = Math.max(state.tiktok._nextMapId, ...state.tiktok.productMapping.map(m=>Number(m.id)||0).concat([0])) + 0;
     // Ensure vendor is fixed by the business rules even for older saved configs.
     state.settings.vendorName = 'Cotton Passion';
   }catch(err){ console.warn('Could not load local config', err); }
@@ -1012,6 +1149,21 @@ function googleShippingMatch(orderId, product='', size='', sku='', color='', fie
   }
   return {value:null,reason:'missing'};
 }
+function expandScientificNotation(str){
+  // Google Sheets often stores a long numeric ID (TikTok Order IDs are 18
+  // digits) as a NUMBER, and its CSV/gviz export can then return that as
+  // scientific notation, e.g. "5.77554356867011E+17". Reconstruct the plain
+  // digit string directly from the mantissa+exponent text — never round-trip
+  // through a JS float, which would only lose more precision.
+  const m=String(str||'').trim().match(/^([+-]?)(\d+)(?:\.(\d+))?[eE]\+?(\d+)$/);
+  if(!m) return null;
+  const sign=m[1]==='-'?'-':'';
+  const intPart=m[2], fracPart=m[3]||'', exp=Number(m[4]);
+  const digits=intPart+fracPart;
+  const pointPos=intPart.length+exp;
+  if(pointPos>=digits.length) return sign+digits+'0'.repeat(pointPos-digits.length);
+  return sign+digits.slice(0,pointPos)+digits.slice(pointPos);
+}
 function normalizeOrderIdForMatch(v){
   // Google Sheets may return Order ID as text or a number and can preserve
   // stray spaces/apostrophes/non-breaking spaces. Normalize only for lookup;
@@ -1019,6 +1171,8 @@ function normalizeOrderIdForMatch(v){
   let x=String(v==null?'':v).replace(/\u00a0/g,' ').trim();
   x=x.replace(/^[']+|[']+$/g,'').replace(/\s+/g,'');
   x=x.replace(/[\u2010-\u2015\u2212]/g,'-');
+  const expanded=expandScientificNotation(x);
+  if(expanded) x=expanded;
   return x.replace(/[^a-zA-Z0-9]/g,'').toLowerCase();
 }
 function googleFbaMatch(orderId, product, sku, size='', color='', field='fbaFee'){
@@ -1353,8 +1507,16 @@ function visibleOrders(){
 function render(){
   renderSidebarState();
   renderToolbar();
-  renderContent();
   renderStatusBar();
+  renderSidebarStateTiktok();
+  renderToolbarTiktok();
+  renderStatusBarTiktok();
+  // Only the currently visible platform's table is (re)drawn here — the
+  // other one is refreshed explicitly by setPlatform() when the person
+  // switches tabs, since a table drawn while `display:none` measures a
+  // 0px viewport and would otherwise render only a handful of rows.
+  if(state.platform==='tiktok') renderContentTiktok(); else renderContent();
+  applyPlatformVisibility();
 }
 
 function renderSidebarState(){
@@ -1384,7 +1546,7 @@ function renderToolbar(){
   const ib=$('#issueBtn'); if(ib){ ib.classList.toggle('hidden', !state.issueCount); }
   $('#processedChip').classList.toggle('hidden', !state.isProcessed);
   $('#formulaNote').classList.toggle('hidden', !state.isProcessed);
-  $('#statusFilter').classList.toggle('hidden', !state.orders.length);
+  $('#statusFilter').classList.toggle('hidden', state.platform!=='az' || !state.orders.length);
 }
 
 function renderStatusBar(){
@@ -1932,6 +2094,58 @@ function normalizeGoogleFbaRows(rows){
   });
   return out;
 }
+// FBT Shipping Fee (TikTok "Fulfillment by TikTok Shop" orders) — a FIXED
+// Product+Size rate, exactly like Ex-WH Cost / FBA Fee above. Unlike the
+// regular TikTok Shipping Fee sheet (which is Order-ID keyed, since the
+// seller buys and prints those labels themselves), FBT orders are shipped
+// entirely by TikTok — the seller never sees a per-order label cost, only a
+// fixed rate card by Product/Size, which is what this sheet holds.
+function normalizeGoogleTiktokFbtShippingRows(rows){
+  const out=[];
+  rows.forEach((r,i)=>{
+    const product=firstMatchingValue(r,['product','product-name','product name','productname','name']);
+    const size=firstMatchingValue(r,['size','product-size','product size','variantsize','variant size']);
+    const color=firstMatchingValue(r,['color','product-color','product color','variantcolor','variant color']);
+    const sku=firstMatchingValue(r,['sku','merchant-sku','merchant sku','seller-sku','seller sku']);
+    const feeRaw=firstMatchingValue(r,['fbt shipping','fbt-shipping','fbtshipping','fbt shipping fee','fbt-shipping-fee','fbtshippingfee','fbt shipping cost','fulfillment by tiktok shop shipping fee']);
+    // Zero is a valid fee. Check presence, not truthiness.
+    if((!product&&!sku)||!hasValue(feeRaw)) return;
+    const fbtShippingFee=toNum(feeRaw);
+    if(!Number.isFinite(fbtShippingFee)) return;
+    out.push({product:catalogDisplayText(product),size:catalogDisplayText(size),color:catalogDisplayText(color),sku:catalogDisplayText(sku),fbtShippingFee,_row:i+2});
+  });
+  return out;
+}
+function googleTiktokFbtShippingMatch(product,sku,size='',color=''){
+  const rows=Array.isArray(state.google?.tiktokFbtShippingRows)?state.google.tiktokFbtShippingRows:[];
+  if(!rows.length) return {value:null,reason:'sheet-empty'};
+  const s=canonicalCatalogKey(sku),p=looseProductKey(product),z=sizeKey(size),c=canonicalColor(color);
+  const v=rows.filter(x=>Number.isFinite(Number(x.fbtShippingFee)));
+
+  // 1) SKU is the strongest source, same tiering as Ex-WH Cost.
+  for(const pred of [
+    x=>s&&canonicalCatalogKey(x.sku)===s&&z&&sizeKey(x.size)===z&&c&&canonicalColor(x.color)===c,
+    x=>s&&canonicalCatalogKey(x.sku)===s&&z&&sizeKey(x.size)===z,
+    x=>s&&canonicalCatalogKey(x.sku)===s
+  ]){
+    const h=v.filter(pred);
+    if(h.length===1) return {value:Number(h[0].fbtShippingFee),row:h[0]._row,reason:'sku'};
+    if(h.length>1){ const n=duplicateEquivalent(h,'fbtShippingFee'); if(n!==null) return {value:n,row:h[0]._row,reason:'sku-duplicate-equivalent'}; }
+  }
+
+  // 2) Exact product/size/color — this is the match the user asked for
+  // ("product ka name or size ka sath").
+  for(const [pred,reason] of [
+    [x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z&&c&&canonicalColor(x.color)===c,'product-size-color'],
+    [x=>p&&looseProductKey(x.product)===p&&z&&sizeKey(x.size)===z,'product-size'],
+    [x=>p&&looseProductKey(x.product)===p,'product']
+  ]){
+    const h=v.filter(pred);
+    if(h.length===1) return {value:Number(h[0].fbtShippingFee),row:h[0]._row,reason};
+    if(h.length>1){ const n=duplicateEquivalent(h,'fbtShippingFee'); if(n!==null) return {value:n,row:h[0]._row,reason:reason+'-duplicate-equivalent'}; }
+  }
+  return {value:null,reason:'missing'};
+}
 
 function normalizeGoogleSkuRows(rows){const out=[];let skippedNoSku=0;rows.forEach((r,i)=>{const sku=firstMatchingValue(r,['sku','merchant-sku','seller-sku']);let product=firstMatchingValue(r,['product','product-name','productname','name']);const size=firstMatchingValue(r,['size','product-size','variantsize']);const color=firstMatchingValue(r,['color','product-color','variantcolor']);if(!sku){skippedNoSku++;return;}if(!product) product=sku;out.push({
   sku:catalogDisplayText(sku),
@@ -2069,6 +2283,13 @@ function modalBody(kind){
   if(kind==='googleShipping') return googleLinkModalHtml('shipping');
   if(kind==='liveSync') return liveSyncModalHtml();
   if(kind==='shortcuts') return shortcutsModalHtml();
+  if(kind==='tiktokGoogleSku') return tiktokGoogleLinkModalHtml('sku');
+  if(kind==='tiktokGoogleShipping') return tiktokGoogleLinkModalHtml('shipping');
+  if(kind==='tiktokGoogleFbtShipping') return tiktokGoogleLinkModalHtml('fbtShipping');
+  if(kind==='tiktokManualSku') return tiktokManualSkuModalHtml();
+  if(kind==='tiktokMapping') return tiktokMappingModalHtml();
+  if(kind==='tiktokIssues') return tiktokIssuesModalHtml();
+  if(kind==='tiktokPushSheets') return tiktokPushSheetsModalHtml();
   return '';
 }
 
@@ -2310,7 +2531,14 @@ function wireModal(kind){
   if(kind==='googleExwh') wireGoogleLinkModal('exwh');
   if(kind==='googleShipping') wireGoogleLinkModal('shipping');
 
-  if(kind==='liveSync') wireLiveSyncModal();}
+  if(kind==='liveSync') wireLiveSyncModal();
+  if(kind==='tiktokGoogleSku') wireTiktokGoogleLinkModal('sku');
+  if(kind==='tiktokGoogleShipping') wireTiktokGoogleLinkModal('shipping');
+  if(kind==='tiktokGoogleFbtShipping') wireTiktokGoogleLinkModal('fbtShipping');
+  if(kind==='tiktokManualSku') wireTiktokManualSkuModal();
+  if(kind==='tiktokMapping') wireTiktokMappingModal();
+  if(kind==='tiktokPushSheets') wireTiktokPushSheetsModal();
+}
 
 /* ---------------------------- DOWNLOAD REPORT ---------------------------- */
 async function downloadReport(){
@@ -2381,6 +2609,1095 @@ async function downloadReport(){
   }catch(err){ console.error(err); toast('error','Download failed',String(err.message||err)); }
 }
 
+/* =====================================================================
+   TIKTOK SHOP MODE — fully separate pipeline from Amazon/Walmart above.
+   A TikTok order export (OrderSKUList sheet) is filtered down to only
+   "To Ship" line items (any substatus) and mapped to the 12-column
+   report: Date, Order ID, Vendor, Status, Shop, Product, Size, Color,
+   QTY, List Price, OFF, Shipping Fee (matched from a linked Google Sheet
+   by Order ID — see normalizeGoogleTiktokShippingRows / googleTiktokShippingMatch).
+   ===================================================================== */
+
+const TIKTOK_COLS = [
+  {key:'date', label:'Date', cls:'col-date'},
+  {key:'orderId', label:'Order ID', cls:'col-oid'},
+  {key:'vendor', label:'Vendor', cls:'col-vendor'},
+  {key:'status', label:'Status', cls:'col-status'},
+  {key:'shop', label:'Shop', cls:'col-shop'},
+  {key:'product', label:'Product', cls:'col-product'},
+  {key:'size', label:'Size', cls:'col-size'},
+  {key:'color', label:'Color', cls:'col-color'},
+  {key:'qty', label:'QTY', cls:'col-qty', num:true},
+  {key:'listPrice', label:'List Price', cls:'col-list', num:true, money:true},
+  {key:'off', label:'OFF', cls:'col-off', num:true, money:true},
+  {key:'shippingFee', label:'Shipping Fee', cls:'col-shipfee', num:true, money:true}
+];
+
+/* ---------------------------- TIKTOK: FILE PARSING ---------------------------- */
+function handleFilesTiktok(fileList){
+  Array.from(fileList||[]).filter(Boolean).forEach(f=>handleFileTiktok(f));
+}
+function handleFileTiktok(file){
+  if(!file) return;
+  const isXlsx = /\.xlsx$/i.test(file.name);
+  const okExt = /\.(xlsx|csv|txt)$/i.test(file.name);
+  if(!okExt){ toast('error','Unsupported file', file.name+': please upload a TikTok Shop order export (.xlsx) or .csv.'); return; }
+  const reader = new FileReader();
+  if(isXlsx){
+    reader.onload = function(e){
+      let rows;
+      try{
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        // TikTok's export sheet is usually named "OrderSKUList" — fall back to
+        // any sheet whose name mentions "order", then the first sheet.
+        const sheetName = wb.SheetNames.find(n=>n.trim().toLowerCase()==='orderskulist')
+          || wb.SheetNames.find(n=>/order/i.test(n))
+          || wb.SheetNames[0];
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[sheetName], {defval:'', raw:false});
+      }catch(err){
+        toast('error','Could not read file', file.name+': '+String(err.message||err)); return;
+      }
+      if(!rows || !rows.length){ toast('error','Empty report', file.name+': no rows were found in that file.'); return; }
+      addParsedFileTiktok(file.name, rows);
+    };
+    reader.onerror = function(){ toast('error','Read failed', file.name+' could not be read.'); };
+    reader.readAsArrayBuffer(file);
+    return;
+  }
+  reader.onload = function(e){
+    const text = e.target.result;
+    let parsed;
+    try{
+      const firstLine = String(text).split(/\r?\n/,1)[0] || '';
+      const delimiter = firstLine.includes('\t') ? '\t' : ',';
+      parsed = Papa.parse(text, { header:true, skipEmptyLines:true, delimiter });
+    }catch(err){
+      toast('error','Could not read file', file.name+': '+String(err.message||err)); return;
+    }
+    if(!parsed.data || !parsed.data.length){ toast('error','Empty report', file.name+': no rows were found in that file.'); return; }
+    addParsedFileTiktok(file.name, parsed.data);
+  };
+  reader.onerror = function(){ toast('error','Read failed', file.name+' could not be read.'); };
+  reader.readAsText(file);
+}
+function addParsedFileTiktok(name, rows){
+  const id = uid();
+  rows.forEach(r=>{ if(r && typeof r==='object') r.__ttFileId = id; });
+  state.tiktok.files.push({ id, name, rowCount: rows.length });
+  state.tiktok.rawRows = (state.tiktok.rawRows||[]).concat(rows);
+  state.tiktok.isProcessed = false;
+  state.tiktok.orders = [];
+  const totalFiles = state.tiktok.files.length;
+  toast('success','Report loaded', name+' — '+rows.length+' line item(s) added.'+(totalFiles>1?' ('+totalFiles+' files, '+state.tiktok.rawRows.length+' rows total.)':' Ready to process.'));
+  render();
+}
+function removeUploadedFileTiktok(id){
+  const idx = state.tiktok.files.findIndex(f=>f.id===id);
+  if(idx===-1) return;
+  const removed = state.tiktok.files.splice(idx,1)[0];
+  state.tiktok.rawRows = (state.tiktok.rawRows||[]).filter(r=> !r || r.__ttFileId !== id);
+  if(!state.tiktok.files.length) state.tiktok.rawRows = null;
+  state.tiktok.isProcessed = false;
+  state.tiktok.orders = [];
+  render();
+  toast('info','File removed', removed.name+' was removed from the batch.');
+}
+function combinedFileLabelTiktok(){
+  if(!state.tiktok.files.length) return '';
+  if(state.tiktok.files.length===1) return state.tiktok.files[0].name;
+  return state.tiktok.files.length+' files ('+fmtNum((state.tiktok.rawRows||[]).length)+' rows)';
+}
+function exportBaseNameTiktok(){
+  if(!state.tiktok.files.length) return 'TikTok_export';
+  if(state.tiktok.files.length===1) return state.tiktok.files[0].name.replace(/\.[^.]+$/,'');
+  return 'Combined_'+state.tiktok.files.length+'_TikTok_Reports';
+}
+function removeReportTiktok(){
+  state.tiktok.rawRows=null; state.tiktok.files=[]; state.tiktok.orders=[]; state.tiktok.isProcessed=false; state.tiktok.isLoading=false; state.tiktok.excludedCount=0; state.tiktok.issueCount=0; state.tiktok.issues=[];
+  render();
+  toast('info','Report removed','The uploaded TikTok report(s) were cleared. You can upload new file(s) now.');
+}
+
+/* ---------------------------- TIKTOK: SKU / PRODUCT LOOKUP ---------------------------- */
+function tiktokFindMappingFor(sku, productName){
+  const bySku = state.tiktok.productMapping.find(m=>m.sku && sameKey(m.sku, sku));
+  if(bySku) return bySku;
+  const byName = state.tiktok.productMapping.find(m=>m.product && sameKey(m.product, productName));
+  return byName || null;
+}
+// Layered match, same priority order as the Amazon/Walmart pipeline: the
+// linked Google SKU sheet is authoritative, then the local Manual SKU list,
+// then manual Product Mapping, and only then the raw file's own Product
+// Name / Variation text as a last resort (never leaves Product/Size/Color
+// fully blank when the source file has something usable).
+function tiktokSkuLookup(sellerSku, productName, variation){
+  const key = canonicalCatalogKey(sellerSku);
+  let hit = null, source = null;
+  if(key){
+    const rows = Array.isArray(state.google?.tiktokSkuRows) ? state.google.tiktokSkuRows : [];
+    hit = rows.find(x=>canonicalCatalogKey(x.sku)===key) || null;
+    if(hit) source = 'Google Sheets';
+  }
+  if(!hit && key){
+    hit = state.tiktok.manualSkuRows.find(x=>canonicalCatalogKey(x.sku)===key) || null;
+    if(hit) source = 'Manual SKU';
+  }
+  if(!hit){
+    hit = tiktokFindMappingFor(sellerSku, productName);
+    if(hit) source = 'Product Mapping';
+  }
+  if(hit){
+    return { product: hit.product || productName || 'Unknown product', size: hit.size || '', color: hit.color || '', source };
+  }
+  // Fallback: TikTok's "Variation" column is typically "<Color>, <Size>"
+  // (e.g. "Floral Ochre, King") — split on the first comma.
+  let size='', color='';
+  const v = String(variation||'').trim();
+  if(v.includes(',')){
+    const idx = v.indexOf(',');
+    color = v.slice(0,idx).trim();
+    size = v.slice(idx+1).trim();
+  } else if(v){ size = v; }
+  return { product: productName || 'Unknown product', size, color, source: null };
+}
+
+/* ---------------------------- TIKTOK: PROCESS PIPELINE ---------------------------- */
+// TikTok's "Paid Time" column looks like "09/03/2026 10:44:08 PM" (US date +
+// time). Only the calendar date is wanted — never the time-of-day.
+function tiktokExtractDate(raw){
+  if(!hasValue(raw)) return '';
+  const s = String(raw).trim();
+  const datePart = s.split(/\s+/)[0] || s;
+  const m = datePart.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})$/);
+  if(m){
+    const mo=Number(m[1]), da=Number(m[2]), yr=Number(m[3]);
+    const d = new Date(Date.UTC(yr, mo-1, da));
+    if(!isNaN(d.getTime())) return formatDate(d.toISOString());
+  }
+  return formatDate(s);
+}
+// Every line whose Order Status is "To Ship" is kept, regardless of
+// Substatus (Awaiting shipment, Awaiting collection, etc. all count) —
+// Shipped, Delivered, Cancelled, On hold, In transit, etc. are excluded.
+// TikTok's own export marks every line with a Fulfillment Type of either
+// "Fulfillment by Seller" or "Fulfillment by TikTok Shop" — the Shop column
+// is set from that (not hardcoded), so a mixed-fulfillment report tags each
+// line correctly. Anything unrecognized/missing falls back to CP TTS and is
+// flagged as an issue rather than silently mistagged.
+function tiktokShopFromFulfillmentType(raw){
+  const norm=String(raw||'').trim().toLowerCase().replace(/\s+/g,' ');
+  if(norm==='fulfillment by tiktok shop') return 'CP FBT';
+  if(norm==='fulfillment by seller') return 'CP TTS';
+  return null;
+}
+// Single source of truth for which raw report lines are kept, used by both
+// the oidShareCounts pre-pass and tiktokRowFromRaw so their filtering can
+// never drift out of sync (that would throw off the per-order fee split).
+// Order Status must be "To Ship". Order Substatus must be "Awaiting
+// collection" — EXCEPT Fulfillment by TikTok Shop orders, which are always
+// kept regardless of substatus (they never pass through the seller's own
+// "Awaiting collection" pickup step).
+function tiktokLineShouldInclude(r){
+  if(normText(getFieldLoose(r,['order status'])) !== 'to ship') return false;
+  const fulfillmentTypeRaw = getFieldLoose(r,['fulfillment type','fulfillment-type','fulfillmenttype','fulfilment type']);
+  if(tiktokShopFromFulfillmentType(fulfillmentTypeRaw) === 'CP FBT') return true;
+  return normText(getFieldLoose(r,['order substatus'])) === 'awaiting collection';
+}
+function tiktokRowFromRaw(r, oidShareCounts){
+  if(!tiktokLineShouldInclude(r)) return null;
+  const fulfillmentTypeRaw = getFieldLoose(r,['fulfillment type','fulfillment-type','fulfillmenttype','fulfilment type']);
+  const shop = tiktokShopFromFulfillmentType(fulfillmentTypeRaw) || 'CP TTS';
+  const isFbt = shop === 'CP FBT';
+  const orderId = String(getFieldLoose(r,['order id'])||'').trim();
+  const sellerSku = String(getFieldLoose(r,['seller sku'])||'').trim();
+  const productName = getFieldLoose(r,['product name'])||'';
+  const variation = getFieldLoose(r,['variation'])||'';
+  const match = tiktokSkuLookup(sellerSku, productName, variation);
+  const qty = toNum(getFieldLoose(r,['quantity']));
+  const subtotalBefore = toNum(getFieldLoose(r,['sku subtotal before discount']));
+  const shipAfterDiscountRaw = toNum(getFieldLoose(r,['shipping fee after discount']));
+  // A combined order's per-line "Shipping Fee After Discount" repeats the
+  // WHOLE order's fee on every line item in TikTok's own export, so it's
+  // split evenly across however many "To Ship" lines share this Order ID.
+  const shareCount = (orderId && oidShareCounts && oidShareCounts[orderId]>0) ? oidShareCounts[orderId] : 1;
+  const shipAfterDiscount = shipAfterDiscountRaw / shareCount;
+  const listPrice = Math.round((subtotalBefore + shipAfterDiscount + Number.EPSILON)*100)/100;
+  const off = toNum(getFieldLoose(r,['sku seller discount']));
+  const paidTime = getFieldLoose(r,['paid time']);
+  // Shipping Fee source depends on Shop: Fulfillment by TikTok Shop orders
+  // are never in the seller's own Order-ID-keyed shipping-label sheet (TikTok
+  // ships those, not the seller) — they use the fixed FBT Shipping Fee sheet
+  // instead, matched by Product+Size. Everything else (CP TTS) keeps using
+  // the existing Order-ID sheet exactly as before.
+  let shippingFee, shipReasonMissing, shipSheetLinked;
+  if(isFbt){
+    const fbtM = googleTiktokFbtShippingMatch(match.product||productName, sellerSku, match.size, match.color);
+    shippingFee = fbtM.value!==null ? Math.round((fbtM.value*qty + Number.EPSILON)*100)/100 : null;
+    shipReasonMissing = 'FBT Shipping Fee missing for this Product/Size';
+    shipSheetLinked = !!state.google.tiktokFbtShippingUrl;
+  } else {
+    const shipM = googleTiktokShippingMatch(orderId);
+    // The linked Shipping Fee sheet's value is the TOTAL for the whole order,
+    // not per line — split it the same way Shipping Fee After Discount is
+    // split above, so an order with 3 "To Ship" line items gets 1/3 of the
+    // fee on each line instead of the full amount 3 times over.
+    const shippingFeeRaw = shipM.value;
+    shippingFee = shippingFeeRaw!==null ? Math.round((shippingFeeRaw/shareCount + Number.EPSILON)*100)/100 : null;
+    shipReasonMissing = shipM.reason==='ambiguous-order-id' ? 'Shipping Fee sheet has conflicting rows for this Order ID' : 'Shipping Fee missing for this Order ID';
+    shipSheetLinked = !!state.google.tiktokShippingUrl;
+  }
+  const issues=[];
+  if(!orderId) issues.push('Missing Order ID');
+  if(!sellerSku) issues.push('Missing Seller SKU');
+  if(sellerSku && !match.source) issues.push('SKU not found in linked SKU sheet');
+  if(hasValue(fulfillmentTypeRaw) && !tiktokShopFromFulfillmentType(fulfillmentTypeRaw)) issues.push('Unrecognized Fulfillment Type — Shop defaulted to CP TTS');
+  if(orderId && shipSheetLinked && shippingFee===null){
+    issues.push(shipReasonMissing);
+  }
+  return {
+    _id:uid(), rawSku:sellerSku, date:tiktokExtractDate(paidTime), orderId, vendor:'Cotton Passion', status:'Sold', shop,
+    product:match.product, size:match.size||'—', color:match.color||'—', qty, listPrice, off,
+    shippingFee,
+    skuSource: match.source || 'Missing',
+    issues,
+    raw:{ orderId, sellerSku, productName, variation, paidTime:paidTime||'', orderStatus:getFieldLoose(r,['order status'])||'', orderSubstatus:getFieldLoose(r,['order substatus'])||'', fulfillmentType:fulfillmentTypeRaw||'' }
+  };
+}
+function processTiktokReport(){
+  if(!state.tiktok.rawRows){ toast('error','Nothing to process','Upload a TikTok order report first.'); return; }
+  state.tiktok.isLoading = true; render();
+  window.setTimeout(()=>{
+    try{ processTiktokReportCore(true); }
+    catch(err){
+      console.error('TikTok processing error', err);
+      state.tiktok.isLoading=false; state.tiktok.isProcessed=false;
+      render();
+      toast('error','Processing failed', String(err && err.message || err));
+    }
+  }, 50);
+}
+function processTiktokReportCore(showToast){
+  if(!Array.isArray(state.tiktok.rawRows)) throw new Error('Loaded report data is invalid.');
+  // Re-processing rebuilds every row with a fresh _id, so any staged (unsaved)
+  // edits keyed to the old rows can no longer apply to anything — drop them
+  // rather than leave orphaned entries behind.
+  state.tiktok.pendingEdits = {};
+  // Count how many "To Ship" lines share each Order ID BEFORE building rows,
+  // so tiktokRowFromRaw can split each combined order's repeated Shipping
+  // Fee After Discount evenly across its line items.
+  const oidShareCounts={};
+  state.tiktok.rawRows.forEach(r=>{
+    if(!r || typeof r!=='object') return;
+    if(!tiktokLineShouldInclude(r)) return;
+    const oid=String(getFieldLoose(r,['order id'])||'').trim();
+    if(oid) oidShareCounts[oid]=(oidShareCounts[oid]||0)+1;
+  });
+  const rows=[]; let excluded=0;
+  state.tiktok.rawRows.forEach(r=>{
+    if(!r || typeof r!=='object') return;
+    const row = tiktokRowFromRaw(r, oidShareCounts);
+    if(!row){ excluded++; return; }
+    rows.push(row);
+  });
+  const oidCounts = {}; rows.forEach(r=> { if(r.orderId) oidCounts[r.orderId]=(oidCounts[r.orderId]||0)+1; });
+  rows.forEach(r=>r.isMulti = !!(r.orderId && oidCounts[r.orderId]>1));
+  state.tiktok.orders = rows;
+  state.tiktok.excludedCount = excluded;
+  state.tiktok.issues=[];
+  rows.forEach(r=>{ if(r.issues.length) state.tiktok.issues.push({orderId:r.orderId||'(missing)', sku:r.rawSku||'(missing)', product:r.product, issues:r.issues}); });
+  state.tiktok.issueCount = state.tiktok.issues.length;
+  state.tiktok.isProcessed = true; state.tiktok.isLoading = false;
+  render();
+  if(state.google.tiktokShippingUrl){
+    const sheetHasUsableRows = (state.google.tiktokShippingRows||[]).some(x=>x._mode==='orderId');
+    // Fulfillment by TikTok Shop rows never use this Order-ID sheet (they use
+    // the separate FBT Shipping Fee sheet below) — exclude them here so a
+    // report that's all-FBT doesn't falsely trigger a "0 matches" warning.
+    const rowsWithOrderId = rows.filter(r=>r.orderId && r.shop!=='CP FBT');
+    const matchedCount = rowsWithOrderId.filter(r=>r.shippingFee!==null).length;
+    if(sheetHasUsableRows && rowsWithOrderId.length && matchedCount===0){
+      toast('error','Shipping Fee sheet linked but 0 matches','None of this report\u2019s Order IDs were found in the linked Shipping Fee sheet. Open Shipping Fee \u2192 check the link points at the correct tab (the exact #gid in the URL) for these dates, then Sync Now.');
+    }
+  }
+  if(state.google.tiktokFbtShippingUrl){
+    const fbtRows = rows.filter(r=>r.shop==='CP FBT');
+    const fbtMatched = fbtRows.filter(r=>r.shippingFee!==null).length;
+    if((state.google.tiktokFbtShippingRows||[]).length && fbtRows.length && fbtMatched===0){
+      toast('error','FBT Shipping Fee sheet linked but 0 matches','None of this report\u2019s Fulfillment by TikTok Shop line items matched a Product/Size in the linked FBT Shipping Fee sheet. Open FBT Shipping Fee \u2192 check the Product and Size spelling, then Sync Now.');
+    }
+  }
+  if(showToast){
+    toast(state.tiktok.issueCount?'info':'success','TikTok report processed', rows.length+' sold order line(s) included · '+excluded+' excluded (not To Ship).'+(state.tiktok.issueCount?' '+state.tiktok.issueCount+' line(s) need attention.':''));
+  }
+}
+function reprocessTiktokIfLoaded(msg){
+  if(state.tiktok.rawRows && state.tiktok.isProcessed){ processTiktokReportCore(false); if(msg) toast('success','Recalculated', msg); }
+}
+
+/* ---------------------------- TIKTOK: DERIVED / FILTER / SORT ---------------------------- */
+function visibleTiktokOrders(){
+  let rows = state.tiktok.orders;
+  if(state.tiktok.search){
+    const q = state.tiktok.search.toLowerCase();
+    rows = rows.filter(r=> (r.orderId+r.product+r.rawSku).toLowerCase().includes(q));
+  }
+  const dir = state.tiktok.sortDir==='asc'?1:-1;
+  const key = state.tiktok.sortBy;
+  rows = rows.slice().sort((a,b)=>{
+    // CP TTS orders always come before CP FBT ones — a hard grouping, the
+    // same way Amazon/Walmart groups by platform before the column sort —
+    // with the chosen column sort applied within each group.
+    const shopRank = s => s==='CP TTS' ? 0 : (s==='CP FBT' ? 1 : 2);
+    const as = shopRank(a.shop), bs = shopRank(b.shop);
+    if(as!==bs) return as-bs;
+    let av=a[key], bv=b[key];
+    if(typeof av==='number' && typeof bv==='number') return (av-bv)*dir;
+    return String(av).localeCompare(String(bv))*dir;
+  });
+  return groupRowsByOrderId(rows);
+}
+
+/* ---------------------------- TIKTOK: RENDER ---------------------------- */
+function renderSidebarStateTiktok(){
+  const removeBtn=$('#removeReportTiktokBtn'); if(removeBtn) removeBtn.disabled = !state.tiktok.rawRows || state.tiktok.isLoading;
+  const shipBadge=$('#tiktokShippingSheetBadge');
+  if(shipBadge){
+    const rows=state.google.tiktokShippingRows||[];
+    const usable=rows.filter(x=>x._mode==='orderId').length;
+    shipBadge.textContent = state.google.tiktokShippingUrl ? ('Linked · '+usable+' usable') : 'Not linked';
+    shipBadge.className='badge'+(state.google.tiktokShippingUrl?(usable?' on':' warn'):'');
+  }
+  const skuBadge=$('#tiktokSkuSheetBadge'); if(skuBadge){ skuBadge.textContent = state.google.tiktokSkuUrl ? 'Linked' : 'Not linked'; skuBadge.className='badge'+(state.google.tiktokSkuUrl?' on':''); }
+  const fbtShipBadge=$('#tiktokFbtShippingSheetBadge');
+  if(fbtShipBadge){
+    const rows=state.google.tiktokFbtShippingRows||[];
+    fbtShipBadge.textContent = state.google.tiktokFbtShippingUrl ? ('Linked · '+rows.length+' usable') : 'Not linked';
+    fbtShipBadge.className='badge'+(state.google.tiktokFbtShippingUrl?(rows.length?' on':' warn'):'');
+  }
+  const manualSkuBadge=$('#tiktokManualSkuBadge'); if(manualSkuBadge){ manualSkuBadge.textContent = state.tiktok.manualSkuRows.length+' saved'; manualSkuBadge.className='badge'+(state.tiktok.manualSkuRows.length?' on':''); }
+  const refreshBtn=$('#refreshAllGoogleTiktokBtn'); if(refreshBtn) refreshBtn.disabled = !(state.google.tiktokShippingUrl||state.google.tiktokSkuUrl||state.google.tiktokFbtShippingUrl) || state.tiktok.isLoading;
+  const processBtn=$('#processTiktokBtn'); if(processBtn) processBtn.disabled = !state.tiktok.rawRows || state.tiktok.isLoading;
+  const sideHint=$('#sideHintTiktok'); if(sideHint) sideHint.textContent = state.tiktok.orders.length ? state.tiktok.orders.length+' sold order line(s) loaded.' : 'Drop a TikTok order export anywhere to begin.';
+  const pendingCount = Object.keys(state.tiktok.pendingEdits||{}).length;
+  const saveBtn=$('#saveTiktokBtn');
+  if(saveBtn) saveBtn.classList.toggle('hidden', !(state.tiktok.editMode || pendingCount>0));
+  const saveBadge=$('#saveTiktokBadge'); if(saveBadge){ saveBadge.textContent=String(pendingCount); saveBadge.className='badge'+(pendingCount?' warn':''); }
+  const discardBtn=$('#discardTiktokBtn');
+  if(discardBtn) discardBtn.classList.toggle('hidden', !(state.tiktok.editMode || pendingCount>0));
+}
+function renderToolbarTiktok(){
+  const ft=$('#filenameTagTiktok'); if(ft) ft.classList.toggle('hidden', !state.tiktok.files.length);
+  const ftx=$('#filenameTextTiktok'); if(ftx) ftx.textContent = combinedFileLabelTiktok();
+  const rc=$('#rowCountChipTiktok');
+  if(rc){ if(state.tiktok.orders.length){ rc.classList.remove('hidden'); rc.textContent = state.tiktok.orders.length+' rows'; } else rc.classList.add('hidden'); }
+  const ib=$('#issueBtnTiktok'); if(ib) ib.classList.toggle('hidden', !state.tiktok.issueCount);
+  const ibadge=$('#issueBadgeTiktok'); if(ibadge){ ibadge.textContent = state.tiktok.issueCount?String(state.tiktok.issueCount):'OK'; ibadge.className='badge'+(state.tiktok.issueCount?' issue':' on'); }
+  const pc=$('#processedChipTiktok'); if(pc) pc.classList.toggle('hidden', !state.tiktok.isProcessed);
+  const fn=$('#tiktokFormulaNote'); if(fn) fn.classList.toggle('hidden', !state.tiktok.isProcessed);
+}
+function renderStatusBarTiktok(){
+  const rows = state.tiktok.orders;
+  const so=$('#sbTiktokOrders'); if(so) so.textContent = fmtNum(rows.length);
+  const se=$('#sbTiktokExcluded'); if(se) se.textContent = fmtNum(state.tiktok.excludedCount||0);
+  const si=$('#sbTiktokIssues'); if(si) si.textContent = fmtNum(state.tiktok.issueCount||0);
+}
+function renderContentTiktok(){
+  const c = $('#contentTiktok');
+  if(!c) return;
+  if(state.tiktok.isLoading){ c.innerHTML = loadingHtmlTiktok(); return; }
+  if(!state.tiktok.orders.length){ c.innerHTML = emptyHtmlTiktok(); wireEmptyTiktok(); return; }
+  c.innerHTML = tiktokTableHtml();
+  wireTiktokTable();
+}
+function loadingHtmlTiktok(){
+  let rows = '';
+  for(let i=0;i<10;i++){
+    rows += `<div class="skel-row">${Array.from({length:8}).map(()=>`<div class="skel" style="width:${60+Math.random()*70}px;"></div>`).join('')}</div>`;
+  }
+  return `<div style="padding-top:2px;">
+    <div style="display:flex;align-items:center;gap:8px;padding:14px 16px;color:var(--text-2);font-size:12.5px;">
+      ${ICONS.spinner} Processing report — filtering sold orders, matching SKU sheet…
+    </div>
+    ${rows}
+  </div>`;
+}
+function emptyHtmlTiktok(){
+  const hasFiles = state.tiktok.files.length>0;
+  const fileListHtml = hasFiles ? `
+    <div class="uploaded-files-list" style="width:100%;max-width:440px;margin:14px auto 0;text-align:left;">
+      ${state.tiktok.files.map(f=>`
+        <div class="uploaded-file-row" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface-2);">
+          <span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;">${esc(f.name)}</span>
+          <span class="mono" style="color:var(--text-3);font-size:11px;flex:0 0 auto;">${fmtNum(f.rowCount)} rows</span>
+          <button type="button" class="icon-btn" data-remove-file-tiktok="${f.id}" title="Remove this file" style="width:22px;height:22px;flex:0 0 auto;">${ICONS.x}</button>
+        </div>`).join('')}
+    </div>` : '';
+  return `
+  <div class="empty-wrap">
+    <div class="dropzone" id="dropzoneTiktok">
+      <div class="dropzone-icon">${ICONS.upload.replace('width="15" height="15"','width="26" height="26"')}</div>
+      <h2>${hasFiles ? 'Ready to process' : 'Drop your TikTok Shop order export here'}</h2>
+      <p>${hasFiles
+        ? (state.tiktok.files.length===1
+            ? esc(state.tiktok.files[0].name)+' is loaded ('+fmtNum(state.tiktok.files[0].rowCount)+' rows). Click Process Report in the sidebar to build the sold-orders table.'
+            : state.tiktok.files.length+' files loaded ('+fmtNum((state.tiktok.rawRows||[]).length)+' rows total). Click Process Report in the sidebar to build one combined table.')
+        : 'Drag & drop a TikTok Shop order export (.xlsx) or browse your files. Only "To Ship" line items are kept (any substatus) — everything else (shipped, delivered, cancelled, on hold, in transit) is excluded automatically.'}</p>
+      ${fileListHtml}
+      <button class="btn accent" id="browseBtnTiktok" style="margin:14px auto 0;">${ICONS.upload} ${hasFiles ? 'Add Another File' : 'Upload Order Report'}</button>
+      <div class="accepts">Accepted formats: .xlsx (TikTok Shop order export) · .csv — multiple files supported.</div>
+    </div>
+  </div>`;
+}
+function wireEmptyTiktok(){
+  const dz = $('#dropzoneTiktok');
+  if(!dz) return;
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('dragging'); });
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('dragging'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); dz.classList.remove('dragging');
+    if(e.dataTransfer.files && e.dataTransfer.files.length) handleFilesTiktok(e.dataTransfer.files);
+  });
+  $('#browseBtnTiktok').addEventListener('click', ()=> $('#fileInputTiktok').click());
+  $all('[data-remove-file-tiktok]', dz).forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.stopPropagation();
+      removeUploadedFileTiktok(btn.getAttribute('data-remove-file-tiktok'));
+    });
+  });
+}
+function tiktokTableHtml(){
+  const head = TIKTOK_COLS.map(c=>`<div class="c ${c.cls}${c.key==='shippingFee'?' tt-ship-head':''}" data-sort="${c.key}">${esc(c.label)} ${state.tiktok.sortBy===c.key?ICONS.sort:''}</div>`).join('');
+  return `<div class="table-wrap">
+    <div class="grid-scroll" id="gridScrollTiktok">
+      <div class="grid-head tt-grid">${head}</div>
+      <div class="grid-body tt-grid" id="gridBodyTiktok"></div>
+    </div>
+  </div>`;
+}
+function tiktokRowHtml(r, idx){
+  const editing = state.tiktok.editMode;
+  const cells = TIKTOK_COLS.map(c=>{
+    if(editing){
+      const editKey = r._id+'::'+c.key;
+      const hasPending = Object.prototype.hasOwnProperty.call(state.tiktok.pendingEdits, editKey);
+      let text;
+      if(hasPending){
+        text = state.tiktok.pendingEdits[editKey];
+      } else {
+        const val=r[c.key];
+        text=(val===null||val===undefined)?'':(c.money?Number(val).toFixed(2):String(val));
+      }
+      return `<div class="c ${c.cls} ${c.num?'num':''} tt-editable${hasPending?' tt-pending':''}" contenteditable="true" spellcheck="false" data-row-id="${esc(r._id)}" data-field="${c.key}">${esc(text)}</div>`;
+    }
+    if(c.key==='orderId'){
+      return `<div class="c ${c.cls} ${r.isMulti?'multi-order-cell':''}"><span class="oid ${r.isMulti?'multi':''}">${r.isMulti?`<span class="pill">${esc(r.orderId)}</span>`:esc(r.orderId)}</span></div>`;
+    }
+    if(c.key==='status'){
+      const cls = 'status-'+r.status.toLowerCase().replace(/\s+/g,'');
+      return `<div class="c ${c.cls}"><span class="status-pill ${cls}">${esc(r.status)}</span></div>`;
+    }
+    let val = r[c.key];
+    const missing = val===null || val===undefined || val==='';
+    let display = missing ? '<span class="source-missing">—</span>' : (c.money ? fmtMoney(val) : (c.num ? fmtNum(val) : esc(val)));
+    return `<div class="c ${c.cls} ${c.num?'num':''}" title="${esc((r.issues||[]).join(' · '))}">${display}</div>`;
+  }).join('');
+  return `<div class="grow tt-grid ${idx%2===0?'even':''}" style="top:${idx*ROW_H}px;height:${ROW_H}px;">
+    <div class="heat" style="background:${r.skuSource==='Missing'?'var(--red)':'var(--green)'}"></div>${cells}
+  </div>`;
+}
+function toggleEditTiktok(){
+  state.tiktok.editMode = !state.tiktok.editMode;
+  const btn=$('#editTiktokBtn'), badge=$('#editTiktokBadge');
+  if(btn) btn.classList.toggle('active', state.tiktok.editMode);
+  if(badge){ badge.textContent = state.tiktok.editMode?'On':'Off'; badge.className='badge'+(state.tiktok.editMode?' on':''); }
+  renderContentTiktok();
+  renderSidebarStateTiktok();
+  toast('info', state.tiktok.editMode?'Edit mode on':'Edit mode off', state.tiktok.editMode?'Click any cell to edit it — Enter or clicking away stages the change. Nothing is applied until you click Save Changes.':'Turning edit mode off does not discard any unsaved changes — click Save Changes to apply them.');
+}
+function recalcTiktokRow(r){
+  // List Price / Off are the only edited fields with real downstream effects —
+  // Net Sale, Revenue and Fee all derive from them, the same formula used when
+  // the row was first built. Shipping Fee stays a direct, independent value —
+  // it never feeds another column, so editing it needs no recalculation.
+  if(r.listPrice===null || r.listPrice===undefined || !Number.isFinite(Number(r.listPrice))) return;
+  const listPrice = Number(r.listPrice);
+  const off = Number.isFinite(Number(r.off)) ? Number(r.off) : 0;
+  const netSale = Math.max(listPrice-off,0);
+  r.netSale = netSale;
+  r.revenue = netSale;
+  r.fee = Math.round((netSale*0.15+Number.EPSILON)*100)/100;
+}
+// Edits are staged here — NOT written to state.tiktok.orders — until the
+// user explicitly clicks Save Changes. This also survives the table's
+// virtualized re-draws (only visible rows exist in the DOM at any moment),
+// since every re-render re-reads any pending value for a cell before
+// falling back to the row's actual saved value.
+function stageTiktokEdit(el){
+  const rowId = el.getAttribute('data-row-id');
+  const field = el.getAttribute('data-field');
+  if(!rowId || !field) return;
+  const row = state.tiktok.orders.find(r=>r._id===rowId);
+  if(!row) return;
+  const raw = el.textContent.trim();
+  const col = TIKTOK_COLS.find(c=>c.key===field);
+  const savedVal = row[field];
+  const savedText = (savedVal===null||savedVal===undefined) ? '' : (col && col.money ? Number(savedVal).toFixed(2) : String(savedVal));
+  const key = rowId+'::'+field;
+  if(raw === savedText){
+    delete state.tiktok.pendingEdits[key];
+    el.classList.remove('tt-pending');
+  } else {
+    state.tiktok.pendingEdits[key] = raw;
+    el.classList.add('tt-pending');
+  }
+  renderSidebarStateTiktok();
+}
+function saveTiktokEdits(){
+  const keys = Object.keys(state.tiktok.pendingEdits);
+  if(!keys.length){ toast('info','No changes to save','Edit a cell first — nothing is staged yet.'); return; }
+  const touched = new Set();
+  keys.forEach(key=>{
+    const sep = key.indexOf('::');
+    const rowId = key.slice(0,sep), field = key.slice(sep+2);
+    const row = state.tiktok.orders.find(r=>r._id===rowId);
+    if(!row) return;
+    const raw = state.tiktok.pendingEdits[key];
+    const col = TIKTOK_COLS.find(c=>c.key===field);
+    if(col && (col.money || col.num)){
+      row[field] = raw==='' ? null : (Number.isFinite(toNum(raw)) ? toNum(raw) : row[field]);
+    } else {
+      row[field] = raw;
+    }
+    touched.add(row);
+  });
+  touched.forEach(recalcTiktokRow);
+  state.tiktok.pendingEdits = {};
+  renderContentTiktok();
+  renderSidebarStateTiktok();
+  toast('success','Changes saved', keys.length+' cell edit(s) applied.');
+}
+function discardTiktokEdits(){
+  const count = Object.keys(state.tiktok.pendingEdits).length;
+  if(!count){ toast('info','Nothing to discard','There are no unsaved changes.'); return; }
+  state.tiktok.pendingEdits = {};
+  renderContentTiktok();
+  renderSidebarStateTiktok();
+  toast('info','Changes discarded', count+' unsaved cell edit(s) were thrown away.');
+}
+let scrollHandlerTiktok = null;
+let editHandlersTiktok = null;
+function wireTiktokTable(){
+  const rows = visibleTiktokOrders();
+  const scroller = $('#gridScrollTiktok');
+  const body = $('#gridBodyTiktok');
+  body.style.height = (rows.length*ROW_H)+'px';
+  function draw(){
+    const scrollTop = scroller.scrollTop;
+    const viewH = scroller.clientHeight;
+    const start = Math.max(0, Math.floor(scrollTop/ROW_H) - 6);
+    const end = Math.min(rows.length, Math.ceil((scrollTop+viewH)/ROW_H) + 6);
+    let html = '';
+    for(let i=start;i<end;i++) html += tiktokRowHtml(rows[i], i);
+    body.innerHTML = html;
+  }
+  draw();
+  if(scrollHandlerTiktok) scroller.removeEventListener('scroll', scrollHandlerTiktok);
+  scrollHandlerTiktok = ()=> window.requestAnimationFrame(draw);
+  scroller.addEventListener('scroll', scrollHandlerTiktok);
+  $all('#contentTiktok .grid-head .c').forEach(el=>{
+    el.addEventListener('click', ()=>{
+      const key = el.getAttribute('data-sort');
+      if(state.tiktok.sortBy===key) state.tiktok.sortDir = state.tiktok.sortDir==='asc'?'desc':'asc';
+      else { state.tiktok.sortBy = key; state.tiktok.sortDir='asc'; }
+      renderContentTiktok();
+    });
+  });
+  if(editHandlersTiktok){
+    body.removeEventListener('blur', editHandlersTiktok.onBlur, true);
+    body.removeEventListener('keydown', editHandlersTiktok.onKeydown);
+  }
+  const onBlur = (e)=>{ if(e.target && e.target.classList && e.target.classList.contains('tt-editable')) stageTiktokEdit(e.target); };
+  const onKeydown = (e)=>{ if(e.key==='Enter' && e.target && e.target.classList && e.target.classList.contains('tt-editable')){ e.preventDefault(); e.target.blur(); } };
+  body.addEventListener('blur', onBlur, true);
+  body.addEventListener('keydown', onKeydown);
+  editHandlersTiktok = {onBlur, onKeydown};
+}
+
+/* ---------------------------- TIKTOK: PLATFORM SWITCH ---------------------------- */
+function applyPlatformVisibility(){
+  const isTiktok = state.platform==='tiktok';
+  $('#sidebarAZ').classList.toggle('hidden', isTiktok);
+  $('#sidebarTikTok').classList.toggle('hidden', !isTiktok);
+  $('#mainAZ').classList.toggle('hidden', isTiktok);
+  $('#mainTiktok').classList.toggle('hidden', !isTiktok);
+  $('#statusBar').classList.toggle('hidden', isTiktok);
+  $('#statusBarTiktok').classList.toggle('hidden', !isTiktok);
+  $all('.platform-btn').forEach(b=> b.classList.toggle('active', b.getAttribute('data-platform')===state.platform));
+  const search = $('#searchInput');
+  if(search) search.value = isTiktok ? state.tiktok.search : state.search;
+}
+function setPlatform(p){
+  if(p!=='az' && p!=='tiktok') return;
+  if(state.platform===p){ applyPlatformVisibility(); return; }
+  state.platform = p;
+  persistConfig();
+  applyPlatformVisibility();
+  // Re-draw the newly visible panel now that it actually has layout
+  // dimensions — a table drawn while `display:none` measures a 0px
+  // viewport and would otherwise render only a handful of rows.
+  if(p==='tiktok') renderContentTiktok(); else renderContent();
+}
+
+/* ---------------------------- TIKTOK: GOOGLE SHEETS ---------------------------- */
+// Pulls the numeric $ amount out of a free-text "Shipping provider" cell,
+// e.g. 'USPS Ground Advantage™ $5.70, Sep 11' -> 5.70. The carrier name and
+// date are ignored on purpose — only the fee itself is ever used.
+function extractShippingFeeFromText(v){
+  const s=String(v==null?'':v);
+  let m=s.match(/\$\s*([\d,]+(?:\.\d{1,2})?)/);
+  if(!m) m=s.match(/([\d,]+(?:\.\d{1,2})?)\s*(?:USD|usd)\b/);
+  if(!m) m=s.match(/\b(?:USD|usd)\s*([\d,]+(?:\.\d{1,2})?)/);
+  if(!m){
+    // Last resort: the whole cell is nothing but a bare number — no $ sign,
+    // no USD marker (some sheets store the fee pre-split from the carrier
+    // text). Only accept this when the ENTIRE cell is just a number, so it
+    // can never misfire on carrier/date text that happens to contain digits.
+    const bare=s.trim();
+    if(/^[\d,]+(?:\.\d{1,2})?$/.test(bare)) m=[bare,bare];
+  }
+  if(!m) return null;
+  const n=Number(m[1].replace(/,/g,''));
+  return Number.isFinite(n)?n:null;
+}
+// Fallback used only when zero rows matched by header name (see below) —
+// i.e. the sheet's actual header text doesn't match any of the known
+// synonyms. Scans real cell values instead of header names: the Order ID
+// column is whichever one is mostly long digit strings, and the fee column
+// is whichever one mostly contains a carrier/service word alongside a $
+// amount. The Insurance column is excluded by name, and — independently —
+// by the carrier-word requirement itself, since an "Insurance: $31.06" cell
+// contains no carrier word, so it can never be mistaken for the shipping fee.
+function autoDetectTiktokShippingColumns(rows){
+  const cols=Object.keys(rows[0]||{});
+  if(!cols.length) return null;
+  const sample=rows.slice(0,Math.min(rows.length,200));
+  const carrierWords=/\b(fedex|ups|usps|dhl|ontrac|lasership|amazon logistics|canada post|royal mail|purolator|gls|dpd|tnt|cainiao|ground|express|economy|priority|standard|advantage)\b/i;
+  let bestOrderIdKey=null,bestOrderIdHits=0,bestFeeKey=null,bestFeeHits=0;
+  cols.forEach(col=>{
+    if(normalizeHeader(col).includes('insurance')) return;
+    let orderIdHits=0,feeHits=0,nonEmpty=0;
+    sample.forEach(r=>{
+      const v=r[col];
+      if(!hasValue(v)) return;
+      nonEmpty++;
+      if(/^\d{15,20}$/.test(normalizeOrderIdForMatch(v))) orderIdHits++;
+      const s=String(v);
+      if(s.includes('$') && carrierWords.test(s)) feeHits++;
+    });
+    if(nonEmpty<3) return;
+    if(orderIdHits/nonEmpty>0.8 && orderIdHits>bestOrderIdHits){ bestOrderIdHits=orderIdHits; bestOrderIdKey=col; }
+    if(feeHits/nonEmpty>0.5 && feeHits>bestFeeHits){ bestFeeHits=feeHits; bestFeeKey=col; }
+  });
+  if(bestOrderIdKey && bestFeeKey && bestOrderIdKey!==bestFeeKey) return {orderIdKey:bestOrderIdKey,feeTextKey:bestFeeKey};
+  return null;
+}
+// A single shipping-label row can list several Order IDs together in one
+// cell — several orders combined into one shipment under one label —
+// separated by commas. Splits them back out and divides that row's fee
+// evenly across them (2-decimal rounding); a normal single-order cell is
+// unaffected (the fee is used as-is).
+function pushTiktokShippingFeeEntries(out, orderIdRaw, fee, rowNum){
+  const ids=catalogDisplayText(orderIdRaw).split(',').map(x=>x.trim()).filter(Boolean);
+  const list=ids.length?ids:[catalogDisplayText(orderIdRaw)];
+  const share=list.length>1 ? Math.round((fee/list.length + Number.EPSILON)*100)/100 : fee;
+  list.forEach(id=>out.push({orderId:id, shippingFee:share, _row:rowNum, _mode:'orderId'}));
+  return list.length;
+}
+function normalizeGoogleTiktokShippingRows(rows){
+  const out=[];
+  let orderIdCount=0, legacyCount=0, skippedNoFee=0, skippedNoKey=0;
+  rows.forEach((r,i)=>{
+    // Primary format (matches the seller's shipping-label sheet): the Order
+    // ID lives in a "Labels Status" column and the fee is embedded as free
+    // text in a "Shipping provider" column alongside the carrier and date.
+    const orderIdRaw=firstMatchingValue(r,['labels status','label status','labelsstatus','order id','order-id','orderid','order','order number','order no','order#']);
+    const shipTextRaw=firstMatchingValue(r,['shipping provider','shipping-provider','shippingprovider']);
+    if(hasValue(orderIdRaw) && hasValue(shipTextRaw)){
+      const fee=extractShippingFeeFromText(shipTextRaw);
+      if(fee!==null){
+        orderIdCount += pushTiktokShippingFeeEntries(out, orderIdRaw, fee, i+2);
+        return;
+      }
+      skippedNoFee++;
+    } else if(hasValue(orderIdRaw) || hasValue(shipTextRaw)){
+      skippedNoKey++;
+    }
+    // Legacy format: an explicit numeric Shipping Fee column keyed by
+    // Product/SKU — kept for backward compatibility with any sheet already
+    // linked in this older shape.
+    const product=firstMatchingValue(r,['product','product-name','product name','productname','name']);
+    const size=firstMatchingValue(r,['size','product-size','product size','variantsize','variant size']);
+    const color=firstMatchingValue(r,['color','product-color','product color','variantcolor','variant color']);
+    const sku=firstMatchingValue(r,['sku','merchant-sku','merchant sku','seller-sku','seller sku']);
+    const feeRaw=firstMatchingValue(r,['shipping fee','shipping-fee','shippingfee']);
+    if((!product&&!sku)||!hasValue(feeRaw)) return;
+    const shippingFee=toNum(feeRaw);
+    if(!Number.isFinite(shippingFee)) return;
+    out.push({product:catalogDisplayText(product),size:catalogDisplayText(size),color:catalogDisplayText(color),sku:catalogDisplayText(sku),shippingFee,_row:i+2,_mode:'product'});
+    legacyCount++;
+  });
+  // If nothing matched by header name at all, fall back to detecting the
+  // Order ID / fee-text columns by their actual values (see
+  // autoDetectTiktokShippingColumns above). Keeps the sheet working even if
+  // its header text differs slightly from the names matched above, without
+  // ever guessing at genuinely ambiguous data.
+  if(orderIdCount===0 && rows.length){
+    const auto=autoDetectTiktokShippingColumns(rows);
+    if(auto){
+      rows.forEach((r,i)=>{
+        const orderIdRaw=r[auto.orderIdKey], shipTextRaw=r[auto.feeTextKey];
+        if(!hasValue(orderIdRaw) || !hasValue(shipTextRaw)) return;
+        const fee=extractShippingFeeFromText(shipTextRaw);
+        if(fee===null) return;
+        orderIdCount += pushTiktokShippingFeeEntries(out, orderIdRaw, fee, i+2);
+      });
+    }
+  }
+  out._orderIdCount=orderIdCount; out._legacyCount=legacyCount;
+  out._skippedNoFee=skippedNoFee; out._skippedNoKey=skippedNoKey;
+  return out;
+}
+// Looks up a single TikTok order's shipping fee by Order ID against the
+// linked Shipping Fee sheet. Only ever returns a value when exactly one
+// sheet row matches (or several rows agree on the same fee) — same
+// unambiguous-match rule the rest of the app already follows.
+function googleTiktokShippingMatch(orderId){
+  const rows=Array.isArray(state.google?.tiktokShippingRows)?state.google.tiktokShippingRows:[];
+  if(!rows.length) return {value:null,reason:'sheet-empty'};
+  const key=normalizeOrderIdForMatch(orderId);
+  if(!key) return {value:null,reason:'no-order-id'};
+  const pool=rows.filter(x=>x._mode==='orderId');
+  let hits=pool.filter(x=>normalizeOrderIdForMatch(x.orderId)===key);
+  let reasonSuffix='';
+  if(!hits.length && /^\d{15,}$/.test(key)){
+    // Google Sheets can silently convert a long numeric Order ID to a number
+    // and lose its last few digits of precision on export (18-digit TikTok
+    // IDs exceed a float's exact-integer range). When the exact digit string
+    // doesn't match, fall back to comparing the first 15 digits only —
+    // TikTok Order IDs are unique enough that a shared 15-digit prefix is,
+    // in practice, the same order.
+    const prefix=key.slice(0,15);
+    hits=pool.filter(x=>{ const k=normalizeOrderIdForMatch(x.orderId); return /^\d{15,}$/.test(k) && k.slice(0,15)===prefix; });
+    reasonSuffix='-precision-fallback';
+  }
+  if(hits.length===1) return {value:Number(hits[0].shippingFee),row:hits[0]._row,reason:'order-id'+reasonSuffix};
+  if(hits.length>1){
+    const allSame=hits.every(h=>Number(h.shippingFee)===Number(hits[0].shippingFee));
+    if(allSame) return {value:Number(hits[0].shippingFee),row:hits[0]._row,reason:'order-id-duplicate-equivalent'+reasonSuffix,count:hits.length};
+    return {value:null,reason:'ambiguous-order-id',count:hits.length};
+  }
+  return {value:null,reason:'missing'};
+}
+// Keeps every line item that shares an Order ID adjacent to each other in
+// whatever order the rows currently are — so a sold order with 2+ SKUs is
+// never split apart across the table or the exported report, regardless of
+// which column is sorted on.
+function groupRowsByOrderId(rows){
+  const groups=new Map(); const order=[];
+  rows.forEach(r=>{
+    const gk=r.orderId || ('__row_'+(r._id||order.length));
+    if(!groups.has(gk)){ groups.set(gk,[]); order.push(gk); }
+    groups.get(gk).push(r);
+  });
+  return order.flatMap(gk=>groups.get(gk));
+}
+// Central config for the 3 TikTok Google Sheet kinds — a plain lookup map
+// instead of nested ternaries, so adding a kind never risks the two
+// branches drifting out of sync.
+const TIKTOK_GOOGLE_KIND = {
+  shipping:{ urlKey:'tiktokShippingUrl', rowKey:'tiktokShippingRows', updatedKey:'tiktokShippingUpdated', normalize:normalizeGoogleTiktokShippingRows, label:'Shipping Fee', modalKind:'tiktokGoogleShipping' },
+  sku:{ urlKey:'tiktokSkuUrl', rowKey:'tiktokSkuRows', updatedKey:'tiktokSkuUpdated', normalize:normalizeGoogleSkuRows, label:'SKU/Product', modalKind:'tiktokGoogleSku' },
+  fbtShipping:{ urlKey:'tiktokFbtShippingUrl', rowKey:'tiktokFbtShippingRows', updatedKey:'tiktokFbtShippingUpdated', normalize:normalizeGoogleTiktokFbtShippingRows, label:'FBT Shipping Fee', modalKind:'tiktokGoogleFbtShipping' }
+};
+async function refreshTiktokGoogleSource(kind, silent=false){
+  const cfg = TIKTOK_GOOGLE_KIND[kind];
+  const { urlKey:key, rowKey, updatedKey } = cfg;
+  const url = state.google[key];
+  if(!url){ if(!silent) toast('error','No Google Sheet linked','Link the sheet first.'); return false; }
+  try{
+    const rows = await fetchGoogleRows(url);
+    const normalized = cfg.normalize(rows);
+    state.google[rowKey] = normalized;
+    state.google[updatedKey] = new Date().toISOString();
+    persistConfig();
+    if(state.tiktok.rawRows && state.tiktok.isProcessed) processTiktokReportCore(false);
+    render();
+    if(!silent){
+      const skippedNote = (kind==='sku' && normalized._skippedNoSku) ? (' · '+normalized._skippedNoSku+' row(s) skipped (blank SKU)') : '';
+      if(kind==='shipping'){
+        const usable=normalized._orderIdCount||0, legacy=normalized._legacyCount||0, badFee=normalized._skippedNoFee||0;
+        let detail = usable+' row(s) matched by Order ID';
+        if(legacy) detail += ', '+legacy+' by Product/Size (legacy)';
+        if(!usable && !legacy){
+          toast('error','Sheet synced but 0 usable rows', 'None of the '+normalized.length+' row(s) had both an Order ID and a readable $ fee.'+(badFee?' '+badFee+' row(s) had an Order ID and a "Shipping provider" value but no $ amount could be read from it — check that column\'s text format.':' Check that your sheet has an Order ID column and a "Shipping provider" column.'));
+        } else {
+          toast('success','Google Sheet synced', detail+'.');
+        }
+      } else if(kind==='fbtShipping'){
+        if(!normalized.length){
+          toast('error','Sheet synced but 0 usable rows', 'No row had a Product or SKU together with a readable "FBT Shipping" value. Check that your sheet has a Product (and/or SKU) column and an "FBT Shipping" column.');
+        } else {
+          toast('success','Google Sheet synced', normalized.length+' Product/Size rate(s) loaded.');
+        }
+      } else {
+        toast('success','Google Sheet synced', normalized.length+' usable row(s) loaded'+skippedNote+'.');
+      }
+    }
+    return true;
+  }catch(err){
+    console.error('TikTok Google Sheet sync failed:', err);
+    if(state.tiktok.rawRows && state.tiktok.isProcessed) processTiktokReportCore(false);
+    render();
+    if(!silent){
+      const cached = Array.isArray(state.google[rowKey]) ? state.google[rowKey].length : 0;
+      toast(cached?'info':'error', cached?'Sync failed — previous sheet data kept':'Google Sheet sync failed',
+        String(err&&err.message||err)+(cached?' · '+cached+' previously loaded row(s) remain available.':''));
+    }
+    return false;
+  }
+}
+async function refreshAllGoogleTiktok(){
+  const kinds=[];
+  if(state.google.tiktokShippingUrl) kinds.push(['shipping',TIKTOK_GOOGLE_KIND.shipping.label]);
+  if(state.google.tiktokSkuUrl) kinds.push(['sku',TIKTOK_GOOGLE_KIND.sku.label]);
+  if(state.google.tiktokFbtShippingUrl) kinds.push(['fbtShipping',TIKTOK_GOOGLE_KIND.fbtShipping.label]);
+  if(!kinds.length){ toast('error','No Google Sheets linked','Link at least one Google Sheet first.'); return; }
+  const btn=$('#refreshAllGoogleTiktokBtn'); if(btn) btn.disabled=true;
+  const results=[];
+  for(const [k,label] of kinds){ const ok = await refreshTiktokGoogleSource(k, true); results.push(label+': '+(ok?'synced':'failed')); }
+  if(btn) btn.disabled=false;
+  render();
+  toast(results.some(x=>x.endsWith('failed'))?'error':'success','All Sheets sync finished', results.join(' · '));
+}
+function tiktokGooglePreviewHtml(kind){
+  const cfg = TIKTOK_GOOGLE_KIND[kind];
+  const rows = state.google[cfg.rowKey]||[];
+  if(!rows.length) return '<div class="help" style="margin-top:8px;">No usable rows detected yet.</div>';
+  if(kind==='sku'){
+    const head=['SKU','Product','Size','Color'];
+    const sample=rows.slice(0,5).map(r=>[r.sku||'—',r.product||'—',r.size||'—',r.color||'—']);
+    return '<div class="section-divider">Preview — '+rows.length+' usable row(s)</div><table class="mini-table"><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+sample.map(row=>'<tr>'+row.map(v=>'<td class="mono">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table>'+ (rows.length>5?'<div class="help">+ '+(rows.length-5)+' more row(s).</div>':'');
+  }
+  if(kind==='fbtShipping'){
+    const head=['Product','Size','Color','SKU','FBT Shipping'];
+    const sample=rows.slice(0,5).map(r=>[r.product||'—',r.size||'—',r.color||'—',r.sku||'—',fmtMoney(r.fbtShippingFee)]);
+    return '<div class="section-divider">Preview — '+rows.length+' usable row(s)</div><table class="mini-table"><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+sample.map(row=>'<tr>'+row.map(v=>'<td class="mono">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table>'+ (rows.length>5?'<div class="help">+ '+(rows.length-5)+' more row(s).</div>':'');
+  }
+  const byOrderId = rows.filter(r=>r._mode==='orderId').length;
+  const head = byOrderId ? ['Order ID','Shipping Fee'] : ['Product','Size','Color','SKU','Shipping Fee'];
+  const sample = rows.slice(0,5).map(r=> r._mode==='orderId'
+    ? [r.orderId||'—', r.shippingFee!=null?fmtMoney(r.shippingFee):'—']
+    : [r.product||'—',r.size||'—',r.color||'—',r.sku||'—', r.shippingFee!=null?fmtMoney(r.shippingFee):'—']);
+  return '<div class="section-divider">Preview — '+rows.length+' usable row(s)</div><table class="mini-table"><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+sample.map(row=>'<tr>'+row.map(v=>'<td class="mono">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table>'+ (rows.length>5?'<div class="help">+ '+(rows.length-5)+' more row(s).</div>':'');
+}
+function tiktokGoogleLinkModalHtml(kind){
+  const cfg = TIKTOK_GOOGLE_KIND[kind];
+  const url = state.google[cfg.urlKey];
+  const titles = { sku:'Link SKU / Product Google Sheet (TikTok)', shipping:'Link Shipping Fee Google Sheet (TikTok)', fbtShipping:'Link FBT Shipping Fee Google Sheet (TikTok)' };
+  const helps = {
+    sku:'Required: SKU, Product; Size and Color recommended. The TikTok export\u2019s Seller SKU is matched against this sheet.',
+    shipping:'Expected columns: an Order ID column (e.g. \u201cLabels Status\u201d) and a \u201cShipping provider\u201d column containing the carrier name, fee and date as text (e.g. \u201cUSPS Ground Advantage\u2122 $5.70, Sep 11\u201d) \u2014 only the $ amount is used. Matched by Order ID. Only applies to Fulfillment by Seller (CP TTS) orders. (A legacy Product/Size/Color/SKU + numeric Shipping Fee sheet is also still supported.)',
+    fbtShipping:'Required: Product (and/or SKU), FBT Shipping. Size and Color recommended for more precise matching. This is a FIXED rate per Product/Size — not per order — used only for Fulfillment by TikTok Shop (CP FBT) orders, matched by Product name and Size.'
+  };
+  const title = titles[kind];
+  const help = helps[kind];
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${title}</h3><p>Google Sheet is the authoritative source. The app only writes a value when an unambiguous matching row exists.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="tiktokGoogleSheetUrlInput" value="${esc(url)}" placeholder="https://docs.google.com/spreadsheets/d/..."><div class="help">${help}</div></div><div class="section-divider">Connection</div><div class="code-block">Recommended: normal /edit Google Sheet link + \u201cAnyone with the link \u2192 Viewer\u201d. Published links are supported when Google returns public CSV data. After editing the sheet, use Sync All Sheets or Sync Now.</div><div class="help">Last synced: ${state.google[cfg.updatedKey]?new Date(state.google[cfg.updatedKey]).toLocaleString():'Never'}</div><div id="tiktokGooglePreviewArea">${tiktokGooglePreviewHtml(kind)}</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="saveTiktokGoogleSheetBtn">${ICONS.check} Save & Sync</button></div></div>`;
+}
+function wireTiktokGoogleLinkModal(kind){
+  $('#saveTiktokGoogleSheetBtn').addEventListener('click', async ()=>{
+    const url = $('#tiktokGoogleSheetUrlInput').value.trim();
+    const cfg = TIKTOK_GOOGLE_KIND[kind];
+    const { urlKey:key, rowKey, updatedKey } = cfg;
+    state.google[key]=url; persistConfig();
+    if(!url){
+      state.google[rowKey]=[]; state.google[updatedKey]=null;
+      if(state.tiktok.rawRows && state.tiktok.isProcessed) processTiktokReportCore(false);
+      persistConfig(); closeModal(); render();
+      toast('info','Google Sheet disconnected', cfg.label+' source removed; values will remain blank.');
+      return;
+    }
+    const btn=$('#saveTiktokGoogleSheetBtn'); btn.disabled=true; btn.innerHTML=ICONS.spinner+' Reading sheet…';
+    const ok = await refreshTiktokGoogleSource(kind, true);
+    btn.disabled=false; btn.innerHTML=ICONS.check+' Save & Sync';
+    if(ok){ closeModal(); toast('success','Google Sheet connected', 'The '+cfg.label+' source is now live. Sync All Sheets after edits.'); }
+    else { render(); openModal(cfg.modalKind); }
+  });
+}
+
+/* ---------------------------- TIKTOK: MANUAL SKU / MAPPING / ISSUES MODALS ---------------------------- */
+function tiktokManualSkuModalHtml(){
+  const rows = state.tiktok.manualSkuRows.map(m=>`<tr data-id="${m.id}">
+    <td><input type="text" data-field="sku" value="${esc(m.sku)}" placeholder="SKU"></td>
+    <td><input type="text" data-field="product" value="${esc(m.product)}" placeholder="Product name"></td>
+    <td style="width:110px;"><input type="text" data-field="size" value="${esc(m.size)}" placeholder="Size"></td>
+    <td style="width:100px;"><input type="text" data-field="color" value="${esc(m.color)}" placeholder="Color"></td>
+    <td style="width:32px;"><button class="row-del" data-del="${m.id}">${ICONS.trash}</button></td>
+  </tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Manual SKU (TikTok)</h3><p>For a Seller SKU you don't want to add to the Google SKU sheet. Checked automatically after the linked SKU sheet — no Sync click needed.</p></div></div>
+  <div class="modal-body">
+    <div class="section-divider">Saved manual SKUs (${state.tiktok.manualSkuRows.length})</div>
+    <table class="mini-table"><thead><tr><th>SKU</th><th>Product</th><th>Size</th><th>Color</th><th></th></tr></thead><tbody id="tiktokManualSkuTbody">${rows||'<tr><td colspan="5" style="color:var(--text-3);">None added yet — use "Add row" below.</td></tr>'}</tbody></table>
+    <button class="btn sm ghost" id="addTiktokManualSkuRow" style="margin-top:10px;">${ICONS.plus} Add row</button>
+    <div class="help" style="margin-top:10px;">Matching order: the linked SKU/Product Google Sheet is checked first; a SKU only falls back to this list when it isn't found there.</div>
+  </div>
+  <div class="modal-foot"><button class="btn ghost" data-close>Close</button><button class="btn accent" id="saveTiktokManualSkuBtn">${ICONS.check} Save & Recalculate</button></div></div>`;
+}
+function wireTiktokManualSkuModal(){
+  $('#addTiktokManualSkuRow').addEventListener('click',()=>{state.tiktok.manualSkuRows.push({id:state.tiktok._nextManualSkuId++,sku:'',product:'',size:'',color:''});openModal('tiktokManualSku');});
+  $all('#tiktokManualSkuTbody [data-del]').forEach(b=>b.addEventListener('click',()=>{state.tiktok.manualSkuRows=state.tiktok.manualSkuRows.filter(m=>m.id!==Number(b.getAttribute('data-del')));openModal('tiktokManualSku');}));
+  $all('#tiktokManualSkuTbody tr').forEach(tr=>{const id=Number(tr.getAttribute('data-id'));$all('input',tr).forEach(inp=>inp.addEventListener('input',()=>{const row=state.tiktok.manualSkuRows.find(m=>m.id===id);if(row) row[inp.getAttribute('data-field')]=inp.value;}));});
+  $('#saveTiktokManualSkuBtn').addEventListener('click',()=>{persistConfig();closeModal();reprocessTiktokIfLoaded('Manual SKU list updated across the table.');render();toast('success','Manual SKU saved',state.tiktok.manualSkuRows.length+' SKU(s) saved.');});
+}
+function tiktokMappingModalHtml(){
+  const rows=state.tiktok.productMapping.map(m=>`<tr data-id="${m.id}">
+    <td><input type="text" data-field="sku" value="${esc(m.sku)}" placeholder="SKU"></td>
+    <td><input type="text" data-field="product" value="${esc(m.product)}" placeholder="Product"></td>
+    <td style="width:100px;"><input type="text" data-field="size" value="${esc(m.size)}"></td>
+    <td style="width:90px;"><input type="text" data-field="color" value="${esc(m.color)}"></td>
+    <td style="width:32px;"><button class="row-del" data-del="${m.id}">${ICONS.trash}</button></td>
+  </tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Product Mapping / SKU Lookup (TikTok)</h3><p>Linked SKU/Product Google Sheet is authoritative when available. Manual mapping is used only when the Google SKU sheet is not linked or the SKU isn't found.</p></div></div>
+  <div class="modal-body">
+    <div class="section-divider">Find SKU from Product / Size / Color</div>
+    <div style="display:grid;grid-template-columns:1.5fr 1fr 1fr auto;gap:8px;align-items:end;">
+      <div class="field" style="margin:0;"><label>Product</label><input type="text" id="tiktokLookupProduct" placeholder="e.g. Floral Bedspread"></div>
+      <div class="field" style="margin:0;"><label>Size</label><input type="text" id="tiktokLookupSize" placeholder="e.g. King"></div>
+      <div class="field" style="margin:0;"><label>Color</label><input type="text" id="tiktokLookupColor" placeholder="e.g. Ochre"></div>
+      <button class="btn accent" id="tiktokLookupSkuBtn">Lookup</button>
+    </div>
+    <div id="tiktokLookupResult"></div>
+    <div class="section-divider">Manual Product Mapping</div>
+    <table class="mini-table"><thead><tr><th>SKU</th><th>Product</th><th>Size</th><th>Color</th><th></th></tr></thead><tbody id="tiktokMapTbody">${rows}</tbody></table>
+    <button class="btn sm ghost" id="addTiktokMapRow" style="margin-top:10px;">${ICONS.plus} Add row</button>
+  </div>
+  <div class="modal-foot"><button class="btn ghost" data-close>Close</button><button class="btn accent" id="saveTiktokMapBtn">${ICONS.check} Save & Recalculate</button></div></div>`;
+}
+function wireTiktokMappingModal(){
+  $('#tiktokLookupSkuBtn').addEventListener('click',()=>{
+    const p=$('#tiktokLookupProduct').value.trim(), z=$('#tiktokLookupSize').value.trim(), c=$('#tiktokLookupColor').value.trim();
+    const rows=state.google.tiktokSkuRows||[]; let hit=null;
+    if(rows.length){
+      hit=rows.find(x=>normText(x.product)===normText(p)&&normText(x.size)===normText(z)&&normText(x.color)===normText(c));
+      if(!hit) hit=rows.find(x=>normText(x.product)===normText(p)&&(!z||normText(x.size)===normText(z))&&(!c||normText(x.color)===normText(c)));
+    }
+    if(!hit) hit=state.tiktok.productMapping.find(x=>normText(x.product)===normText(p)&&(!z||normText(x.size)===normText(z))&&(!c||normText(x.color)===normText(c)));
+    $('#tiktokLookupResult').innerHTML=hit?`<div class="lookup-result"><b>SKU:</b> <span class="mono">${esc(hit.sku)}</span> · <b>Product:</b> ${esc(hit.product)} · <b>Size:</b> ${esc(hit.size||'—')} · <b>Color:</b> ${esc(hit.color||'—')}</div>`:`<div class="lookup-result"><span class="source-missing">No exact SKU match found.</span> Link/sync the SKU Product Sheet and confirm Product, Size and Color.</div>`;
+  });
+  $('#addTiktokMapRow').addEventListener('click',()=>{state.tiktok.productMapping.push({id:state.tiktok._nextMapId++,sku:'',product:'',size:'',color:''});openModal('tiktokMapping');});
+  $all('#tiktokMapTbody [data-del]').forEach(b=>b.addEventListener('click',()=>{state.tiktok.productMapping=state.tiktok.productMapping.filter(m=>m.id!==Number(b.getAttribute('data-del')));openModal('tiktokMapping');}));
+  $all('#tiktokMapTbody tr').forEach(tr=>{const id=Number(tr.getAttribute('data-id'));$all('input',tr).forEach(inp=>inp.addEventListener('input',()=>{const row=state.tiktok.productMapping.find(m=>m.id===id);row[inp.getAttribute('data-field')]=inp.value;}));});
+  $('#saveTiktokMapBtn').addEventListener('click',()=>{persistConfig();closeModal();reprocessTiktokIfLoaded('Product mapping updated across the table.');render();toast('success','Product Mapping saved',state.tiktok.productMapping.length+' mapping(s) saved.');});
+}
+function tiktokIssuesModalHtml(){
+  const rows=state.tiktok.issues.slice(0,250).map(x=>`<tr><td class="mono">${esc(x.orderId)}</td><td class="mono">${esc(x.sku)}</td><td>${esc(x.product)}</td><td class="source-missing">${esc(x.issues.join(' · '))}</td></tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Data Issues (TikTok)</h3><p>${state.tiktok.issueCount} line(s) need attention.</p></div></div><div class="modal-body"><table class="mini-table"><thead><tr><th>Order ID</th><th>SKU</th><th>Product</th><th>Issue</th></tr></thead><tbody>${rows||'<tr><td colspan="4">No issues.</td></tr>'}</tbody></table></div><div class="modal-foot"><button class="btn ghost" data-close>Close</button></div></div>`;
+}
+
+/* ---------------------------- TIKTOK: PUSH TO GOOGLE SHEETS ---------------------------- */
+function tiktokPushSheetsModalHtml(){return `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Push to Google Sheets</h3><p>Send the processed TikTok report to a selected Google Sheet.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="tiktokTargetSheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." value="${esc(state.settings.tiktokTargetSheetUrl||'')}"><div class="help">Paste the destination Google Sheet sharing URL.</div></div><div class="field"><label>Google Apps Script Web App URL</label><input type="text" id="tiktokSheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(state.settings.tiktokSheetsWebAppUrl||'')}"><div class="help">The Sheet URL identifies the destination; the Apps Script /exec URL is the secure write bridge.</div></div><div class="section-divider">Apps Script bridge</div><div class="code-block">function doPost(e) {
+  var out = ContentService.createTextOutput().setMimeType(ContentService.MimeType.JSON);
+  try {
+    var raw = (e && e.postData && e.postData.contents) ? e.postData.contents
+            : ((e && e.parameter && e.parameter.payload) ? e.parameter.payload : '');
+    if (!raw) throw new Error('No push payload received.');
+    var p = JSON.parse(raw);
+    if (!p.sheetUrl || !Array.isArray(p.values) || !p.values.length) {
+      throw new Error('Payload missing sheetUrl or values.');
+    }
+    var ss = SpreadsheetApp.openByUrl(p.sheetUrl);
+    var sh = ss.getSheets()[0];
+    sh.clearContents();
+    sh.getRange(1, 1, p.values.length, p.values[0].length).setValues(p.values);
+    out.setContent(JSON.stringify({ success: true, rows: p.values.length }));
+  } catch (err) {
+    out.setContent(JSON.stringify({ success: false, error: String(err && err.message || err) }));
+  }
+  return out;
+}</div><div class="help"><b>Deploy → Web app → Execute as: Me → Who has access: Anyone</b>, then paste its <code>/exec</code> URL above. If you've deployed before and just changed the code, you must create a <b>new deployment version</b> — saving the script alone does not update the live /exec endpoint.</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="doTiktokPushBtn">${state.tiktok.orders.length?ICONS.check+' Push now':'No data to push'}</button></div></div>`;}
+function wireTiktokPushSheetsModal(){
+  $('#doTiktokPushBtn').addEventListener('click', async () => {
+    const sheetUrl = $('#tiktokTargetSheetUrlInput').value.trim();
+    const url = $('#tiktokSheetsUrlInput').value.trim();
+    if(!sheetUrl){ toast('error','Google Sheet URL required','Paste the destination Google Sheet sharing URL.'); return; }
+    if(!url){ toast('error','Apps Script URL required','Paste the deployed Google Apps Script /exec URL.'); return; }
+    if(!state.tiktok.orders.length){ toast('error','No data','Process a report before pushing.'); return; }
+    state.settings.tiktokTargetSheetUrl = sheetUrl;
+    state.settings.tiktokSheetsWebAppUrl = url;
+    persistConfig();
+    const payload = { sheetUrl, values: [TIKTOK_COLS.map(c=>c.label), ...state.tiktok.orders.map(r=>TIKTOK_COLS.map(c=>r[c.key]))] };
+    const btn = $('#doTiktokPushBtn');
+    btn.disabled = true; btn.innerHTML = ICONS.spinner+' Pushing…';
+    try{
+      const res = await fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      const text = await res.text();
+      let data = null; try{ data = JSON.parse(text); }catch(parseErr){}
+      if(data && data.success){ closeModal(); toast('success','Pushed to Google Sheets', data.rows+' row(s) written to the sheet.'); }
+      else if(data && data.success===false){ toast('error','Push failed — Apps Script reported an error', String(data.error||'Unknown error from the script.')); }
+      else if(!res.ok){ toast('error','Push failed', 'The Apps Script responded with HTTP '+res.status+'. Check that the /exec URL is correct and the deployment is live.'); }
+      else { toast('error','Push may have failed', 'The Apps Script did not return a recognized response. Update it to the code shown in this dialog, redeploy as a NEW version, then try again.'); }
+    }catch(err){
+      toast('error','Push failed — could not reach the Apps Script', 'This usually means the Web App is not deployed with "Execute as: Me" and "Who has access: Anyone", or the URL is not the /exec link from your latest deployment. ('+String(err.message||err)+')');
+    }finally{
+      btn.disabled = false; btn.innerHTML = ICONS.check+' Push now';
+    }
+  });
+}
+
+/* ---------------------------- TIKTOK: DOWNLOAD REPORT ---------------------------- */
+async function downloadReportTiktok(){
+  if(!state.tiktok.orders.length){ toast('error','Nothing to download','Process a report first.'); return; }
+  const header = TIKTOK_COLS.map(c=>c.label);
+  const orderedRows = groupRowsByOrderId(state.tiktok.orders);
+  try{
+    if(typeof ExcelJS==='undefined'){
+      if(typeof XLSX==='undefined') throw new Error('Excel export libraries are not available.');
+      const aoa=[header,...orderedRows.map(r=>TIKTOK_COLS.map(c=>r[c.key]))];
+      const ws=XLSX.utils.aoa_to_sheet(aoa);
+      ws['!freeze']={xSplit:0,ySplit:1};
+      const wb=XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb,ws,'TikTok Sold Orders');
+      XLSX.writeFile(wb,'TikTok_'+exportBaseNameTiktok()+'.xlsx');
+      toast('success','Downloaded','Report file created successfully.'); return;
+    }
+    const wb=new ExcelJS.Workbook(); wb.creator='USM'; wb.created=new Date();
+    const ws=wb.addWorksheet('TikTok Sold Orders',{views:[{state:'frozen',ySplit:1}]});
+    ws.addRow(header); ws.getRow(1).height=22;
+    const orange='F2762E', white='FFFFFF';
+    ws.autoFilter={from:{row:1,column:1},to:{row:1,column:header.length}};
+    // Explicitly touch every header column by index rather than relying on
+    // eachCell()'s default "only cells it considers non-empty" enumeration —
+    // that was silently leaving the last column (Shipping Fee) unstyled.
+    for(let i=1;i<=header.length;i++){
+      const c=ws.getRow(1).getCell(i);
+      c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
+      c.font={bold:true,color:{argb:'FF'+white}};
+      c.alignment={vertical:'middle'};
+    }
+    orderedRows.forEach(r=>{
+      const er=ws.addRow([r.date,r.orderId,r.vendor,r.status,r.shop,r.product,r.size,r.color,r.qty,r.listPrice,r.off,r.shippingFee]);
+      if(r.isMulti){ const c=er.getCell(2); c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC6EFCE'}}; c.font={bold:true,color:{argb:'FF006100'}}; }
+    });
+    ws.columns=TIKTOK_COLS.map(c=>({width:c.key==='orderId'?24:Math.max(10,Math.min(28,c.label.length+6))}));
+    ws.getColumn(9).numFmt='#,##0';
+    [10,11,12].forEach(ci=>ws.getColumn(ci).numFmt='"$"#,##0.00');
+    const buffer=await wb.xlsx.writeBuffer();
+    const blob=new Blob([buffer],{type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'});
+    const url=URL.createObjectURL(blob); const a=document.createElement('a');
+    const fname='TikTok_'+exportBaseNameTiktok()+'.xlsx';
+    a.href=url; a.download=fname; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('success','Downloaded',fname+' saved to your device.');
+  }catch(err){ console.error(err); toast('error','Download failed',String(err.message||err)); }
+}
+
 /* ---------------------------- GLOBAL EVENTS ---------------------------- */
 function wireGlobal(){
   $('#themeToggleBtn').addEventListener('click', toggleTheme);
@@ -2397,14 +3714,29 @@ function wireGlobal(){
     if(e.target.files && e.target.files.length) handleFiles(e.target.files);
     e.target.value = '';
   });
-  $('#searchInput').addEventListener('input', e=>{ state.search = e.target.value; renderContent(); });
+  $('#fileInputTiktok').addEventListener('change', e=>{
+    if(e.target.files && e.target.files.length) handleFilesTiktok(e.target.files);
+    e.target.value = '';
+  });
+  $('#searchInput').addEventListener('input', e=>{
+    if(state.platform==='tiktok'){ state.tiktok.search = e.target.value; renderContentTiktok(); }
+    else { state.search = e.target.value; renderContent(); }
+  });
   $('#statusFilter').addEventListener('change', e=>{ state.statusFilter = e.target.value; renderContent(); });
+  $('#platformToggle').addEventListener('click', e=>{
+    const btn = e.target.closest('.platform-btn');
+    if(!btn) return;
+    setPlatform(btn.getAttribute('data-platform'));
+  });
 
-  // whole window drag & drop
+  // whole window drag & drop — routed to whichever platform is active
   window.addEventListener('dragover', e=> e.preventDefault());
   window.addEventListener('drop', e=>{
     e.preventDefault();
-    if(e.dataTransfer.files && e.dataTransfer.files.length) handleFiles(e.dataTransfer.files);
+    if(e.dataTransfer.files && e.dataTransfer.files.length){
+      if(state.platform==='tiktok') handleFilesTiktok(e.dataTransfer.files);
+      else handleFiles(e.dataTransfer.files);
+    }
   });
 
   // sidebar actions
@@ -2426,15 +3758,30 @@ function wireGlobal(){
     if(action==='openManualSku') openModal('manualSku');
     if(action==='openProductMapping') openModal('mapping');
     if(action==='openSettings') openModal('settings');
+    if(action==='openFileTiktok') $('#fileInputTiktok').click();
+    if(action==='removeReportTiktok') removeReportTiktok();
+    if(action==='processReportTiktok') processTiktokReport();
+    if(action==='openGoogleShippingTiktok') openModal('tiktokGoogleShipping');
+    if(action==='openGoogleSkuTiktok') openModal('tiktokGoogleSku');
+    if(action==='openGoogleFbtShippingTiktok') openModal('tiktokGoogleFbtShipping');
+    if(action==='refreshAllGoogleTiktok') refreshAllGoogleTiktok();
+    if(action==='downloadReportTiktok') downloadReportTiktok();
+    if(action==='toggleEditTiktok') toggleEditTiktok();
+    if(action==='saveTiktokEdits') saveTiktokEdits();
+    if(action==='discardTiktokEdits') discardTiktokEdits();
+    if(action==='openPushSheetsTiktok') openModal('tiktokPushSheets');
+    if(action==='openManualSkuTiktok') openModal('tiktokManualSku');
+    if(action==='openProductMappingTiktok') openModal('tiktokMapping');
+    if(action==='showIssuesTiktok') openModal('tiktokIssues');
   });
 
   // keyboard shortcuts
   window.addEventListener('keydown', e=>{
     const mod = e.metaKey || e.ctrlKey;
-    if(mod && e.key.toLowerCase()==='o'){ e.preventDefault(); $('#fileInput').click(); }
+    if(mod && e.key.toLowerCase()==='o'){ e.preventDefault(); (state.platform==='tiktok'?$('#fileInputTiktok'):$('#fileInput')).click(); }
     if(mod && e.key.toLowerCase()==='k'){ e.preventDefault(); $('#searchInput').focus(); }
-    if(mod && e.key.toLowerCase()==='e'){ e.preventDefault(); downloadReport(); }
-    if(mod && e.key==='Enter'){ e.preventDefault(); processReport(); }
+    if(mod && e.key.toLowerCase()==='e'){ e.preventDefault(); if(state.platform==='tiktok') downloadReportTiktok(); else downloadReport(); }
+    if(mod && e.key==='Enter'){ e.preventDefault(); if(state.platform==='tiktok') processTiktokReport(); else processReport(); }
     if(e.key==='Escape' && state.modal){ closeModal(); }
   });
 }
