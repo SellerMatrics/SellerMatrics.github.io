@@ -1054,19 +1054,22 @@ function canonicalSize(v){
 }
 function canonicalColor(v){ return canonicalCatalogKey(v); }
 
-// ---- Hcotton Towel pack-size correction ----
-// Hcotton Towel is sold in multi-towel bundles — the SKU carries a pack
-// marker such as "4P", "5P" or "6P" (a bare number immediately followed by
-// "P", never glued to other letters, so "4PC" or "TXL" never match). The
-// linked Ex-WH Cost / Shipping Fee / FBA Fee sheets price a SINGLE towel, so
-// for this product the true physical unit count is the pack number times
-// the order Quantity — "4P" at Quantity 2 = 8 towels — and that corrected
-// count is what per-unit cost math (and the displayed Qty column) must use.
-// List Price / revenue / the Amazon or Walmart fee % are untouched: those
-// are priced per pack (what the customer actually paid), not per towel.
-function isHcottonTowelProduct(...texts){
+// ---- Pack-size (NP) quantity correction ----
+// Many products here are sold in multi-piece bundles — the SKU carries a
+// pack marker such as "4P", "5P" or "6P" (a bare number immediately
+// followed by "P", never glued to other letters, so "4PC" or "TXL" never
+// match), e.g. "4P Sheet Set" or "6P Hcotton Towel". The linked Ex-WH Cost /
+// Shipping Fee / FBA Fee sheets price a SINGLE piece, so the true physical
+// unit count is the pack number times the order Quantity — "6P" at
+// Quantity 5 = 30 pieces — and that corrected count is what per-unit cost
+// math (and the displayed Qty column) must use. This applies to every
+// product EXCEPT Pillow Protector, which is intentionally excluded and
+// always keeps the raw order Quantity. List Price / revenue / the Amazon
+// or Walmart fee % are untouched everywhere: those are priced per pack
+// (what the customer actually paid), not per piece.
+function isPillowProtectorProduct(...texts){
   const combined = texts.filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]+/g,'');
-  return combined.includes('hcottontowel');
+  return combined.includes('pillowprotector');
 }
 function extractPackMultiplier(...texts){
   for(const t of texts){
@@ -1372,15 +1375,16 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   // authoritative source spelling/values without requiring a re-upload.
   const expenseUnit = localExpenseFor(sku,product);
   const exWhUnit = exM.value!==null ? exM.value : null;
-  // Hcotton Towel: correct qty to the true physical towel count before any
-  // per-unit cost math below runs. The pack number lives in the SKU itself
-  // (e.g. "...-6P-..."), not in Size or Product — Size here is a plain
+  // Pack-size (NP) correction: correct qty to the true physical piece count
+  // before any per-unit cost math below runs, for every product except
+  // Pillow Protector. The pack number lives in the SKU itself (e.g.
+  // "...-6P-..."), not in Size or Product — Size here can be a plain
   // dimension like "(20x30)". SKU is checked first; the other fields stay
   // as a harmless fallback for any SKU that doesn't carry it.
-  // See isHcottonTowelProduct/extractPackMultiplier above for why.
+  // See isPillowProtectorProduct/extractPackMultiplier above for why.
   // listPrice/off/revenue above are untouched on purpose — they're priced
-  // per pack, not per towel.
-  if(isHcottonTowelProduct(product, productName)){
+  // per pack, not per piece.
+  if(!isPillowProtectorProduct(product, productName)){
     const packSize = extractPackMultiplier(sku, size, rawSize, product, productName);
     if(packSize) qty = qty * packSize;
   }
