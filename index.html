@@ -1053,6 +1053,29 @@ function canonicalSize(v){
   return x.replace(/[^a-z0-9]+/g,'');
 }
 function canonicalColor(v){ return canonicalCatalogKey(v); }
+
+// ---- Hcotton Towel pack-size correction ----
+// Hcotton Towel is sold in multi-towel bundles — the SKU carries a pack
+// marker such as "4P", "5P" or "6P" (a bare number immediately followed by
+// "P", never glued to other letters, so "4PC" or "TXL" never match). The
+// linked Ex-WH Cost / Shipping Fee / FBA Fee sheets price a SINGLE towel, so
+// for this product the true physical unit count is the pack number times
+// the order Quantity — "4P" at Quantity 2 = 8 towels — and that corrected
+// count is what per-unit cost math (and the displayed Qty column) must use.
+// List Price / revenue / the Amazon or Walmart fee % are untouched: those
+// are priced per pack (what the customer actually paid), not per towel.
+function isHcottonTowelProduct(...texts){
+  const combined = texts.filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]+/g,'');
+  return combined.includes('hcottontowel');
+}
+function extractPackMultiplier(...texts){
+  for(const t of texts){
+    if(!t) continue;
+    const m = String(t).match(/\b(\d{1,2})\s*-?\s*P\b/i);
+    if(m){ const n=parseInt(m[1],10); if(Number.isFinite(n) && n>0) return n; }
+  }
+  return null;
+}
 function looseProductKey(v){ return canonicalCatalogText(v).replace(/\b(?:qt|plus|hd|fbm|listing|order|id)\b/g,' ').replace(/[^a-z0-9]+/g,''); }
 function sizeKey(v){
   const canon=canonicalSize(v);
@@ -1288,7 +1311,7 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
     ? (getFieldLoose(r,['item description']) || sku || 'Unknown product')
     : (getField(r,['product-name','item-name','title']) || sku || 'Unknown product');
   const qtyRaw = getField(r,['quantity','quantity-purchased','qty']);
-  const qty = hasValue(qtyRaw) ? toNum(qtyRaw) : 0;
+  let qty = hasValue(qtyRaw) ? toNum(qtyRaw) : 0;
   let itemPriceRaw = isWalmart ? getFieldLoose(r,['item cost']) : getField(r,['item-price','price']);
   // A Walmart PO Data export normally leaves "Original Price" blank, but when
   // a value does show up there it is the correct list price to use — it
@@ -1349,6 +1372,18 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   // authoritative source spelling/values without requiring a re-upload.
   const expenseUnit = localExpenseFor(sku,product);
   const exWhUnit = exM.value!==null ? exM.value : null;
+  // Hcotton Towel: correct qty to the true physical towel count before any
+  // per-unit cost math below runs. The pack number lives in the SKU itself
+  // (e.g. "...-6P-..."), not in Size or Product — Size here is a plain
+  // dimension like "(20x30)". SKU is checked first; the other fields stay
+  // as a harmless fallback for any SKU that doesn't carry it.
+  // See isHcottonTowelProduct/extractPackMultiplier above for why.
+  // listPrice/off/revenue above are untouched on purpose — they're priced
+  // per pack, not per towel.
+  if(isHcottonTowelProduct(product, productName)){
+    const packSize = extractPackMultiplier(sku, size, rawSize, product, productName);
+    if(packSize) qty = qty * packSize;
+  }
   // Shipping Fee and FBA Fee are per-unit rates in the linked sheets (same as
   // Ex-WH Cost) — multiply by quantity so multi-quantity lines get the right total.
   const shippingFee = shipM.value!==null ? shipM.value*qty : null;
