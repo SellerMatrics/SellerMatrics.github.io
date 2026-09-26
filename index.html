@@ -737,7 +737,7 @@ const state = {
   costMaster:[],
   productMapping:[],
   manualSkuRows:[], // user-entered SKU/Product/Size/Color rows — a fallback when a SKU isn't worth adding to the Google SKU sheet
-  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Cotton Passion', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'', tiktokSheetsWebAppUrl:'', tiktokTargetSheetUrl:'' },
+  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Qatan', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'', tiktokSheetsWebAppUrl:'', tiktokTargetSheetUrl:'' },
   google:{
     exwhUrl:'', shippingUrl:'', fbaUrl:'', skuUrl:'',
     exwhRows:[], shippingRows:[], fbaRows:[], skuRows:[],
@@ -909,7 +909,8 @@ function loadConfig(){
     state.tiktok._nextManualSkuId = Math.max(state.tiktok._nextManualSkuId, ...state.tiktok.manualSkuRows.map(m=>Number(m.id)||0).concat([0])) + 0;
     state.tiktok._nextMapId = Math.max(state.tiktok._nextMapId, ...state.tiktok.productMapping.map(m=>Number(m.id)||0).concat([0])) + 0;
     // Ensure vendor is fixed by the business rules even for older saved configs.
-    state.settings.vendorName = 'Cotton Passion';
+    // This build of the tool is the Canada report — vendor is always Qatan here.
+    state.settings.vendorName = 'Qatan';
   }catch(err){ console.warn('Could not load local config', err); }
 }
 function normStatus(v){
@@ -1345,10 +1346,10 @@ function isWalmartRawRows(rows){
   if(!rows || !rows.length) return false;
   return Object.keys(rows[0]||{}).some(k=>k.trim().toLowerCase()==='fulfillment entity');
 }
-// CP FBA (Amazon) and CP WFS (Walmart) are the two "platform-fulfilled" shop
-// values — both get Shipping Fee + FBA Fee + CM. CP FBM and CP Walmart (both
+// FBA (Amazon) and WFS (Walmart) are the two "platform-fulfilled" shop
+// values — both get Shipping Fee + FBA Fee + CM. FBM and Walmart (both
 // seller-fulfilled) get none of the three, exactly like FBM always has.
-function isFeeEligibleShop(shop){ return shop==='CP FBA' || shop==='CP WFS'; }
+function isFeeEligibleShop(shop){ return shop==='FBA' || shop==='WFS'; }
 function extractOrderId(r, isWalmart){
   return isWalmart
     ? (getFieldLoose(r,['order#','order #','seller order no']) || '')
@@ -1375,14 +1376,14 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   const fulfillmentLower = fulfillment.toLowerCase();
   let shop;
   if(isWalmart){
-    shop = fulfillmentLower.includes('wfs') ? 'CP WFS' : (fulfillmentLower==='sellerfulfilled' ? 'CP Walmart' : '');
+    shop = fulfillmentLower.includes('wfs') ? 'WFS' : (fulfillmentLower==='sellerfulfilled' ? 'Walmart' : '');
   } else {
     const isFbaLike = /^(amazon|fba|fulfillment by amazon)$/i.test(fulfillmentLower) || fulfillmentLower.includes('amazon');
-    shop = isFbaLike ? 'CP FBA' : (fulfillmentLower==='merchant' ? 'CP FBM' : '');
+    shop = isFbaLike ? 'FBA' : (fulfillmentLower==='merchant' ? 'FBM' : '');
   }
   // Amazon FBM (merchant-fulfilled) orders sometimes carry a "shipping-price"
   // column for shipping the customer paid — fold it into List Price.
-  const shippingPriceRaw = (!isWalmart && shop==='CP FBM') ? getFieldLoose(r,['shipping-price','shipping price']) : '';
+  const shippingPriceRaw = (!isWalmart && shop==='FBM') ? getFieldLoose(r,['shipping-price','shipping price']) : '';
   const purchaseDate = isWalmart ? getFieldLoose(r,['order date']) : getField(r,['purchase-date','order-date','date']);
   const rawSize=getFieldLoose(r,['size','product-size','variantsize'])||'';
   const rawColor=getFieldLoose(r,['color','product-color','variantcolor'])||'';
@@ -1394,19 +1395,23 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   const product = (mapping && mapping.product) || productName;
   const size = (mapping && mapping.size) || canonicalRawSize || '—';
   const color = (mapping && mapping.color) || rawColor || '—';
-  // Country: both Amazon and Walmart reports carry a "ship-country" column —
-  // "US" for a US order, "CA" for a Canadian one. Missing/blank defaults to
-  // US, so any report without this column behaves exactly as before.
+  // Country: Amazon reports carry a "ship-country" column — "US" for a US
+  // order, "CA" for a Canadian one — and that column is still trusted for
+  // Amazon uploads. This build of the tool is the dedicated Walmart CANADA
+  // version, so every Walmart row is always treated as Canada regardless of
+  // whether a ship-country column is present in the raw export (Walmart's
+  // Canada exports often don't carry one at all, which is exactly why the
+  // old column-detection check kept silently falling back to "US" and
+  // multiplying the List Price below when it shouldn't have).
   const shipCountryRaw = getFieldLoose(r,['ship-country','ship country','shipcountry','ship-to-country','ship to country']);
-  const isCanada = String(shipCountryRaw||'').trim().toUpperCase()==='CA';
+  const isCanada = isWalmart ? true : (String(shipCountryRaw||'').trim().toUpperCase()==='CA');
   const unitListPrice = toNum(itemPriceRaw);
-  // Walmart's Item Cost / Original Price is normally a per-unit rate —
-  // multiply by quantity so the List Price reflects the full line, same as
-  // Ex-WH Cost. Amazon's item-price is already the line total, so it is left
-  // as-is — and so is a Walmart CANADA report's Item Cost: that export's
-  // value is already the full line total, so it must NOT be multiplied
-  // again. This only changes Walmart + Canada; US Walmart and every Amazon
-  // report keep their existing math exactly as before.
+  // Walmart's Item Cost / Original Price on a US export is normally a
+  // per-unit rate — multiply by quantity so the List Price reflects the
+  // full line, same as Ex-WH Cost. Amazon's item-price is already the line
+  // total, so it is left as-is — and so is this Walmart CANADA report's
+  // Item Cost: that export's value is already the full line total, so it
+  // must NEVER be multiplied by quantity again.
   let listPrice = (isWalmart && !isCanada) ? unitListPrice*qty : unitListPrice;
   if(hasValue(shippingPriceRaw)) listPrice += toNum(shippingPriceRaw);
   const off = Math.min(Math.max(getPromotionOff(r,listPrice),0), Math.max(listPrice,0));
@@ -1420,7 +1425,7 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   // just one more dimension. See normalizeGoogleShippingRows for the columns.
   const shipField = isCanada ? (isWalmart ? 'caWalmartShippingFee' : 'caShippingFee') : (isWalmart ? 'walmartShippingFee' : 'shippingFee');
   const fbaField = isCanada ? (isWalmart ? 'caWalmartFbaFee' : 'caFbaFee') : (isWalmart ? 'walmartFbaFee' : 'fbaFee');
-  // Seller-fulfilled orders (CP FBM / CP Walmart) never carry an FBA Fee, and
+  // Seller-fulfilled orders (FBM / Walmart) never carry an FBA Fee, and
   // Shipping Fee is intentionally left blank for them too (it changes daily
   // and is not tracked here) — so these two lookups are simply skipped
   // rather than being marked "missing".
@@ -1468,7 +1473,7 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
     } else issues.push('Shipping & FBA Fee sheet not linked');
   }
   return {
-    _id:uid(), rawSku:sku||'', date:formatDate(purchaseDate), orderId:orderId||'', vendor:'Cotton Passion', status:'Sold', shop, isWalmart, isCanada, product,size,color,qty,
+    _id:uid(), rawSku:sku||'', date:formatDate(purchaseDate), orderId:orderId||'', vendor:'Qatan', status:'Sold', shop, isWalmart, isCanada, product,size,color,qty,
     exWhUnit,exWhCost,revenue,netSale,listPrice,saleTax,fee,expenseUnit,expense,shippingFee,fbaFee,off,cm,
     costSource:exM.value!==null?'Google Sheets':'Missing',
     shippingSource: feeEligible ? (shipM.value!==null?'Google Sheets':'Missing') : (isWalmart ? 'Not applicable (Seller Fulfilled)' : 'Not applicable (FBM)'),
@@ -1502,7 +1507,7 @@ function processReportCore(showToast){
     const isWalmart = isWalmartRawRows([r]);
     const status = normStatus(getField(r,['order-status','order-item-status','status']));
     if(status === 'Cancelled'){ cancelled++; return; }
-    // Fee-eligible (CP FBA/CP WFS) and seller-fulfilled (CP FBM/CP Walmart)
+    // Fee-eligible (FBA/WFS) and seller-fulfilled (FBM/Walmart)
     // orders are all kept in the report — fee-eligible rows are grouped
     // first, the rest after — see the stable sort applied to `rows` below,
     // right before it is stored.
@@ -1514,8 +1519,8 @@ function processReportCore(showToast){
   });
   const counts = {}; rows.forEach(r=> { if(r.orderId) counts[r.orderId]=(counts[r.orderId]||0)+1; });
   rows.forEach(r=>r.isMulti = !!(r.orderId && counts[r.orderId]>1));
-  // Report order: the whole Amazon platform first (CP FBA, then CP FBM),
-  // then the whole Walmart platform after (CP WFS, then CP Walmart) — never
+  // Report order: the whole Amazon platform first (FBA, then FBM),
+  // then the whole Walmart platform after (WFS, then Walmart) — never
   // interleaved. Array.sort is stable so each group keeps its original
   // relative (file) order.
   rows.sort((a,b)=>{
@@ -1552,7 +1557,7 @@ function applyFbaToOrders(){
   state.orders.forEach(r=>{
     const feeEligible = isFeeEligibleShop(r.shop);
     if(!feeEligible){
-      // Seller-fulfilled rows (CP FBM / CP Walmart) never carry an FBA Fee,
+      // Seller-fulfilled rows (FBM / Walmart) never carry an FBA Fee,
       // and never carry a CM value at all.
       r.fbaFee = null; r.fbaSource = r.isWalmart ? 'Not applicable (Seller Fulfilled)' : 'Not applicable (FBM)'; r.cm = null;
       return;
@@ -1588,7 +1593,7 @@ function visibleOrders(){
   const key = state.sortBy;
   rows = rows.slice().sort((a,b)=>{
     // Amazon platform rows are always grouped before Walmart platform rows;
-    // within each platform, fee-eligible (CP FBA/CP WFS) lines are grouped
+    // within each platform, fee-eligible (FBA/WFS) lines are grouped
     // before seller-fulfilled ones. The user's chosen column sort then
     // applies within that group — matching the exported report's order.
     const ap = a.isWalmart ? 1 : 0, bp = b.isWalmart ? 1 : 0;
@@ -1787,11 +1792,11 @@ function rowHtml(r, idx){
     let extra = '';
     if(c.key==='cm' && !missing){ extra = (val>=0?' pos':' neg')+' cm-cell'; }
     // Shipping Fee / FBA Fee text color shows at a glance which rate sheet
-    // the number came from: Amazon (CP FBA) = orange, Walmart (CP WFS) = dark red.
+    // the number came from: Amazon (FBA) = orange, Walmart (WFS) = dark red.
     let feeStyle = '';
     if((c.key==='shippingFee'||c.key==='fbaFee') && !missing){
-      if(r.shop==='CP FBA') feeStyle=' style="color:var(--accent-2);font-weight:600;"';
-      else if(r.shop==='CP WFS') feeStyle=' style="color:var(--dark-red);font-weight:600;"';
+      if(r.shop==='FBA') feeStyle=' style="color:var(--accent-2);font-weight:600;"';
+      else if(r.shop==='WFS') feeStyle=' style="color:var(--dark-red);font-weight:600;"';
     }
     return `<div class="c ${c.cls} ${c.num?'num':''}${extra}"${feeStyle} title="${esc(c.key==='exWhCost'?r.costSource:(c.key==='shippingFee'?r.shippingSource:(c.key==='fbaFee'?r.fbaSource:(r.issues||[]).join(' · '))))}">${display}</div>`;
   }).join('');
@@ -2503,8 +2508,8 @@ function settingsModalHtml(){
       </div>
       <div class="field">
         <label>Vendor</label>
-        <input type="text" value="Cotton Passion" readonly>
-        <div class="help">Vendor is fixed to Cotton Passion for every non-cancelled order row.</div>
+        <input type="text" value="Qatan" readonly>
+        <div class="help">Vendor is fixed to Qatan for every non-cancelled order row.</div>
       </div>
       <div class="field">
         <label>Fee (%)</label>
@@ -2539,7 +2544,7 @@ function wireSettingsModal(){
     });
   });
   $('#saveSettingsBtn').addEventListener('click', ()=>{
-    state.settings.vendorName = 'Cotton Passion';
+    state.settings.vendorName = 'Qatan';
     state.settings.referralPercent = 15;
     state.settings.currency = $('#setCurrency').value || '$';
     state.theme = themeDraft; applyTheme();
@@ -2701,11 +2706,11 @@ async function downloadReport(){
     state.productMapping.forEach(m=>pm.addRow([m.sku,m.product,m.size,m.color]));
     pm.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; pm.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
 
-    const cfg=wb.addWorksheet('Config'); cfg.addRows([['Setting','Value'],['Referral Fee %',15],['Sale Tax','BLANK / NOT USED'],['Vendor','Cotton Passion']]);
+    const cfg=wb.addWorksheet('Config'); cfg.addRows([['Setting','Value'],['Referral Fee %',15],['Sale Tax','BLANK / NOT USED'],['Vendor','Qatan']]);
     cfg.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; cfg.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
 
     state.orders.forEach(r=>{
-      const row=[r.date,r.orderId,'Cotton Passion','Sold',r.shop,r.product,r.size,r.color,r.qty,r.exWhCost,r.revenue,r.netSale,r.listPrice,'',r.fee,r.expense,r.shippingFee,r.fbaFee,r.off,r.cm];
+      const row=[r.date,r.orderId,'Qatan','Sold',r.shop,r.product,r.size,r.color,r.qty,r.exWhCost,r.revenue,r.netSale,r.listPrice,'',r.fee,r.expense,r.shippingFee,r.fbaFee,r.off,r.cm];
       const er=ws.addRow(row);
       if(r.isMulti){ const c=er.getCell(2); c.fill={type:'pattern',pattern:'solid',fgColor:{argb:'FFC6EFCE'}}; c.font={bold:true,color:{argb:'FF006100'}}; }
     });
@@ -3606,8 +3611,14 @@ let __lastAutoSyncAt = 0;
 const AUTO_SYNC_MIN_GAP_MS = 10000;
 function hasAnyLinkedGoogleSheet(){
   const g = state.google || {};
-  return !!(g.exwhUrl || g.shippingUrl || g.skuUrl || g.tiktokShippingUrl || g.tiktokSkuUrl || g.tiktokFbtShippingUrl);
+  return !!(g.exwhUrl || g.shippingUrl || g.skuUrl || g.liveUrl || g.tiktokShippingUrl || g.tiktokSkuUrl || g.tiktokFbtShippingUrl);
 }
+// Returning to the tab does a DEEP sync — every linked Google Sheet source
+// is refreshed, not just some of them. Before this, Direct Live Sync's
+// master sheet was skipped here (it only ever updated on its own interval
+// timer, which browsers throttle or pause while the tab is backgrounded),
+// so coming back to the tab could still show a stale Live snapshot even
+// though the other sheets had just refreshed. Now it's included too.
 async function autoSyncOnReturn(){
   if(document.visibilityState === 'hidden') return; // only act when actually visible
   if(__autoSyncInFlight) return;
@@ -3618,6 +3629,7 @@ async function autoSyncOnReturn(){
   __lastAutoSyncAt = now;
   try{
     if(state.google.exwhUrl || state.google.shippingUrl || state.google.skuUrl) await refreshAllGoogle();
+    if(state.google.liveUrl) await syncLiveMaster({silent:true});
     if(state.google.tiktokShippingUrl || state.google.tiktokSkuUrl || state.google.tiktokFbtShippingUrl) await refreshAllGoogleTiktok();
   } finally {
     __autoSyncInFlight = false;
@@ -3936,19 +3948,30 @@ function wireGlobal(){
 }
 
 /* ---------------------------- INTRO SPLASH ---------------------------- */
-// Dismisses the one-time welcome splash: fades it out, then removes it from
-// the DOM so it can never block a click or show up again this session.
-// Safe to call more than once (click + timer + keypress can all race).
+// The software must not "open" (render its real content) until this splash
+// has actually been shown and dismissed — intro first, then the app, never
+// both at once. scheduleIntroDismiss() takes the callback that opens the
+// app and fires it exactly once, at the moment the splash starts dismissing
+// (click, keypress, or the timeout — whichever comes first); the fallback
+// guard below still finishes removing the splash element from the DOM even
+// if a transitionend event never fires.
+let __introOpenApp = null;
+let __introOpened = false;
 function dismissIntro(){
+  if(!__introOpened){
+    __introOpened = true;
+    if(typeof __introOpenApp === 'function'){ __introOpenApp(); }
+  }
   const el = document.getElementById('introSplash');
   if(!el || el.classList.contains('intro-out')) return;
   el.classList.add('intro-out');
   el.addEventListener('transitionend', ()=>{ el.remove(); }, {once:true});
   setTimeout(()=>{ if(el.parentNode) el.remove(); }, 900); // fallback in case transitionend never fires
 }
-function scheduleIntroDismiss(){
+function scheduleIntroDismiss(openApp){
+  __introOpenApp = openApp || null;
   const el = document.getElementById('introSplash');
-  if(!el) return;
+  if(!el){ dismissIntro(); return; }
   const reduceMotion = window.matchMedia && window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   setTimeout(dismissIntro, reduceMotion ? 500 : 1900);
   el.addEventListener('click', dismissIntro, {once:true});
@@ -3957,12 +3980,19 @@ function scheduleIntroDismiss(){
 
 /* ---------------------------- INIT ---------------------------- */
 function init(){
+  // Setup only — nothing visible to the person yet, so this can safely run
+  // while the intro splash is showing. loadConfig/applyTheme run now so the
+  // splash itself already reflects the person's saved theme.
   loadConfig();
   applyTheme();
   wireGlobal();
-  render();
-  scheduleIntroDismiss();
-  if(state.google.liveMeta && state.google.liveMeta.autoSync && state.google.liveUrl) setLiveAutoSync(true);
+  // The software only actually opens (renders its content, applies any
+  // saved layout, and kicks off live auto-sync) once the intro splash has
+  // been dismissed — never before, and never at the same time.
+  scheduleIntroDismiss(function openApp(){
+    render();
+    if(state.google.liveMeta && state.google.liveMeta.autoSync && state.google.liveUrl) setLiveAutoSync(true);
+  });
 }
 document.addEventListener('DOMContentLoaded', init);
 })();
