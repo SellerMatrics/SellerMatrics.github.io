@@ -1345,10 +1345,39 @@ function isWalmartRawRows(rows){
   if(!rows || !rows.length) return false;
   return Object.keys(rows[0]||{}).some(k=>k.trim().toLowerCase()==='fulfillment entity');
 }
-// FBA (Amazon) and WFS (Walmart) are the two "platform-fulfilled" shop
-// values — both get Shipping Fee + FBA Fee + CM. FBM and Walmart (both
-// seller-fulfilled) get none of the three, exactly like FBM always has.
-function isFeeEligibleShop(shop){ return shop==='FBA' || shop==='WFS'; }
+// CP FBA (Amazon) and CP WFS (Walmart) are the two "platform-fulfilled" shop
+// values — both get Shipping Fee + FBA Fee + CM. CP FBM and CP Walmart (both
+// seller-fulfilled) get none of the three, exactly like FBM always has. A
+// Canada order's shop label drops the "CP " prefix (see rowFromRaw), so this
+// checks the channel by suffix — matches 'CP FBA'/'FBA' and 'CP WFS'/'WFS'
+// alike — rather than the full prefixed string.
+function isFeeEligibleShop(shop){ return /FBA$/.test(shop) || /WFS$/.test(shop); }
+// Country detection: prefer an explicit ship-country column (both Amazon and
+// Walmart reports normally carry one), but real-world exports spell that
+// column differently and don't always agree on "CA" vs "CAN" vs "Canada" —
+// so this is a cascade, not a single lookup. If the country column is
+// missing or blank, fall back to the ship-state/province (US state codes and
+// Canadian province codes never collide, e.g. "ON", "BC", "QC" are never a
+// US state), then to the postal code's shape (Canadian "A1A 1A1" vs a US
+// ZIP). Any report with none of these signals defaults to US, exactly as
+// before, so this only ever adds correct Canada detections — it never turns
+// a working US row into a Canada one.
+const CA_PROVINCE_CODES = new Set(['AB','BC','MB','NB','NL','NS','NT','NU','ON','PE','QC','SK','YT']);
+const CA_PROVINCE_NAMES = new Set(['ALBERTA','BRITISH COLUMBIA','MANITOBA','NEW BRUNSWICK','NEWFOUNDLAND AND LABRADOR','NOVA SCOTIA','NORTHWEST TERRITORIES','NUNAVUT','ONTARIO','PRINCE EDWARD ISLAND','QUEBEC','SASKATCHEWAN','YUKON']);
+function detectIsCanadaOrder(r){
+  const specificRaw = getFieldLoose(r,['ship-country','ship country','shipcountry','ship-to-country','ship to country','shiptocountry','destination country','destination-country','buyer-country','buyer country','ship country code']);
+  const genericRaw = hasValue(specificRaw) ? '' : getFieldLoose(r,['country','country code','country-code','countrycode']);
+  const countryV = String(specificRaw || genericRaw || '').trim().toUpperCase();
+  if(countryV==='CA' || countryV==='CAN' || countryV==='CANADA') return true;
+  if(countryV==='US' || countryV==='USA' || countryV==='UNITED STATES' || countryV==='UNITED STATES OF AMERICA') return false;
+  const stateRaw = getFieldLoose(r,['ship-state','ship state','shipstate','ship-to-state','ship to state','province','ship-province','ship province','state']);
+  const stateV = String(stateRaw||'').trim().toUpperCase();
+  if(CA_PROVINCE_CODES.has(stateV) || CA_PROVINCE_NAMES.has(stateV)) return true;
+  const zipRaw = getFieldLoose(r,['ship-zip','ship-postal-code','ship zip','ship postal code','postal code','postal-code','zip','zip code','ship-to-zip','ship to zip']);
+  const zipV = String(zipRaw||'').trim().toUpperCase();
+  if(/^[A-Z]\d[A-Z]\s?\d[A-Z]\d$/.test(zipV)) return true; // Canadian postal code shape
+  return false;
+}
 function extractOrderId(r, isWalmart){
   return isWalmart
     ? (getFieldLoose(r,['order#','order #','seller order no']) || '')
@@ -1356,6 +1385,7 @@ function extractOrderId(r, isWalmart){
 }
 function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   const orderId = extractOrderId(r, isWalmart);
+  const isCanada = detectIsCanadaOrder(r);
   let sku = getField(r,['sku','merchant-sku','seller-sku']);
   const productName = isWalmart
     ? (getFieldLoose(r,['item description']) || sku || 'Unknown product')
@@ -1374,15 +1404,21 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
     : String(getField(r,['fulfillment-channel','fulfillment channel'])).trim();
   const fulfillmentLower = fulfillment.toLowerCase();
   let shop;
+  // channelKind is the bare fulfillment channel (FBA/FBM/WFS/Walmart) — the
+  // "CP " prefix is a Cotton Passion (US) branding detail, not part of the
+  // channel itself. A Canada order shows the bare channel name instead, with
+  // "Qatan" carrying the vendor identity there (see the returned row below).
+  let channelKind;
   if(isWalmart){
-    shop = fulfillmentLower.includes('wfs') ? 'WFS' : (fulfillmentLower==='sellerfulfilled' ? 'Walmart' : '');
+    channelKind = fulfillmentLower.includes('wfs') ? 'WFS' : (fulfillmentLower==='sellerfulfilled' ? 'Walmart' : '');
   } else {
     const isFbaLike = /^(amazon|fba|fulfillment by amazon)$/i.test(fulfillmentLower) || fulfillmentLower.includes('amazon');
-    shop = isFbaLike ? 'FBA' : (fulfillmentLower==='merchant' ? 'FBM' : '');
+    channelKind = isFbaLike ? 'FBA' : (fulfillmentLower==='merchant' ? 'FBM' : '');
   }
+  shop = channelKind ? (isCanada ? channelKind : 'CP '+channelKind) : '';
   // Amazon FBM (merchant-fulfilled) orders sometimes carry a "shipping-price"
   // column for shipping the customer paid — fold it into List Price.
-  const shippingPriceRaw = (!isWalmart && shop==='FBM') ? getFieldLoose(r,['shipping-price','shipping price']) : '';
+  const shippingPriceRaw = (!isWalmart && channelKind==='FBM') ? getFieldLoose(r,['shipping-price','shipping price']) : '';
   const purchaseDate = isWalmart ? getFieldLoose(r,['order date']) : getField(r,['purchase-date','order-date','date']);
   const rawSize=getFieldLoose(r,['size','product-size','variantsize'])||'';
   const rawColor=getFieldLoose(r,['color','product-color','variantcolor'])||'';
@@ -1394,23 +1430,6 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   const product = (mapping && mapping.product) || productName;
   const size = (mapping && mapping.size) || canonicalRawSize || '—';
   const color = (mapping && mapping.color) || rawColor || '—';
-  // Country: both Amazon and Walmart reports usually carry a country column —
-  // "US" for a US order, "CA" for a Canadian one. Missing/blank defaults to
-  // US, so any report without this column behaves exactly as before.
-  // Broadened on purpose: some Walmart exports (e.g. PO Data) spell/place
-  // this differently, or carry a currency/marketplace column instead of a
-  // country column, so several fallbacks are checked before giving up.
-  const shipCountryRaw = getFieldLoose(r,['ship-country','ship country','shipcountry','ship-to-country','ship to country','country','country code','countrycode','buyer country','destination country','shipping country','ship to country code']);
-  const shipCountryVal = String(shipCountryRaw||'').trim().toUpperCase();
-  let isCanada = shipCountryVal==='CA' || shipCountryVal==='CAN' || shipCountryVal==='CANADA' || shipCountryVal.includes('CANADA');
-  if(!isCanada && !hasValue(shipCountryRaw)){
-    // No usable country column at all — fall back to a currency/marketplace
-    // signal that Walmart Canada exports commonly carry instead.
-    const currencyRaw = String(getFieldLoose(r,['currency','currency code','order currency']) || '').trim().toUpperCase();
-    const marketplaceRaw = String(getFieldLoose(r,['marketplace','site','partner','partner id']) || '').trim().toUpperCase();
-    const priceStr = String(itemPriceRaw||'');
-    if(currencyRaw==='CAD' || marketplaceRaw.includes('.CA') || marketplaceRaw==='CA' || /\bCAD\b|C\$/.test(priceStr)) isCanada = true;
-  }
   const unitListPrice = toNum(itemPriceRaw);
   // Walmart's Item Cost / Original Price is normally a per-unit rate —
   // multiply by quantity so the List Price reflects the full line, same as
@@ -1432,7 +1451,7 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
   // just one more dimension. See normalizeGoogleShippingRows for the columns.
   const shipField = isCanada ? (isWalmart ? 'caWalmartShippingFee' : 'caShippingFee') : (isWalmart ? 'walmartShippingFee' : 'shippingFee');
   const fbaField = isCanada ? (isWalmart ? 'caWalmartFbaFee' : 'caFbaFee') : (isWalmart ? 'walmartFbaFee' : 'fbaFee');
-  // Seller-fulfilled orders (FBM / Walmart) never carry an FBA Fee, and
+  // Seller-fulfilled orders (CP FBM / CP Walmart) never carry an FBA Fee, and
   // Shipping Fee is intentionally left blank for them too (it changes daily
   // and is not tracked here) — so these two lookups are simply skipped
   // rather than being marked "missing".
@@ -1480,7 +1499,7 @@ function rowFromRaw(r, shippingOccurrence=1, isWalmart=false){
     } else issues.push('Shipping & FBA Fee sheet not linked');
   }
   return {
-    _id:uid(), rawSku:sku||'', date:formatDate(purchaseDate), orderId:orderId||'', vendor:(isCanada ? 'Qatan' : 'Cotton Passion'), status:'Sold', shop, isWalmart, isCanada, product,size,color,qty,
+    _id:uid(), rawSku:sku||'', date:formatDate(purchaseDate), orderId:orderId||'', vendor:(isCanada?'Qatan':'Cotton Passion'), status:'Sold', shop, isWalmart, isCanada, product,size,color,qty,
     exWhUnit,exWhCost,revenue,netSale,listPrice,saleTax,fee,expenseUnit,expense,shippingFee,fbaFee,off,cm,
     costSource:exM.value!==null?'Google Sheets':'Missing',
     shippingSource: feeEligible ? (shipM.value!==null?'Google Sheets':'Missing') : (isWalmart ? 'Not applicable (Seller Fulfilled)' : 'Not applicable (FBM)'),
@@ -1514,7 +1533,7 @@ function processReportCore(showToast){
     const isWalmart = isWalmartRawRows([r]);
     const status = normStatus(getField(r,['order-status','order-item-status','status']));
     if(status === 'Cancelled'){ cancelled++; return; }
-    // Fee-eligible (FBA/WFS) and seller-fulfilled (FBM/Walmart)
+    // Fee-eligible (CP FBA/CP WFS) and seller-fulfilled (CP FBM/CP Walmart)
     // orders are all kept in the report — fee-eligible rows are grouped
     // first, the rest after — see the stable sort applied to `rows` below,
     // right before it is stored.
@@ -1526,8 +1545,8 @@ function processReportCore(showToast){
   });
   const counts = {}; rows.forEach(r=> { if(r.orderId) counts[r.orderId]=(counts[r.orderId]||0)+1; });
   rows.forEach(r=>r.isMulti = !!(r.orderId && counts[r.orderId]>1));
-  // Report order: the whole Amazon platform first (FBA, then FBM),
-  // then the whole Walmart platform after (WFS, then Walmart) — never
+  // Report order: the whole Amazon platform first (CP FBA, then CP FBM),
+  // then the whole Walmart platform after (CP WFS, then CP Walmart) — never
   // interleaved. Array.sort is stable so each group keeps its original
   // relative (file) order.
   rows.sort((a,b)=>{
@@ -1564,7 +1583,7 @@ function applyFbaToOrders(){
   state.orders.forEach(r=>{
     const feeEligible = isFeeEligibleShop(r.shop);
     if(!feeEligible){
-      // Seller-fulfilled rows (FBM / Walmart) never carry an FBA Fee,
+      // Seller-fulfilled rows (CP FBM / CP Walmart) never carry an FBA Fee,
       // and never carry a CM value at all.
       r.fbaFee = null; r.fbaSource = r.isWalmart ? 'Not applicable (Seller Fulfilled)' : 'Not applicable (FBM)'; r.cm = null;
       return;
@@ -1600,7 +1619,7 @@ function visibleOrders(){
   const key = state.sortBy;
   rows = rows.slice().sort((a,b)=>{
     // Amazon platform rows are always grouped before Walmart platform rows;
-    // within each platform, fee-eligible (FBA/WFS) lines are grouped
+    // within each platform, fee-eligible (CP FBA/CP WFS) lines are grouped
     // before seller-fulfilled ones. The user's chosen column sort then
     // applies within that group — matching the exported report's order.
     const ap = a.isWalmart ? 1 : 0, bp = b.isWalmart ? 1 : 0;
@@ -1800,10 +1819,11 @@ function rowHtml(r, idx){
     if(c.key==='cm' && !missing){ extra = (val>=0?' pos':' neg')+' cm-cell'; }
     // Shipping Fee / FBA Fee text color shows at a glance which rate sheet
     // the number came from: Amazon (FBA) = orange, Walmart (WFS) = dark red.
+    // Checked by suffix so it applies to both 'CP FBA'/'FBA' and 'CP WFS'/'WFS'.
     let feeStyle = '';
     if((c.key==='shippingFee'||c.key==='fbaFee') && !missing){
-      if(r.shop==='FBA') feeStyle=' style="color:var(--accent-2);font-weight:600;"';
-      else if(r.shop==='WFS') feeStyle=' style="color:var(--dark-red);font-weight:600;"';
+      if(/FBA$/.test(r.shop)) feeStyle=' style="color:var(--accent-2);font-weight:600;"';
+      else if(/WFS$/.test(r.shop)) feeStyle=' style="color:var(--dark-red);font-weight:600;"';
     }
     return `<div class="c ${c.cls} ${c.num?'num':''}${extra}"${feeStyle} title="${esc(c.key==='exWhCost'?r.costSource:(c.key==='shippingFee'?r.shippingSource:(c.key==='fbaFee'?r.fbaSource:(r.issues||[]).join(' · '))))}">${display}</div>`;
   }).join('');
@@ -2384,7 +2404,7 @@ async function refreshAllGoogle(){
   const btn=$('#refreshAllGoogleBtn');if(btn)btn.disabled=true;const results=[];for(const [k,label] of linked){const ok=await refreshGoogleSource(k,true);results.push(label+': '+(ok?(state.google.lastChanged[k]?'changed':'no changes'):'failed'));}if(btn)btn.disabled=false;render();toast(results.some(x=>x.endsWith('failed'))?'error':'success','All Sheets sync finished',results.join(' · '));
 }
 function googlePreviewHtml(kind){const key={exwh:'exwhRows',shipping:'shippingRows',fba:'fbaRows',sku:'skuRows'}[kind];const rows=state.google[key]||[];if(!rows.length)return '<div class="help" style="margin-top:8px;">No usable rows detected yet.</div>';const head={exwh:['Article / Product','Size','Color','SKU','Ex-WH Cost','Rate Date'],shipping:['Product','Size','Color','Amazon Shipping','Amazon FBA','Walmart Shipping','Walmart FBA','CA Shipping','CA FBA','Walmart CA Shipping','Walmart CA FBA'],fba:['Order ID','Product','Size','Color','SKU','FBA Fee'],sku:['SKU','Product','Size','Color']}[kind];const sample=rows.slice(0,5).map(r=>kind==='exwh'?[r.product||'—',r.size||'—',r.color||'—',r.sku||'—',fmtMoney(r.exWhCost),r.sourceDate||'Direct']:kind==='shipping'?[r.product||'—',r.size||'—',r.color||'—',r.shippingFee!=null?fmtMoney(r.shippingFee):'—',r.fbaFee!=null?fmtMoney(r.fbaFee):'—',r.walmartShippingFee!=null?fmtMoney(r.walmartShippingFee):'—',r.walmartFbaFee!=null?fmtMoney(r.walmartFbaFee):'—',r.caShippingFee!=null?fmtMoney(r.caShippingFee):'—',r.caFbaFee!=null?fmtMoney(r.caFbaFee):'—',r.caWalmartShippingFee!=null?fmtMoney(r.caWalmartShippingFee):'—',r.caWalmartFbaFee!=null?fmtMoney(r.caWalmartFbaFee):'—']:kind==='fba'?[r.orderId||'—',r.product||'—',r.size||'—',r.color||'—',r.sku||'—',fmtMoney(r.fbaFee)]:[r.sku||'—',r.product||'—',r.size||'—',r.color||'—']);return '<div class="section-divider">Preview — '+rows.length+' usable row(s)</div><table class="mini-table"><tr>'+head.map(h=>'<th>'+esc(h)+'</th>').join('')+'</tr>'+sample.map(row=>'<tr>'+row.map(v=>'<td class="mono">'+esc(v)+'</td>').join('')+'</tr>').join('')+'</table>'+ (rows.length>5?'<div class="help">+ '+(rows.length-5)+' more row(s).</div>':'');}
-function googleLinkModalHtml(kind){const key={exwh:'exwhUrl',shipping:'shippingUrl',fba:'fbaUrl',sku:'skuUrl'}[kind];const updatedKey={exwh:'exwhUpdated',shipping:'shippingUpdated',fba:'fbaUpdated',sku:'skuUpdated'}[kind];const url=state.google[key];const titles={exwh:'Link Ex-WH Cost Google Sheet',shipping:'Link Shipping & FBA Fee Google Sheet',fba:'Link FBA Fee Google Sheet',sku:'Link SKU / Product Google Sheet'};const helps={exwh:'Recommended: SKU, Product, Size, Color, Ex-WH Cost.',shipping:'One sheet, up to eight fee columns: Product, Size, Amazon Shipping Fee, Amazon FBA Fee, Walmart Shipping Fee, Walmart FBA Fee — plus CA Shipping Fee, CA FBA Fee, Walmart CA Shipping Fee, Walmart CA FBA Fee for Canada. All are fixed product/size rules. Amazon reports read the Amazon columns and Walmart reports read the Walmart columns; within each, an order\\u2019s ship-country picks CA vs the plain (US) column, matched on the same row.',fba:'Recommended: Product, Size, Color, FBA Fee. FBA is a fixed product/size rule; older Order ID rows remain supported as fallback.',sku:'Required: SKU, Product; Size and Color recommended.'};return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${titles[kind]}</h3><p>Google Sheet is the authoritative source. The app only writes a value when an unambiguous matching row exists.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="googleSheetUrlInput" value="${esc(url)}" placeholder="https://docs.google.com/spreadsheets/d/..."><div class="help">${helps[kind]}</div></div><div class="section-divider">Connection</div><div class="code-block">Recommended: normal /edit Google Sheet link + “Anyone with the link → Viewer”. Published links are supported when Google returns public CSV data. After editing the sheet, use Sync All Sheets or Sync Now.</div><div class="help">Last synced: ${state.google[updatedKey]?new Date(state.google[updatedKey]).toLocaleString():'Never'}</div><div id="googlePreviewArea">${googlePreviewHtml(kind)}</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="saveGoogleSheetBtn">${ICONS.check} Save & Sync</button></div></div>`;}
+function googleLinkModalHtml(kind){const key={exwh:'exwhUrl',shipping:'shippingUrl',fba:'fbaUrl',sku:'skuUrl'}[kind];const updatedKey={exwh:'exwhUpdated',shipping:'shippingUpdated',fba:'fbaUpdated',sku:'skuUpdated'}[kind];const url=state.google[key];const titles={exwh:'Link Ex-WH Cost Google Sheet',shipping:'Link Shipping & FBA Fee Google Sheet',fba:'Link FBA Fee Google Sheet',sku:'Link SKU / Product Google Sheet'};const helps={exwh:'Recommended: SKU, Product, Size, Color, Ex-WH Cost.',shipping:'One sheet, up to eight fee columns: Product, Size, Amazon Shipping Fee, Amazon FBA Fee, Walmart Shipping Fee, Walmart FBA Fee — plus CA Shipping Fee, CA FBA Fee, Walmart CA Shipping Fee, Walmart CA FBA Fee for Canada. All are fixed product/size rules. Amazon reports read the Amazon columns and Walmart reports read the Walmart columns; within each, the ship-country on each order picks CA vs the plain (US) column, matched on the same row.',fba:'Recommended: Product, Size, Color, FBA Fee. FBA is a fixed product/size rule; older Order ID rows remain supported as fallback.',sku:'Required: SKU, Product; Size and Color recommended.'};return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>${titles[kind]}</h3><p>Google Sheet is the authoritative source. The app only writes a value when an unambiguous matching row exists.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="googleSheetUrlInput" value="${esc(url)}" placeholder="https://docs.google.com/spreadsheets/d/..."><div class="help">${helps[kind]}</div></div><div class="section-divider">Connection</div><div class="code-block">Recommended: normal /edit Google Sheet link + “Anyone with the link → Viewer”. Published links are supported when Google returns public CSV data. After editing the sheet, use Sync All Sheets or Sync Now.</div><div class="help">Last synced: ${state.google[updatedKey]?new Date(state.google[updatedKey]).toLocaleString():'Never'}</div><div id="googlePreviewArea">${googlePreviewHtml(kind)}</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="saveGoogleSheetBtn">${ICONS.check} Save & Sync</button></div></div>`;}
 async function wireGoogleLinkModal(kind){$('#saveGoogleSheetBtn').addEventListener('click',async()=>{const url=$('#googleSheetUrlInput').value.trim();const key={exwh:'exwhUrl',shipping:'shippingUrl',fba:'fbaUrl',sku:'skuUrl'}[kind];state.google[key]=url;persistConfig();if(!url){const rowKey={exwh:'exwhRows',shipping:'shippingRows',fba:'fbaRows',sku:'skuRows'}[kind];const updatedKey={exwh:'exwhUpdated',shipping:'shippingUpdated',fba:'fbaUpdated',sku:'skuUpdated'}[kind];state.google[rowKey]=[];state.google[updatedKey]=null;if(kind==='shipping'){state.fbaApplied=false; if(state.rawRows&&state.isProcessed) processReportSync();}persistConfig();closeModal();render();toast('info','Google Sheet disconnected',(kind==='shipping'?'Shipping & FBA Fee':kind)+' source removed; values will remain blank.');return;}const btn=$('#saveGoogleSheetBtn');btn.disabled=true;btn.innerHTML=ICONS.spinner+' Reading sheet…';const ok=await refreshGoogleSource(kind,true);btn.disabled=false;btn.innerHTML=ICONS.check+' Save & Sync';if(ok){closeModal();toast('success','Google Sheet connected','The '+(kind==='shipping'?'Shipping & FBA Fee':kind)+' source is now live. Sync All Sheets after edits.');}else{render();openModal({exwh:'googleExwh',shipping:'googleShipping',sku:'googleSku'}[kind]);}});}
 /* ---------------------------- MODALS ---------------------------- */
 function closeModal(){ state.modal=null; $('#modalRoot').innerHTML=''; }
@@ -2515,8 +2535,8 @@ function settingsModalHtml(){
       </div>
       <div class="field">
         <label>Vendor</label>
-        <input type="text" value="Cotton Passion (US) / Qatan (Canada)" readonly>
-        <div class="help">Vendor is fixed to Cotton Passion for every non-cancelled US order row, and Qatan for every Canada order row.</div>
+        <input type="text" value="Cotton Passion" readonly>
+        <div class="help">Vendor is fixed to Cotton Passion for every non-cancelled order row.</div>
       </div>
       <div class="field">
         <label>Fee (%)</label>
@@ -2713,12 +2733,7 @@ async function downloadReport(){
     state.productMapping.forEach(m=>pm.addRow([m.sku,m.product,m.size,m.color]));
     pm.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; pm.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
 
-    // Vendor is Cotton Passion for US orders and Qatan for Canada orders — a
-    // batch can contain both, so the Config summary reflects whichever are
-    // actually present rather than assuming one or the other.
-    const hasUsVendor = state.orders.some(r=>!r.isCanada), hasCaVendor = state.orders.some(r=>r.isCanada);
-    const vendorSummary = hasUsVendor && hasCaVendor ? 'Cotton Passion (US) / Qatan (Canada)' : (hasCaVendor ? 'Qatan' : 'Cotton Passion');
-    const cfg=wb.addWorksheet('Config'); cfg.addRows([['Setting','Value'],['Referral Fee %',15],['Sale Tax','BLANK / NOT USED'],['Vendor',vendorSummary]]);
+    const cfg=wb.addWorksheet('Config'); cfg.addRows([['Setting','Value'],['Referral Fee %',15],['Sale Tax','BLANK / NOT USED'],['Vendor','Cotton Passion']]);
     cfg.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}}; cfg.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF'+orange}};
 
     state.orders.forEach(r=>{
@@ -3974,11 +3989,13 @@ function scheduleIntroDismiss(){
 
 /* ---------------------------- INIT ---------------------------- */
 function init(){
+  // Armed first, before anything below that could throw — the splash must
+  // always resolve into the app, never get stuck on top of it permanently.
+  scheduleIntroDismiss();
   loadConfig();
   applyTheme();
   wireGlobal();
   render();
-  scheduleIntroDismiss();
   if(state.google.liveMeta && state.google.liveMeta.autoSync && state.google.liveUrl) setLiveAutoSync(true);
 }
 document.addEventListener('DOMContentLoaded', init);
