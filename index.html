@@ -660,7 +660,7 @@ a{ color:inherit; }
           <span id="filenameTextTiktok"></span>
         </div>
         <span class="chip hidden" id="rowCountChipTiktok"></span><button class="btn sm danger hidden issue-btn" id="issueBtnTiktok" data-action="showIssuesTiktok">Issues <span class="badge" id="issueBadgeTiktok">0</span></button>
-        <span class="chip green hidden" id="processedChipTiktok">Processed</span><span class="chip hidden" id="tiktokFormulaNote">List Price = SKU Subtotal Before Discount + Shipping Fee After Discount · OFF = SKU Seller Discount · only To Ship lines are included</span>
+        <span class="chip green hidden" id="processedChipTiktok">Processed</span><span class="chip hidden" id="tiktokFormulaNote">List Price = SKU Subtotal Before Discount + (Shipping Fee After Discount + Shipping Fee Platform Discount) · OFF = SKU Seller Discount · only To Ship lines are included</span>
         <div class="main-toolbar-spacer"></div>
       </div>
       <div class="content" id="contentTiktok"><!-- filled by renderContentTiktok() --></div>
@@ -2961,10 +2961,15 @@ function tiktokRowFromRaw(r, oidShareCounts){
   const match = tiktokSkuLookup(sellerSku, productName, variation);
   const qty = toNum(getFieldLoose(r,['quantity']));
   const subtotalBefore = toNum(getFieldLoose(r,['sku subtotal before discount']));
-  const shipAfterDiscountRaw = toNum(getFieldLoose(r,['shipping fee after discount']));
-  // A combined order's per-line "Shipping Fee After Discount" repeats the
-  // WHOLE order's fee on every line item in TikTok's own export, so it's
-  // split evenly across however many "To Ship" lines share this Order ID.
+  // Shipping Fee After Discount + Shipping Fee Platform Discount are added
+  // together first; that combined figure is what gets added to SKU Subtotal
+  // Before Discount to make the List Price.
+  const shipAfterDiscountRaw = toNum(getFieldLoose(r,['shipping fee after discount']))
+                             + toNum(getFieldLoose(r,['shipping fee platform discount']));
+  // A combined order's per-line "Shipping Fee After Discount" (and Platform
+  // Discount) repeats the WHOLE order's fee on every line item in TikTok's
+  // own export, so the combined figure is split evenly across however many
+  // "To Ship" lines share this Order ID.
   const shareCount = (orderId && oidShareCounts && oidShareCounts[orderId]>0) ? oidShareCounts[orderId] : 1;
   const shipAfterDiscount = shipAfterDiscountRaw / shareCount;
   const listPrice = Math.round((subtotalBefore + shipAfterDiscount + Number.EPSILON)*100)/100;
