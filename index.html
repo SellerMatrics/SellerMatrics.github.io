@@ -507,44 +507,101 @@ a{ color:inherit; }
   #introSplash{ transition:opacity .15s linear; }
 }
 </style>
-<style id="info-modal-styles">
-/* ============================= INFORMATION MODAL =============================
-   Additive styles for the "Information" documentation dialog only. Every rule is
-   scoped to a new .info-* class (or to .info-modal / .info-panel descendants) and
-   uses the existing theme variables, so nothing else in the app is affected and
-   both the dark and the light theme are covered. */
-@media (min-width:980px){ .modal.info-modal{ max-width:880px; } }
-.info-tabs{ display:flex; gap:2px; padding:0 14px; border-bottom:1px solid var(--border); overflow-x:auto; flex:0 0 auto; }
+<style id="info-panel-style">
+/* =====================================================================
+   INFORMATION PANEL — software documentation modal + its sidebar button.
+   Purely additive: uses the existing theme tokens, touches no app logic.
+   ===================================================================== */
+.side-info{
+  /* bottom:-14px cancels the sidebar's 14px bottom padding, so on short windows the pinned block sits
+     flush with the sidebar edge instead of letting the last nav rows peek out underneath it. */
+  position:sticky; bottom:-14px; z-index:3; margin:auto -10px 0; padding:10px 10px 12px;
+  background:var(--bg-elevated); border-top:1px solid var(--border);
+}
+.side-info .side-btn{ margin-bottom:0; }
+.side-btn.info-btn{ background:var(--surface-2); border-color:var(--border); color:var(--text); font-weight:600; }
+.side-btn.info-btn svg{ color:var(--accent-2); }
+.side-btn.info-btn:hover{ background:var(--accent-soft); border-color:var(--accent-border); color:var(--accent-2); }
+.side-btn.info-btn .badge{ background:var(--accent-soft); color:var(--accent-2); }
+
+.modal.info-modal{ max-width:min(960px, calc(100vw - 18px)); max-height:min(90vh, 900px); }
+.info-modal .modal-head{ justify-content:space-between; align-items:flex-start; }
+.info-modal .modal-head .chip{ flex:0 0 auto; white-space:nowrap; }
+.info-tabs{
+  display:flex; gap:2px; padding:0 14px; border-bottom:1px solid var(--border);
+  overflow-x:auto; flex:0 0 auto; scrollbar-width:thin;
+}
 .info-tab{
-  appearance:none; background:transparent; border:0; border-bottom:2px solid transparent; color:var(--text-2);
-  font:inherit; font-size:12px; font-weight:600; padding:10px 12px 9px; margin-bottom:-1px; cursor:pointer;
-  white-space:nowrap; transition:color .13s ease, border-color .13s ease;
+  appearance:none; -webkit-appearance:none; background:transparent; border:0; border-bottom:2px solid transparent;
+  color:var(--text-2); font-family:inherit; font-size:12.2px; font-weight:600; padding:11px 12px 10px;
+  cursor:pointer; white-space:nowrap; margin-bottom:-1px; transition:color .13s, border-color .13s;
 }
 .info-tab:hover{ color:var(--text); }
 .info-tab.active{ color:var(--accent-2); border-bottom-color:var(--accent); }
-.info-tab:focus-visible{ outline:2px solid var(--accent); outline-offset:-2px; border-radius:4px; }
-.info-panel p{ margin:0 0 10px; font-size:12.2px; line-height:1.65; color:var(--text-2); }
-.info-panel ul{ margin:0 0 12px; padding-left:18px; }
-.info-panel li{ margin-bottom:4px; font-size:12.2px; line-height:1.65; color:var(--text-2); }
-.info-panel b{ color:var(--text); font-weight:600; }
-.info-panel code{
-  font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-size:11px; padding:1px 5px; border-radius:4px;
-  background:var(--surface-2); border:1px solid var(--border); color:var(--text);
+.info-body{ padding:18px 22px 24px; }
+.info-sec{ display:none; }
+.info-sec.active{ display:block; animation:fadeIn .15s ease; }
+.info-sec h4{
+  margin:24px 0 9px; font-size:10.8px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3);
+  padding-bottom:6px; border-bottom:1px solid var(--border);
 }
-.info-panel .code-block{ max-height:none; font-size:11.2px; margin-bottom:12px; overflow-x:auto; white-space:pre; }
-.info-table{ margin:0 0 14px; }
-.info-table th, .info-table td{ text-align:left; vertical-align:top; padding:7px 8px; font-size:11.6px; line-height:1.55; }
-.info-table th{ font-size:10px; }
-.info-table td{ color:var(--text-2); }
-.info-table .num{ text-align:right; font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-variant-numeric:tabular-nums; }
-.info-table .hl{ color:var(--accent-2); font-weight:700; }
-.info-kv td:first-child{ color:var(--text); font-weight:600; }
-.info-scroll{ overflow-x:auto; }
-.info-scroll .info-wide{ min-width:560px; }
-.info-callout{ border:1px solid var(--accent-border); background:var(--accent-soft); border-radius:8px; padding:10px 12px; margin:0 0 14px; }
-.info-callout p{ margin:0 0 6px; }
-.info-callout p:last-child{ margin-bottom:0; }
-.info-callout .info-ttl{ margin-bottom:6px; font-size:11.5px; font-weight:700; color:var(--accent-2); }
+.info-sec h4:first-child{ margin-top:0; }
+.info-sec p, .info-sec li{ font-size:12.6px; line-height:1.7; color:var(--text-2); }
+.info-sec p{ margin:0 0 10px; }
+.info-sec ul, .info-sec ol{ margin:0 0 12px; padding-left:20px; }
+.info-sec li{ margin-bottom:5px; }
+.info-sec b{ color:var(--text); font-weight:650; }
+.info-sec code{
+  font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-size:11.3px; background:var(--surface-3);
+  border:1px solid var(--border); border-radius:5px; padding:1px 5px; color:var(--text); white-space:nowrap;
+}
+/* Long formulas inside table cells may wrap at spaces instead of forcing the table to scroll sideways. */
+.info-table td code{ white-space:normal; }
+.info-formula{
+  background:var(--surface-2); border:1px solid var(--border); border-left:3px solid var(--accent); border-radius:9px;
+  padding:12px 15px; margin:8px 0 14px; font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-size:12px;
+  line-height:1.9; color:var(--text); white-space:pre-wrap; overflow-x:auto;
+}
+.info-formula .k{ color:var(--accent-2); font-weight:700; }
+.info-formula .c{ color:var(--text-3); }
+.info-callout{
+  border:1px solid var(--accent-border); background:var(--accent-soft); border-radius:10px; padding:11px 14px; margin:0 0 14px;
+}
+.info-callout p{ margin:0; color:var(--text); }
+.info-callout.neutral{ border-color:var(--border); background:var(--surface-2); }
+.info-flow{ display:flex; flex-wrap:wrap; align-items:center; gap:6px; margin:8px 0 14px; }
+.info-flow .step{
+  font-size:11.2px; font-weight:600; padding:4px 9px; border-radius:20px; background:var(--surface-2);
+  border:1px solid var(--border); color:var(--text);
+}
+.info-flow i{ color:var(--text-3); font-style:normal; font-size:12px; }
+.info-table-wrap{ overflow-x:auto; margin:6px 0 14px; border:1px solid var(--border); border-radius:10px; }
+.info-table{ width:100%; border-collapse:collapse; font-size:12px; }
+.info-table th{
+  text-align:left; font-size:10px; font-weight:700; text-transform:uppercase; letter-spacing:.05em; color:var(--text-3);
+  padding:8px 11px; background:var(--surface-2); border-bottom:1px solid var(--border); white-space:nowrap;
+}
+.info-table td{ padding:8px 11px; border-bottom:1px solid var(--border); color:var(--text-2); vertical-align:top; line-height:1.6; }
+.info-table tr:last-child td{ border-bottom:0; }
+.info-table td:first-child{ color:var(--text); font-weight:600; }
+.info-table td.num, .info-table th.num{ text-align:right; font-variant-numeric:tabular-nums; white-space:nowrap; }
+.info-table tr.hl td{ background:var(--accent-soft); color:var(--text); }
+.info-before-after{ display:grid; grid-template-columns:1fr 1fr; gap:10px; margin:8px 0 14px; }
+.info-before-after > div{ border:1px solid var(--border); border-radius:10px; padding:11px 13px; background:var(--surface-2); }
+.info-before-after > div.new{ border-color:var(--accent-border); background:var(--accent-soft); }
+.info-before-after .lbl{ font-size:10px; font-weight:700; letter-spacing:.08em; text-transform:uppercase; color:var(--text-3); margin-bottom:6px; }
+.info-before-after > div.new .lbl{ color:var(--accent-2); }
+.info-before-after .eq{ font-family:'JetBrains Mono',ui-monospace,Menlo,monospace; font-size:11.6px; line-height:1.75; color:var(--text); }
+@media (max-width:640px){
+  .info-body{ padding:14px 14px 20px; }
+  .info-before-after{ grid-template-columns:1fr; }
+  .info-modal .modal-head .chip{ display:none; }
+  .info-sec code{ white-space:normal; overflow-wrap:anywhere; }
+}
+/* Very narrow phones: the sidebar's side padding drops to 9px, so match it and avoid a 1px sideways overflow. */
+@media (max-width:480px){
+  .side-info{ margin-left:-9px; margin-right:-9px; padding-left:9px; padding-right:9px; }
+}
 </style>
 </head>
 <body>
@@ -635,10 +692,6 @@ a{ color:inherit; }
         <div class="side-group-title">Preferences</div>
         <button class="side-btn" data-action="openSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="side-label">Settings</span></button>
       </div>
-      <div class="side-group" style="margin:16px 0 0;">
-        <div class="side-group-title">Documentation</div>
-        <button class="side-btn" data-action="openInfo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="side-label">Information</span></button>
-      </div>
       <div class="side-hint" id="sideHint">Drop a report anywhere to begin.</div>
      </div>
      <div id="sidebarTikTok" class="hidden">
@@ -675,11 +728,10 @@ a{ color:inherit; }
         <div class="side-group-title">Preferences</div>
         <button class="side-btn" data-action="openSettings"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 1 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 1 1-2.83-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 1 1 2.83-2.83l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 1 1 2.83 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg><span class="side-label">Settings</span></button>
       </div>
-      <div class="side-group" style="margin:16px 0 0;">
-        <div class="side-group-title">Documentation</div>
-        <button class="side-btn" data-action="openInfo"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="side-label">Information</span></button>
-      </div>
       <div class="side-hint" id="sideHintTiktok">Drop a TikTok order export anywhere to begin.</div>
+     </div>
+     <div class="side-info">
+      <button class="side-btn info-btn" data-action="openInfo" id="openInfoBtn" aria-haspopup="dialog" title="Software information: every calculation, rule and data source explained"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="side-label">Information</span><span class="badge">Docs</span></button>
      </div>
     </div>
 
@@ -2476,6 +2528,7 @@ function modalBody(kind){
   if(kind==='googleShipping') return googleLinkModalHtml('shipping');
   if(kind==='liveSync') return liveSyncModalHtml();
   if(kind==='shortcuts') return shortcutsModalHtml();
+  if(kind==='info') return infoModalHtml();
   if(kind==='tiktokGoogleSku') return tiktokGoogleLinkModalHtml('sku');
   if(kind==='tiktokGoogleShipping') return tiktokGoogleLinkModalHtml('shipping');
   if(kind==='tiktokGoogleFbtShipping') return tiktokGoogleLinkModalHtml('fbtShipping');
@@ -2483,209 +2536,7 @@ function modalBody(kind){
   if(kind==='tiktokMapping') return tiktokMappingModalHtml();
   if(kind==='tiktokIssues') return tiktokIssuesModalHtml();
   if(kind==='tiktokPushSheets') return tiktokPushSheetsModalHtml();
-  if(kind==='info') return infoModalHtml();
   return '';
-}
-
-/* --- Software Information (technical documentation dialog) ---
-   Opened from the "Information" button at the bottom of the sidebar. Purely
-   descriptive: it renders static documentation and never reads or changes any
-   report data, so it cannot affect a calculation. */
-const INFO_OVERVIEW_HTML = `
-  <div class="section-divider">Purpose</div>
-  <p><b>Seller Matrics</b> turns raw marketplace order exports into a clean, line-level pricing and profitability report. It runs two independent pipelines &mdash; <b>Amazon / Walmart</b> and <b>TikTok Shop</b> &mdash; selected with the platform toggle in the header. Every calculation runs locally in your browser.</p>
-
-  <div class="section-divider">Processing pipeline</div>
-  <div class="info-scroll">
-  <table class="mini-table info-table info-kv">
-    <thead><tr><th style="width:116px;">Stage</th><th>What happens</th></tr></thead>
-    <tbody>
-      <tr><td>1. Upload</td><td>One or more XLSX, CSV or TXT order reports are loaded and merged into a single batch (<b>Upload Report</b>, or drag &amp; drop anywhere on the page).</td></tr>
-      <tr><td>2. Parse</td><td>The first row is the header and every column is read by its <b>name</b>, never by its position, so a re-ordered or extended export keeps working. Names are matched case-insensitively; TikTok columns also ignore spaces, dashes and underscores.</td></tr>
-      <tr><td>3. Filter</td><td>Amazon / Walmart: cancelled lines are excluded. TikTok: only &ldquo;To ship&rdquo; lines are kept (see the TikTok Shop tab).</td></tr>
-      <tr><td>4. Calculate</td><td>Each remaining report line becomes exactly one output row. Money columns are parsed, combined and rounded as described in the platform tabs.</td></tr>
-      <tr><td>5. Enrich</td><td>Product, Size, Color and per-unit rates are resolved from the linked Google Sheets, then the Manual SKU list, then Product Mapping.</td></tr>
-      <tr><td>6. Review</td><td>Lines with missing or ambiguous source data are flagged and listed under <b>Issues</b>. TikTok rows can also be corrected in <b>Edit Table</b> mode.</td></tr>
-      <tr><td>7. Output</td><td><b>Download Report</b> writes an XLSX file; <b>Push to Google Sheets</b> sends the processed table to a Google Sheet through an Apps Script bridge.</td></tr>
-    </tbody>
-  </table>
-  </div>
-
-  <div class="section-divider">Core conventions</div>
-  <ul>
-    <li><b>Number parsing</b> &mdash; currency symbols ($ &pound; &euro; &#8360;) and thousands separators are stripped. A blank or non-numeric cell counts as <code>0</code>.</li>
-    <li><b>Rounding</b> &mdash; every calculated money value is rounded to 2 decimals (half-up) per line: <code>ROUND(x, 2)</code>.</li>
-    <li><b>Missing columns</b> &mdash; an absent or blank numeric column contributes <code>0</code> and never stops processing.</li>
-    <li><b>Multi-line orders</b> &mdash; lines that share an Order ID stay adjacent and are highlighted in the Order ID column.</li>
-    <li><b>Unambiguous matching</b> &mdash; a value from a linked sheet is written only when exactly one row matches (or several rows agree on the same value). Otherwise the cell stays blank and the line is flagged in Issues.</li>
-    <li><b>Vendor</b> &mdash; fixed to &ldquo;Cotton Passion&rdquo;. Canada orders in the Amazon / Walmart pipeline use &ldquo;Qatan&rdquo;.</li>
-  </ul>`;
-
-const INFO_TIKTOK_HTML = `
-  <div class="section-divider">List Price formula</div>
-  <div class="code-block">Step 1   Shipping part = ( Shipping Fee After Discount + Shipping Fee Platform Discount ) ÷ N
-Step 2   List Price    = ROUND( SKU Subtotal Before Discount + Shipping part , 2 )
-
-OFF      = SKU Seller Discount
-N        = number of kept "To ship" lines that share the same Order ID (N = 1 for a single-line order)</div>
-  <p>For every line, <b>Shipping Fee Platform Discount</b> is first added to <b>Shipping Fee After Discount</b>. That combined shipping amount is then added to <b>SKU Subtotal Before Discount</b>, and the result is the line&rsquo;s <b>List Price</b>. If an export has no Shipping Fee Platform Discount column (or the cell is blank), its value is <code>0</code> and the result equals the previous formula.</p>
-
-  <div class="info-scroll">
-  <table class="mini-table info-table info-wide">
-    <thead><tr><th class="num">SKU Subtotal Before Discount</th><th class="num">Shipping Fee After Discount</th><th class="num">Shipping Fee Platform Discount</th><th class="num">Step 1</th><th class="num">List Price</th></tr></thead>
-    <tbody>
-      <tr><td class="num">36.99</td><td class="num">2.99</td><td class="num">0.00</td><td class="num">2.99</td><td class="num hl">39.98</td></tr>
-      <tr><td class="num">38.99</td><td class="num">0.00</td><td class="num">2.99</td><td class="num">2.99</td><td class="num hl">41.98</td></tr>
-      <tr><td class="num">26.99</td><td class="num">0.26</td><td class="num">2.73</td><td class="num">2.99</td><td class="num hl">29.98</td></tr>
-    </tbody>
-  </table>
-  </div>
-  <p><b>Combined order.</b> TikTok repeats the order-level shipping amounts on every line of the order, so they are split evenly. Example: two kept lines (N = 2), each repeating After Discount 2.00 and Platform Discount 1.00, give a shipping part of (2.00 + 1.00) &divide; 2 = 1.50 per line &mdash; a line with subtotal 36.99 gets List Price 38.49 and a line with subtotal 26.99 gets 28.49.</p>
-
-  <div class="info-callout">
-    <div class="info-ttl">Formula revision &mdash; Shipping Fee Platform Discount</div>
-    <p><b>Previous:</b> <code>List Price = SKU Subtotal Before Discount + Shipping Fee After Discount</code></p>
-    <p><b>Current:</b> <code>List Price = SKU Subtotal Before Discount + (Shipping Fee After Discount + Shipping Fee Platform Discount)</code></p>
-    <p>Effect: when the platform covers the shipping fee (After Discount = 0, Platform Discount &gt; 0), that shipping amount is now included in List Price instead of being left out. TikTok defines Shipping Fee After Discount as Original Shipping Fee &minus; Shipping Fee Seller Discount &minus; Shipping Fee Platform Discount, so the two columns together equal the shipping fee before the platform discount.</p>
-  </div>
-
-  <div class="section-divider">Which report lines are kept</div>
-  <ul>
-    <li><b>Order Status</b> must be &ldquo;To ship&rdquo;.</li>
-    <li><b>Order Substatus</b> must be &ldquo;Awaiting collection&rdquo; &mdash; except <b>Fulfillment by TikTok Shop</b> lines, which are kept whatever their substatus.</li>
-    <li>Every other line (Pending, On hold, Shipped, Delivered, Canceled, In transit, &hellip;) is excluded and counted in the status bar as &ldquo;excluded (not To Ship)&rdquo;. TikTok&rsquo;s description row, directly under the header, is dropped by the same rule.</li>
-  </ul>
-
-  <div class="section-divider">Source columns and where they go</div>
-  <div class="info-scroll">
-  <table class="mini-table info-table info-kv">
-    <thead><tr><th style="width:230px;">Export column</th><th>Used for</th></tr></thead>
-    <tbody>
-      <tr><td>Order Status / Order Substatus</td><td>Line filter (above).</td></tr>
-      <tr><td>Fulfillment Type</td><td>Shop: &ldquo;Fulfillment by seller&rdquo; &rarr; <b>CP TTS</b>; &ldquo;Fulfillment by TikTok Shop&rdquo; &rarr; <b>CP FBT</b>. Any other value falls back to CP TTS and is flagged.</td></tr>
-      <tr><td>Order ID</td><td>Order ID column, multi-line grouping, the share count N, and the key for the Shipping Fee sheet lookup.</td></tr>
-      <tr><td>Seller SKU, Product Name, Variation</td><td>Product / Size / Color resolution (below).</td></tr>
-      <tr><td>Quantity</td><td>QTY column; also the multiplier for the FBT shipping rate.</td></tr>
-      <tr><td>SKU Subtotal Before Discount</td><td>Base amount of <b>List Price</b> (Step 2).</td></tr>
-      <tr><td>Shipping Fee After Discount</td><td>First part of the shipping amount (Step 1).</td></tr>
-      <tr><td>Shipping Fee Platform Discount</td><td>Added to Shipping Fee After Discount in Step 1.</td></tr>
-      <tr><td>SKU Seller Discount</td><td><b>OFF</b> column, as is.</td></tr>
-      <tr><td>Paid Time</td><td>Date column &mdash; calendar date only, the time of day is dropped.</td></tr>
-    </tbody>
-  </table>
-  </div>
-
-  <div class="section-divider">Shipping Fee column (independent of List Price)</div>
-  <p>The <b>Shipping Fee</b> column is the seller-side shipping cost. It is a different figure from the buyer-side shipping amount that feeds List Price.</p>
-  <ul>
-    <li><b>CP TTS</b> &mdash; looked up by Order ID in the linked <b>Shipping Fee</b> Google Sheet. The sheet value is the total for the whole order, so it is divided by N and rounded to 2 decimals. A label row that lists several Order IDs is split evenly across them. If an exact long Order ID is not found, its first 15 digits are compared, because Google Sheets can drop trailing digits of long numbers.</li>
-    <li><b>CP FBT</b> &mdash; a fixed per-piece rate from the linked <b>FBT Shipping Fee</b> sheet, matched by SKU first and then by Product / Size / Color. Shipping Fee = rate &times; QTY, rounded to 2 decimals.</li>
-    <li>If the relevant sheet is linked but no single matching row exists, the cell stays blank and the line is flagged in Issues.</li>
-  </ul>
-
-  <div class="section-divider">Product, Size and Color resolution</div>
-  <p>The Seller SKU is resolved in this priority order: (1) the linked <b>SKU / Product</b> Google Sheet, (2) the <b>Manual SKU</b> list, (3) <b>Product Mapping</b> (by SKU, then by product name), (4) the export&rsquo;s own text &mdash; Product Name, with Variation split on its first comma as <code>Color, Size</code>. A line not found in sources 1&ndash;3 is flagged &ldquo;SKU not found in linked SKU sheet&rdquo; and its left indicator turns red.</p>
-
-  <div class="section-divider">Edit Table and export</div>
-  <ul>
-    <li><b>Edit Table</b> &mdash; click a cell, type, then press Enter. Changes are staged and only applied by <b>Save Changes</b> (or dropped by <b>Discard Changes</b>). Saving List Price or OFF also refreshes the row&rsquo;s internal Net Sale (<code>max(List Price &minus; OFF, 0)</code>), Revenue (= Net Sale) and Fee (<code>ROUND(Net Sale &times; 15%, 2)</code>); these three are not shown in the TikTok table or export.</li>
-    <li><b>Download Report</b> &mdash; <code>TikTok_&lt;file name&gt;.xlsx</code>, sheet &ldquo;TikTok Sold Orders&rdquo;, 12 columns: Date, Order ID, Vendor, Status, Shop, Product, Size, Color, QTY, List Price, OFF, Shipping Fee. The header row is styled and frozen with filters, money uses the <code>$#,##0.00</code> format, and lines of one order stay together.</li>
-    <li><b>Table order</b> &mdash; CP TTS lines first, then CP FBT, with the chosen column sort applied inside each group.</li>
-  </ul>
-
-  <div class="section-divider">Issues flagged</div>
-  <ul>
-    <li>Missing Order ID &middot; Missing Seller SKU &middot; SKU not found in linked SKU sheet</li>
-    <li>Unrecognized Fulfillment Type &mdash; Shop defaulted to CP TTS</li>
-    <li>Shipping Fee missing for this Order ID &middot; Shipping Fee sheet has conflicting rows for this Order ID (only while a Shipping Fee sheet is linked)</li>
-    <li>FBT Shipping Fee missing for this Product/Size (only while an FBT Shipping Fee sheet is linked)</li>
-  </ul>`;
-
-const INFO_AZ_HTML = `
-  <div class="section-divider">Formulas</div>
-  <div class="code-block">List Price   = item-price            (Amazon: already the line total)
-             = Item Cost × QTY       (Walmart US; "Original Price" overrides Item Cost when present)
-             = Item Cost             (Walmart Canada: already the line total)
-             + shipping-price        (Amazon FBM only, when the column has a value)
-Off          = promotion discount (amount, or List Price × discount %), limited to 0 ... List Price
-Net Sale     = max( List Price − Off , 0 )
-Revenue      = Net Sale
-Fee          = ROUND( Net Sale × 15% , 2 )
-Ex-WH Cost   = Ex-WH rate × QTY
-Expense      = Expense rate × QTY
-Shipping Fee = Shipping rate × QTY   (FBA and WFS lines only)
-FBA Fee      = FBA rate × QTY        (FBA and WFS lines only)
-CM           = ROUND( List Price − ( Ex-WH Cost + Fee + Expense + Shipping Fee + FBA Fee + Off ) , 2 )
-Sale Tax     = intentionally left blank</div>
-
-  <ul>
-    <li><b>Lines kept</b> &mdash; every line except status &ldquo;Cancelled&rdquo; (counted in the status bar). Amazon and Walmart reports uploaded together are each read with their own column rules; a Walmart PO export is recognised by its &ldquo;Fulfillment Entity&rdquo; column.</li>
-    <li><b>Shop</b> &mdash; FBA or FBM (Amazon), WFS or Walmart (seller-fulfilled), prefixed &ldquo;CP &rdquo; for US orders. An order is treated as Canada by its country, then its state / province, then the shape of its postal code; Canada orders drop the prefix, use vendor &ldquo;Qatan&rdquo; and read the CA columns of the Shipping &amp; FBA Fee sheet.</li>
-    <li><b>CM availability</b> &mdash; computed only for FBA and WFS lines, and only when Ex-WH Cost, Shipping Fee and FBA Fee are all available. FBM and seller-fulfilled lines never carry Shipping Fee, FBA Fee or CM.</li>
-    <li><b>Pack-size correction</b> &mdash; a pack marker in the SKU (such as <code>4P</code> or <code>6P</code>) multiplies QTY before the per-unit costs are applied (6P &times; 5 = 30 pieces). Pillow Protector products are excluded. List Price, Revenue and Fee are never affected, because they are priced per pack.</li>
-    <li><b>Ex-WH Cost lookup</b> &mdash; SKU + Size + Color, then SKU + Size, then SKU, then Product + Size + Color, Product + Size and finally Product. Several rows with an identical value count as one match; conflicting rows leave the cell blank and flag the line.</li>
-    <li><b>Expense</b> &mdash; the per-unit rate saved in <b>Manual Expense</b> (matched by SKU, then by product name), multiplied by QTY.</li>
-  </ul>
-
-  <div class="section-divider">Output columns (20)</div>
-  <p>Date, Order ID, Vendor, Status, Shop, Product, Size, Color, Qty, Ex-WH Cost, Revenue, Net Sale, List Price, Sale Tax, Fee, Expense, Shipping Fee, FBA Fee, Off, CM. Rows are ordered Amazon first, then Walmart; inside each platform the fee-eligible lines (FBA / WFS) come before FBM / seller-fulfilled lines.</p>`;
-
-const INFO_SOURCES_HTML = `
-  <div class="section-divider">Linked Google Sheets</div>
-  <p>Google Sheets are the authoritative source for product data and rates. Use a normal sheet link shared as &ldquo;Anyone with the link &rarr; Viewer&rdquo; (published CSV links also work). <b>Sync All Sheets</b> re-reads every linked sheet, linked sheets are synced again automatically when you return to the tab, and a successful sync reprocesses the loaded report &mdash; no re-upload is needed.</p>
-  <div class="info-scroll">
-  <table class="mini-table info-table info-kv info-wide">
-    <thead><tr><th style="width:150px;">Sheet</th><th style="width:120px;">Pipeline</th><th>Expected columns</th><th>Feeds</th></tr></thead>
-    <tbody>
-      <tr><td>Ex-WH Cost</td><td>Amazon / Walmart</td><td>SKU, Product, Size, Color, Ex-WH Cost</td><td>Ex-WH Cost (per unit &times; QTY)</td></tr>
-      <tr><td>Shipping &amp; FBA Fee</td><td>Amazon / Walmart</td><td>Product, Size, Color, SKU, plus up to eight fee columns (Amazon / Walmart / CA &times; Shipping / FBA)</td><td>Shipping Fee and FBA Fee (per unit &times; QTY)</td></tr>
-      <tr><td>SKU / Product</td><td>Both (a separate link per platform)</td><td>SKU and Product (required); Size and Color</td><td>Product, Size, Color</td></tr>
-      <tr><td>Shipping Fee</td><td>TikTok</td><td>An Order ID column (for example &ldquo;Labels Status&rdquo;) and a &ldquo;Shipping provider&rdquo; text column that contains the fee</td><td>Shipping Fee of CP TTS lines</td></tr>
-      <tr><td>FBT Shipping Fee</td><td>TikTok</td><td>Product, Size, Color, SKU, FBT Shipping Fee</td><td>Shipping Fee of CP FBT lines</td></tr>
-    </tbody>
-  </table>
-  </div>
-
-  <div class="section-divider">Local lists</div>
-  <ul>
-    <li><b>Manual SKU</b> &mdash; a local fallback list (SKU, Product, Size, Color) used when a SKU is not in the linked SKU sheet. It is saved in the browser and a sheet sync never removes it.</li>
-    <li><b>Product Mapping / SKU Lookup</b> &mdash; a manual map from SKU or product name to Product / Size / Color, checked after Manual SKU.</li>
-    <li><b>Manual Expense</b> (Amazon / Walmart) &mdash; per-unit Expense by SKU or product name, multiplied by QTY.</li>
-  </ul>
-
-  <div class="section-divider">Output</div>
-  <ul>
-    <li><b>Download Report</b> &mdash; an XLSX file of the processed table for the active platform.</li>
-    <li><b>Push to Google Sheets</b> &mdash; posts the processed table to your own Google Apps Script web-app URL. The bridge script shown in that dialog replaces the contents of the first tab of the destination sheet.</li>
-  </ul>`;
-
-function infoModalHtml(){
-  // Opens on the tab of the platform that is currently active.
-  const startTab = state.platform==='tiktok' ? 'tiktok' : 'az';
-  const tabs = [['overview','Overview'],['tiktok','TikTok Shop'],['az','Amazon / Walmart'],['sources','Data Sources']];
-  const tabsHtml = tabs.map(([id,label])=>`<button type="button" class="info-tab${id===startTab?' active':''}" role="tab" aria-selected="${id===startTab?'true':'false'}" data-info-tab="${id}">${label}</button>`).join('');
-  const panel = (id, html)=>`<div class="info-panel${id===startTab?'':' hidden'}" role="tabpanel" data-info-panel="${id}">${html}</div>`;
-  return `<div class="modal wide info-modal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
-    <div class="modal-head"><div><h3 id="infoModalTitle">Software Information</h3><p>Seller Matrics &mdash; technical reference: data flow, calculation formulas and business rules.</p></div></div>
-    <div class="info-tabs" role="tablist">${tabsHtml}</div>
-    <div class="modal-body" id="infoModalBody">
-      ${panel('overview', INFO_OVERVIEW_HTML)}
-      ${panel('tiktok', INFO_TIKTOK_HTML)}
-      ${panel('az', INFO_AZ_HTML)}
-      ${panel('sources', INFO_SOURCES_HTML)}
-    </div>
-    <div class="modal-foot"><button class="btn ghost" data-close>Close</button></div>
-  </div>`;
-}
-function wireInfoModal(){
-  const tabs = $all('[data-info-tab]');
-  const panels = $all('[data-info-panel]');
-  function show(name){
-    tabs.forEach(t=>{ const on = t.getAttribute('data-info-tab')===name; t.classList.toggle('active', on); t.setAttribute('aria-selected', on?'true':'false'); });
-    panels.forEach(p=> p.classList.toggle('hidden', p.getAttribute('data-info-panel')!==name));
-    const body = $('#infoModalBody'); if(body) body.scrollTop = 0;
-  }
-  tabs.forEach(t=> t.addEventListener('click', ()=> show(t.getAttribute('data-info-tab'))));
 }
 
 /* --- Manual SKU (replaces the old Cost Master screen — Ex-WH/Shipping/FBA are Google-Sheet-only now) --- */
@@ -2915,6 +2766,296 @@ function shortcutsModalHtml(){
   </div>`;
 }
 
+/* --- Information / technical reference (documentation modal) ---
+   Read-only. Opened from the "Information" button at the bottom of the sidebar.
+   Content is static HTML grouped into tabs; wireInfoModal() only switches tabs. */
+const INFO_SECTIONS = [
+{ id:'overview', label:'Overview', html:`
+<h4>Purpose</h4>
+<p><b>Seller Matrics</b> is a single-file, client-side order-profitability engine. It ingests raw marketplace order exports, keeps only the billable lines, enriches every line with product, cost and fee masters, computes the figures documented in this reference, flags whatever it cannot resolve, and produces a normalised report that can be downloaded as <code>.xlsx</code> or pushed to a Google Sheet.</p>
+
+<h4>Processing pipeline</h4>
+<div class="info-flow"><span class="step">1 · Upload</span><i>→</i><span class="step">2 · Parse</span><i>→</i><span class="step">3 · Filter</span><i>→</i><span class="step">4 · Normalise</span><i>→</i><span class="step">5 · Enrich</span><i>→</i><span class="step">6 · Compute</span><i>→</i><span class="step">7 · Validate</span><i>→</i><span class="step">8 · Render / Export</span></div>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Stage</th><th>What happens</th></tr></thead>
+<tbody>
+<tr><td>Upload / Parse</td><td>Files are read locally with the browser <code>FileReader</code>. <code>.xlsx</code> files go through SheetJS; <code>.csv</code> / <code>.txt</code> files go through PapaParse (tab or comma delimiter is detected from the first line). Several files can be loaded into one combined batch.</td></tr>
+<tr><td>Filter</td><td>Only lines that qualify as sold are kept (the rules differ per engine — see the engine tabs). Everything else is counted as <i>excluded</i> or <i>cancelled</i> in the status bar.</td></tr>
+<tr><td>Normalise</td><td>Column headers are matched by name (case-insensitive; spaces, hyphens and underscores ignored). Every numeric cell passes through one tolerant number reader.</td></tr>
+<tr><td>Enrich</td><td>Product / Size / Color, costs and fees are resolved from the linked Google Sheets and the local masters using strict unique-match rules.</td></tr>
+<tr><td>Compute</td><td>The money columns are calculated line by line and rounded to 2 decimals.</td></tr>
+<tr><td>Validate</td><td>Anything missing or ambiguous is left blank and logged in the <b>Issues</b> list — it is never guessed.</td></tr>
+<tr><td>Render / Export</td><td>A virtualised table draws only the visible rows. The report can be downloaded as <code>.xlsx</code> or pushed to a Google Sheet through your own Apps Script.</td></tr>
+</tbody></table></div>
+
+<h4>Formula reference — every calculated column</h4>
+<p><code>N</code> is the number of qualifying lines that share one Order ID (<code>N = 1</code> for a normal single-line order). <code>QTY</code> is the order quantity; in the Amazon / Walmart engine, cost and fee maths use the quantity after the pack-size correction described in that tab.</p>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Engine</th><th>Column</th><th>Calculation</th></tr></thead>
+<tbody>
+<tr class="hl"><td>TikTok</td><td>List Price</td><td><code>ROUND( SKU Subtotal Before Discount + (Shipping Fee After Discount + Shipping Fee Platform Discount) ÷ N , 2 )</code></td></tr>
+<tr><td>TikTok</td><td>OFF</td><td><code>SKU Seller Discount</code></td></tr>
+<tr><td>TikTok</td><td>Shipping Fee · CP TTS</td><td>Order total from the linked Shipping Fee sheet <code>÷ N</code>, rounded to 2 decimals</td></tr>
+<tr><td>TikTok</td><td>Shipping Fee · CP FBT</td><td>FBT rate per piece <code>× QTY</code>, rounded to 2 decimals</td></tr>
+<tr><td>Amazon / Walmart</td><td>List Price</td><td>Amazon: <code>item-price</code> (plus <code>shipping-price</code> on FBM lines). Walmart US: <code>(Original Price, else Item Cost) × order quantity</code>. Walmart Canada: <code>(Original Price, else Item Cost)</code> as exported.</td></tr>
+<tr><td>Amazon / Walmart</td><td>OFF</td><td><code>MIN( MAX( promotion , 0 ) , List Price )</code></td></tr>
+<tr><td>Amazon / Walmart</td><td>Net Sale · Revenue</td><td><code>MAX( List Price − OFF , 0 )</code> · Revenue equals Net Sale</td></tr>
+<tr><td>Amazon / Walmart</td><td>Fee</td><td><code>ROUND( Net Sale × 15 % , 2 )</code></td></tr>
+<tr><td>Amazon / Walmart</td><td>Ex-WH Cost</td><td><code>Ex-WH unit cost × QTY</code></td></tr>
+<tr><td>Amazon / Walmart</td><td>Expense</td><td><code>Expense per unit × QTY</code></td></tr>
+<tr><td>Amazon / Walmart</td><td>Shipping Fee · FBA Fee</td><td><code>Unit rate × QTY</code> — FBA and WFS lines only</td></tr>
+<tr><td>Amazon / Walmart</td><td>CM</td><td><code>ROUND( List Price − (Ex-WH Cost + Fee + Expense + Shipping Fee + FBA Fee + OFF) , 2 )</code> — FBA and WFS lines only, once every component is resolved</td></tr>
+<tr><td>Amazon / Walmart</td><td>Sale Tax</td><td>Blank by design</td></tr>
+</tbody></table></div>
+
+<h4>Engines</h4>
+<ul>
+<li><b>TikTok engine</b> — 12-column report: Date, Order ID, Vendor, Status, Shop, Product, Size, Color, QTY, List Price, OFF, Shipping Fee.</li>
+<li><b>Amazon / Walmart engine</b> — 20-column report that adds Ex-WH Cost, Revenue, Net Sale, Sale Tax, Fee, Expense, FBA Fee and CM. Amazon and Walmart reports can be loaded in the same batch; every row is read with its own platform rules.</li>
+</ul>
+<p>The two engines keep separate state, separate Google Sheet links and separate masters. The platform switch in the top bar only changes which one is visible.</p>
+
+<h4>Runtime &amp; storage</h4>
+<ul>
+<li><b>Local processing:</b> order files are read and calculated inside the browser and are never uploaded. The only network calls are reading your linked Google Sheets and the optional <i>Push to Google Sheets</i> request to your own Apps Script.</li>
+<li><b>Libraries:</b> SheetJS 0.18.5, PapaParse 5.4.1 and ExcelJS 4.4.0 are loaded from public CDNs, so an internet connection is required.</li>
+<li><b>Persistence:</b> theme, settings, Google Sheet links, synced sheet rows and the manual masters are saved in <code>localStorage</code> under <code>UsmanProfitForge.config.v3</code>. Uploaded reports and processed rows live in memory only and are cleared when the page is reloaded.</li>
+</ul>
+`},
+
+{ id:'tiktok', label:'TikTok Engine', html:`
+<h4>Input</h4>
+<p>A TikTok Shop <i>All order</i> export: <code>.xlsx</code> (sheet <code>OrderSKUList</code>; otherwise the first sheet whose name contains “order”; otherwise the first sheet) or a <code>.csv</code> / <code>.txt</code> export. One row is one SKU line of an order. TikTok’s second header row (the column descriptions) is read as data and is dropped automatically because its Order Status is never “To ship”.</p>
+
+<h4>Line selection</h4>
+<ol>
+<li><b>Order Status</b> must be <code>To ship</code> (case- and space-insensitive), and</li>
+<li>either <b>Fulfillment Type</b> is <code>Fulfillment by TikTok Shop</code> — always kept, Shop = <b>CP FBT</b> — <b>or</b> <b>Order Substatus</b> is <code>Awaiting collection</code>.</li>
+</ol>
+<p>Pending, On hold, Canceled, Shipped, Delivered and In transit lines — and any “To ship” line that is not “Awaiting collection” (FBT excepted) — are excluded and counted in the status bar.</p>
+
+<h4>List Price — formula</h4>
+<div class="info-formula"><span class="c">// evaluated per source line · N = qualifying lines sharing the Order ID (N = 1 for a single-line order)</span>
+<span class="k">Shipping Amount</span> = Shipping Fee After Discount + Shipping Fee Platform Discount
+<span class="k">Shipping Share </span> = Shipping Amount ÷ N
+<span class="k">List Price     </span> = ROUND( SKU Subtotal Before Discount + Shipping Share , 2 )</div>
+<p><b>Order of operations</b></p>
+<ol>
+<li>The <b>Shipping Fee Platform Discount</b> column is added into the <b>Shipping Fee After Discount</b> column. This sum is the complete shipping amount of the order.</li>
+<li>That sum is added to <b>SKU Subtotal Before Discount</b> (TikTok defines it as SKU Unit Original Price × Quantity).</li>
+<li>The result, rounded to 2 decimals, is the <b>List Price</b> shown in the report.</li>
+</ol>
+<div class="info-callout"><p>TikTok defines <i>Shipping Fee After Discount = Original Shipping Fee − Shipping Fee Seller Discount − Shipping Fee Platform Discount</i>. Adding the Platform Discount back therefore gives <i>Original Shipping Fee − Seller Discount</i>, so the List Price no longer depends on how much of the shipping TikTok happened to subsidise on a given order.</p></div>
+
+<p><b>Worked examples</b></p>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Scenario</th><th class="num">SKU Subtotal Before Discount</th><th class="num">Shipping Fee After Discount</th><th class="num">Platform Discount</th><th class="num">Shipping Amount</th><th class="num">List Price</th></tr></thead>
+<tbody>
+<tr><td>Shipping carried by the order</td><td class="num">26.99</td><td class="num">6.89</td><td class="num">0.00</td><td class="num">6.89</td><td class="num"><b>33.88</b></td></tr>
+<tr><td>Shipping fully subsidised by TikTok</td><td class="num">26.99</td><td class="num">0.00</td><td class="num">6.89</td><td class="num">6.89</td><td class="num"><b>33.88</b></td></tr>
+<tr><td>Shipping partly subsidised</td><td class="num">26.99</td><td class="num">0.26</td><td class="num">2.73</td><td class="num">2.99</td><td class="num"><b>29.98</b></td></tr>
+<tr><td>Two lines on one order (N = 2), per line</td><td class="num">26.99</td><td class="num">0.00</td><td class="num">6.90</td><td class="num">6.90 ÷ 2 = 3.45</td><td class="num"><b>30.44</b></td></tr>
+</tbody></table></div>
+<p>A combined order repeats the whole order’s shipping amounts on every one of its lines in TikTok’s export, so the combined shipping amount is divided evenly across the qualifying lines of that Order ID instead of being counted once per line.</p>
+
+<h4>Column map</h4>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Report column</th><th>Source / rule</th></tr></thead>
+<tbody>
+<tr><td>Date</td><td><b>Paid Time</b> — calendar date only (time of day is dropped), shown as <code>DD/Mon/YYYY</code>.</td></tr>
+<tr><td>Order ID</td><td><b>Order ID</b>. Lines sharing an Order ID are kept together and the ID is highlighted as a multi-item order.</td></tr>
+<tr><td>Vendor · Status</td><td>Fixed values: <code>Cotton Passion</code> · <code>Sold</code>.</td></tr>
+<tr><td>Shop</td><td>From <b>Fulfillment Type</b>: Fulfillment by Seller → <code>CP TTS</code>; Fulfillment by TikTok Shop → <code>CP FBT</code>. A blank value defaults to CP TTS; an unrecognised value also defaults to CP TTS and is flagged as an issue.</td></tr>
+<tr><td>Product · Size · Color</td><td>Resolved from the <b>Seller SKU</b> in this order: linked Google SKU sheet → Manual SKU list → Product Mapping → the export’s own Product Name and Variation (<code>Color, Size</code> split at the first comma).</td></tr>
+<tr><td>QTY</td><td><b>Quantity</b>.</td></tr>
+<tr class="hl"><td>List Price</td><td>See the formula above.</td></tr>
+<tr><td>OFF</td><td><b>SKU Seller Discount</b>, as exported.</td></tr>
+<tr><td>Shipping Fee</td><td>A cost looked up from your sheets — see below. It is independent of the List Price shipping amount.</td></tr>
+</tbody></table></div>
+
+<h4>Shipping Fee column (cost)</h4>
+<ul>
+<li><b>CP TTS</b> — the linked <i>Shipping Fee</i> sheet is matched by Order ID. The sheet value is the total for the whole order, so it is divided by <code>N</code> and rounded to 2 decimals.</li>
+<li><b>CP FBT</b> — the linked <i>FBT Shipping Fee</i> sheet is a per-piece rate matched by SKU, then Product / Size / Color; the result is <code>rate × QTY</code>.</li>
+<li>No match leaves the cell blank. A line is flagged only when the relevant sheet is linked.</li>
+</ul>
+
+<h4>Issue detection</h4>
+<p>A line is listed under <b>Issues</b> when it has: a missing Order ID, a missing Seller SKU, a Seller SKU that no source resolves (reported as “SKU not found in linked SKU sheet”; the Manual SKU list and Product Mapping are tried as well, and the line then falls back to the export’s own Product Name and Variation), an unrecognised Fulfillment Type, or a Shipping Fee that is missing or has conflicting sheet rows (reported only when that sheet is linked).</p>
+
+<h4>Output &amp; editing</h4>
+<ul>
+<li><b>Ordering:</b> CP TTS lines first, then CP FBT; the chosen column sort applies within each group.</li>
+<li><b>Download Report:</b> <code>TikTok_&lt;source name&gt;.xlsx</code>, sheet <i>TikTok Sold Orders</i>, 12 columns, frozen header, money columns formatted as <code>$#,##0.00</code>. <b>Push to Google Sheets</b> sends the same 12 columns.</li>
+<li><b>Edit Table:</b> cells become editable and changes are staged until <b>Save Changes</b>. Saving also re-derives Net Sale (= MAX(List Price − OFF, 0)), Revenue and Fee (= 15 % of Net Sale) in memory; these are not shown in this report. Edits live in memory only — re-processing, including the automatic re-process after a Google Sheet sync, rebuilds every line from the source file and discards them.</li>
+</ul>
+`},
+
+{ id:'azw', label:'Amazon / Walmart Engine', html:`
+<h4>Input &amp; platform detection</h4>
+<ul>
+<li><b>Amazon:</b> <code>.txt</code> / <code>.csv</code> order report (tab or comma separated).</li>
+<li><b>Walmart:</b> <code>.xlsx</code> PO Data export (sheet <code>PO Details</code>, otherwise the first sheet). A row is read as Walmart when the export has a <code>Fulfillment Entity</code> column; every row is detected on its own, so both platforms can share one batch.</li>
+<li><b>Canada:</b> detected from the ship-country column (<code>CA</code>, <code>CAN</code> or <code>Canada</code>); a recognised US value there ends the check. If the country is missing or not recognised, the state / province is used, then the postal-code shape. With no signal the order is treated as US.</li>
+</ul>
+
+<h4>Line selection</h4>
+<p>Every line is kept except those whose status is <code>Cancelled</code> (counted as cancelled in the status bar). The output is ordered Amazon first, then Walmart; inside each platform, fee-eligible lines (CP FBA / CP WFS) come before seller-fulfilled ones. An Order ID that appears on more than one line is flagged as a multi-item order.</p>
+
+<h4>Shop &amp; vendor</h4>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Source value</th><th>Shop (US)</th><th>Shop (Canada)</th><th>Vendor</th></tr></thead>
+<tbody>
+<tr><td>Amazon fulfillment-channel = Amazon / FBA</td><td>CP FBA</td><td>FBA</td><td rowspan="4">Cotton Passion (US) · Qatan (Canada)</td></tr>
+<tr><td>Amazon fulfillment-channel = Merchant</td><td>CP FBM</td><td>FBM</td></tr>
+<tr><td>Walmart Fulfillment Entity contains WFS</td><td>CP WFS</td><td>WFS</td></tr>
+<tr><td>Walmart Fulfillment Entity = SellerFulfilled</td><td>CP Walmart</td><td>Walmart</td></tr>
+</tbody></table></div>
+<p><b>Fee-eligible</b> shops are the FBA and WFS ones: only they receive Shipping Fee, FBA Fee and CM. FBM and Walmart seller-fulfilled lines never do. A fulfillment value that is not recognised leaves Shop blank, and a blank Shop is not fee-eligible.</p>
+
+<h4>Price columns — calculation chain</h4>
+<div class="info-formula"><span class="c">// 1 · List Price</span>
+<span class="k">List Price</span> = Amazon: item-price  (FBM only: + shipping-price)
+            Walmart US: (Original Price, else Item Cost) × order quantity
+            Walmart Canada: (Original Price, else Item Cost) as exported
+<span class="c">// 2 · OFF  (promotion actually granted)</span>
+<span class="k">promotion</span>  = discount-% column holds a value ? List Price × % ÷ 100  (0 when the value is ≤ 0)
+            : first amount column holding a value (item-promotion-discount, item-promotion,
+              promotion-discount, discount-amount, discount, off), absolute value
+<span class="k">OFF</span>        = MIN( MAX( promotion , 0 ) , List Price )
+<span class="c">// 3 · Net Sale, Revenue and the marketplace fee</span>
+<span class="k">Net Sale</span>   = MAX( List Price − OFF , 0 )
+<span class="k">Revenue</span>    = Net Sale
+<span class="k">Fee</span>        = ROUND( Net Sale × 15 % , 2 )
+<span class="k">Sale Tax</span>   = (blank)</div>
+
+<p>The percentage column is read from <code>discount-percent</code>, <code>promotion-percent</code>, <code>off-percent</code> or <code>item-discount-percent</code> (spelling variants such as <code>discountpercentage</code> also match). Once it holds a value the amount columns are not consulted, so a <code>0</code> in it means OFF = 0.</p>
+
+<h4>Quantity — pack-size correction</h4>
+<p>Many products are sold as multi-piece packs, and the SKU carries a marker such as <code>4P</code>, <code>5P</code> or <code>6P</code> (a one- or two-digit number followed by <code>P</code>, optionally separated by a space or hyphen: <code>6P</code>, <code>6-P</code> and <code>6 P</code> match; <code>4PC</code> and <code>TXL</code> never do). The marker is searched for in the SKU first, then in Size, Product and the marketplace product name. The cost and fee sheets price a <b>single piece</b>, so the true piece count is <code>pack number × order quantity</code>, and that corrected number is shown in QTY and used for every per-unit calculation below. <b>Pillow Protector</b> products are excluded and always keep the raw quantity. List Price, Revenue, Net Sale and Fee are never affected: they are priced per pack, exactly as the customer paid.</p>
+
+<h4>Cost columns</h4>
+<div class="info-formula"><span class="k">Ex-WH Cost</span>    = Ex-WH unit cost (linked sheet)                    × QTY
+<span class="k">Expense</span>       = Expense per unit (Manual Expense: SKU, else Product) × QTY
+<span class="k">Shipping Fee</span>  = Shipping unit rate (linked sheet)                 × QTY   <span class="c">// FBA / WFS only</span>
+<span class="k">FBA Fee</span>       = FBA unit rate (linked sheet)                      × QTY   <span class="c">// FBA / WFS only</span></div>
+<p>Expense is <code>0</code> when no Manual Expense entry matches the line, so it is never blank and never blocks a CM.</p>
+<p>Shipping and FBA rates come from one merged <i>Shipping &amp; FBA Fee</i> sheet with separate columns for Amazon, Walmart, Canada-Amazon and Canada-Walmart; the column used follows the platform and country of each line.</p>
+
+<h4>CM — contribution margin</h4>
+<div class="info-formula"><span class="k">CM</span> = ROUND( List Price − ( Ex-WH Cost + Fee + Expense + Shipping Fee + FBA Fee + OFF ) , 2 )</div>
+<p>CM is calculated only for fee-eligible lines (CP FBA / CP WFS) and only when Ex-WH Cost, Shipping Fee and FBA Fee are all resolved. Otherwise it stays blank. OFF is subtracted as a cost; Net Sale is not used in this formula. FBM and seller-fulfilled lines never carry a CM.</p>
+
+<h4>Issue detection</h4>
+<p>Lines are flagged for a missing Order ID, an Ex-WH sheet that is not linked or has no cost for the line, and — on fee-eligible lines — a Shipping &amp; FBA Fee sheet that is not linked, or a missing or ambiguous Shipping Fee / FBA Fee.</p>
+
+<h4>Output</h4>
+<p><b>Download Report</b> writes <code>USM_&lt;source name&gt;.xlsx</code> with the sheet <i>Processed Orders</i> (the 20 columns, frozen header, money columns formatted as currency) plus supporting sheets: Raw Data (very hidden), Cost Master, Google Ex-WH, Shipping &amp; FBA Fee, Product Mapping and Config. <b>Push to Google Sheets</b> sends the processed rows through your Apps Script.</p>
+`},
+
+{ id:'sources', label:'Data Sources', html:`
+<h4>Linked Google Sheets</h4>
+<p>Each sheet is read over HTTPS from the link you paste (the sheet must be shared or published so the link can be read). The rows are cached locally; if a later sync fails, the previously loaded rows stay in use.</p>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Sheet</th><th>Engine</th><th>Provides</th><th>Matching order (first unique hit wins)</th></tr></thead>
+<tbody>
+<tr><td>SKU / Product</td><td>Both (separate links)</td><td>Product, Size and Color for a SKU — the authoritative naming.</td><td>SKU. The Amazon / Walmart engine also falls back to Product + Size + Color.</td></tr>
+<tr><td>Ex-WH Cost</td><td>Amazon / Walmart</td><td>Ex-WH unit cost.</td><td>SKU + Size + Color → SKU + Size → SKU → Product + Size + Color → Product + Size → Product.</td></tr>
+<tr><td>Shipping &amp; FBA Fee</td><td>Amazon / Walmart</td><td>Shipping and FBA unit rates in 8 columns: Amazon, Walmart, Canada-Amazon, Canada-Walmart × Shipping / FBA.</td><td>Product + Size + Color → Product + Size → SKU + Size; then the legacy Order-ID layout. FBA Fee alone then falls back to a unique SKU, then a unique Product.</td></tr>
+<tr><td>Shipping Fee</td><td>TikTok · CP TTS</td><td>Shipping cost per order. The Order ID is read from <i>Labels Status</i> (or <i>Order ID</i>); the fee is read from the <i>Shipping provider</i> text — for example <code>USPS Ground Advantage™ $5.70, Sep 11</code> gives 5.70.</td><td>Order ID, normalised (stray spaces and apostrophes removed, scientific notation expanded back to digits, case and punctuation ignored). If a long ID lost its last digits in Sheets, the first 15 digits are compared. A label row listing several Order IDs separated by commas splits its fee evenly between them.</td></tr>
+<tr><td>FBT Shipping Fee</td><td>TikTok · CP FBT</td><td>Per-piece FBT shipping rate (column <i>FBT Shipping</i>).</td><td>SKU + Size + Color → SKU + Size → SKU → Product + Size + Color → Product + Size → Product.</td></tr>
+</tbody></table></div>
+<p><b>Unique-match rule:</b> a value is returned only when exactly one row matches, or when several rows match and all carry the same value. Conflicting duplicates are ambiguous: the cell stays blank and the line is logged in Issues. Sizes are normalised to canonical keys, so <i>Full/Queen</i>, <i>FQ</i> and <i>Cal King</i> / <i>California King</i> variants compare as equal.</p>
+
+<h4>Local masters (saved in the browser)</h4>
+<ul>
+<li><b>Manual Expense</b> (Amazon / Walmart) — expense per unit, matched by SKU, else by Product name.</li>
+<li><b>Manual SKU</b> — a SKU → Product / Size / Color entry for SKUs you do not want in the Google SKU sheet. It is used automatically and is never removed by a sync.</li>
+<li><b>Product Mapping / SKU Lookup</b> — the last-resort manual mapping, used only when the SKU is not found elsewhere.</li>
+</ul>
+
+<h4>Synchronisation</h4>
+<ul>
+<li><b>Sync All Sheets</b> re-reads every linked sheet and then re-processes the loaded report, so new rates apply at once.</li>
+<li>When the browser tab regains focus, linked sheets are re-synced automatically (at most once every 10 seconds).</li>
+</ul>
+`},
+
+{ id:'safeguards', label:'Rules & Safeguards', html:`
+<h4>Number handling</h4>
+<ul>
+<li><b>Tolerant reader:</b> every numeric input passes through one parser that strips <code>$ £ € ₨</code> and thousands separators, keeps digits, the decimal point and a minus sign, and returns <code>0</code> for a blank or non-numeric cell. A missing column therefore reads as 0 rather than raising an error.</li>
+<li><b>Rounding:</b> money values are rounded to 2 decimals with <code>Math.round((x + Number.EPSILON) × 100) / 100</code> at the point they are produced. The TikTok List Price is rounded once, after the subtotal and the shipping amount have been added at full precision.</li>
+</ul>
+
+<h4>Header matching</h4>
+<p>Source columns are found by name, not by position, so re-ordering or inserting columns in an export cannot shift a calculation. Two matching modes are used:</p>
+<ul>
+<li><b>Loose</b> — case-insensitive and ignoring spaces, hyphens and underscores, so <code>Shipping Fee Platform Discount</code> and <code>shipping_fee_platform_discount</code> are the same column. Used for every TikTok column, the Walmart columns, and the Amazon <code>shipping-price</code>, size, color, discount-percent and country / state / postal-code columns.</li>
+<li><b>Exact name</b> — case-insensitive, but the spaces, hyphens and underscores must match one of the accepted spellings (for example <code>item-price</code> or <code>price</code>). Used for the core Amazon Seller Central columns (order id, SKU, product name, quantity, item-price, order status, fulfillment channel, purchase date), for SKU, quantity and status on Walmart rows, and for the promotion amount columns.</li>
+</ul>
+
+<h4>No guessing</h4>
+<p>Cost and fee lookups follow the unique-match rule (see <i>Data Sources</i>). Unresolved values appear as a red “—” in the table and as an empty cell in exports; the line is listed under the red <b>Issues</b> button with the reason.</p>
+
+<h4>Business rules fixed in code</h4>
+<ul>
+<li>Vendor <b>Cotton Passion</b> (Amazon / Walmart orders detected as Canada use <b>Qatan</b>); Status <b>Sold</b>.</li>
+<li>Marketplace fee: <b>15 %</b> of Net Sale. Sale Tax: intentionally blank.</li>
+<li>TikTok Shop labels: <b>CP TTS</b> (fulfilled by seller) and <b>CP FBT</b> (fulfilled by TikTok Shop).</li>
+</ul>
+
+<h4>Keyboard shortcuts</h4>
+<div class="info-table-wrap"><table class="info-table">
+<tbody>
+<tr><td><code>⌘ / Ctrl + O</code></td><td>Open the file picker for the active engine</td></tr>
+<tr><td><code>⌘ / Ctrl + K</code></td><td>Focus the search box</td></tr>
+<tr><td><code>⌘ / Ctrl + Enter</code></td><td>Process the loaded report</td></tr>
+<tr><td><code>⌘ / Ctrl + E</code></td><td>Download the report</td></tr>
+<tr><td><code>Esc</code></td><td>Close the open dialog</td></tr>
+</tbody></table></div>
+`},
+
+{ id:'changelog', label:'Change Log', html:`
+<h4>Revision 2026-11-11 — TikTok List Price</h4>
+<div class="info-before-after">
+<div><div class="lbl">Previous</div><div class="eq">List Price =<br>&nbsp;&nbsp;SKU Subtotal Before Discount<br>&nbsp;&nbsp;+ Shipping Fee After Discount</div></div>
+<div class="new"><div class="lbl">Current</div><div class="eq">List Price =<br>&nbsp;&nbsp;SKU Subtotal Before Discount<br>&nbsp;&nbsp;+ ( Shipping Fee After Discount<br>&nbsp;&nbsp;&nbsp;&nbsp;+ Shipping Fee Platform Discount )</div></div>
+</div>
+<ul>
+<li><b>New input column:</b> <code>Shipping Fee Platform Discount</code> is now read from the TikTok export. It is matched by header like every other column; a blank or missing column counts as 0, so older exports keep working.</li>
+<li><b>Order of operations:</b> Platform Discount is added into Shipping Fee After Discount; that sum is added into SKU Subtotal Before Discount; the result is the List Price.</li>
+<li><b>Combined orders:</b> the combined shipping amount is divided by the number of qualifying lines on the Order ID, exactly as Shipping Fee After Discount alone was before.</li>
+<li><b>Surfaces affected:</b> the TikTok table, the <code>.xlsx</code> download, the Push to Google Sheets payload (all read the same List Price value) and the formula note in the toolbar.</li>
+<li><b>Unchanged:</b> line selection, OFF, the Shipping Fee (cost) lookups, Product / Size / Color resolution, issue detection, the Amazon / Walmart engine and every other calculation.</li>
+</ul>
+
+<h4>Revision 2026-11-11 — Information panel</h4>
+<ul><li>Added this technical reference, opened from the <b>Information</b> button at the bottom of the sidebar.</li></ul>
+`}
+];
+
+function infoModalHtml(){
+  const start = state.platform==='tiktok' ? 'tiktok' : 'overview';
+  const tabs = INFO_SECTIONS.map(s=>`<button type="button" class="info-tab${s.id===start?' active':''}" role="tab" aria-selected="${s.id===start?'true':'false'}" data-info-tab="${s.id}">${s.label}</button>`).join('');
+  const secs = INFO_SECTIONS.map(s=>`<section class="info-sec${s.id===start?' active':''}" role="tabpanel" data-info-sec="${s.id}">${s.html}</section>`).join('');
+  return `<div class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
+    <div class="modal-head"><div><h3 id="infoModalTitle">Seller Matrics — Technical Reference</h3><p>How every figure is calculated, what is added to what, and where the data comes from.</p></div><span class="chip">Spec rev. 2026-11-11</span></div>
+    <div class="info-tabs" role="tablist">${tabs}</div>
+    <div class="modal-body info-body">${secs}</div>
+    <div class="modal-foot"><button class="btn ghost" data-close>Close</button></div>
+  </div>`;
+}
+function wireInfoModal(){
+  const tabs = $all('.info-tab'), secs = $all('.info-sec');
+  tabs.forEach(tab=> tab.addEventListener('click', ()=>{
+    const id = tab.getAttribute('data-info-tab');
+    tabs.forEach(t=>{ const on = t===tab; t.classList.toggle('active', on); t.setAttribute('aria-selected', on?'true':'false'); });
+    secs.forEach(s=> s.classList.toggle('active', s.getAttribute('data-info-sec')===id));
+    const body = $('.info-body'); if(body) body.scrollTop = 0;
+  }));
+}
+
 function wireModal(kind){
   $all('[data-close]').forEach(b=> b.addEventListener('click', closeModal));
   if(kind==='expense') wireExpenseModal();
@@ -2927,13 +3068,13 @@ function wireModal(kind){
   if(kind==='googleShipping') wireGoogleLinkModal('shipping');
 
   if(kind==='liveSync') wireLiveSyncModal();
+  if(kind==='info') wireInfoModal();
   if(kind==='tiktokGoogleSku') wireTiktokGoogleLinkModal('sku');
   if(kind==='tiktokGoogleShipping') wireTiktokGoogleLinkModal('shipping');
   if(kind==='tiktokGoogleFbtShipping') wireTiktokGoogleLinkModal('fbtShipping');
   if(kind==='tiktokManualSku') wireTiktokManualSkuModal();
   if(kind==='tiktokMapping') wireTiktokMappingModal();
   if(kind==='tiktokPushSheets') wireTiktokPushSheetsModal();
-  if(kind==='info') wireInfoModal();
 }
 
 /* ---------------------------- DOWNLOAD REPORT ---------------------------- */
@@ -3212,19 +3353,20 @@ function tiktokRowFromRaw(r, oidShareCounts){
   const qty = toNum(getFieldLoose(r,['quantity']));
   const subtotalBefore = toNum(getFieldLoose(r,['sku subtotal before discount']));
   const shipAfterDiscountRaw = toNum(getFieldLoose(r,['shipping fee after discount']));
-  // New column: the order's shipping-fee discount from the platform. A blank
-  // or missing column counts as 0, so an older export without it calculates
-  // exactly as before.
+  // "Shipping Fee Platform Discount" (the part of the shipping fee that TikTok
+  // itself covered) is FIRST added to "Shipping Fee After Discount"; that sum
+  // is the shipping amount which is then added to SKU Subtotal Before Discount
+  // to give the List Price below. A blank / missing platform-discount column
+  // reads as 0, so a report without that column behaves exactly as before.
   const shipPlatformDiscountRaw = toNum(getFieldLoose(r,['shipping fee platform discount']));
-  // A combined order's per-line "Shipping Fee After Discount" and "Shipping
-  // Fee Platform Discount" repeat the WHOLE order's amounts on every line item
-  // in TikTok's own export, so they're split evenly across however many "To
-  // Ship" lines share this Order ID.
+  const shipCombinedRaw = shipAfterDiscountRaw + shipPlatformDiscountRaw;
+  // A combined order's per-line "Shipping Fee After Discount" and "Shipping Fee
+  // Platform Discount" repeat the WHOLE order's amounts on every line item in
+  // TikTok's own export, so the combined shipping amount is split evenly
+  // across however many "To Ship" lines share this Order ID.
   const shareCount = (orderId && oidShareCounts && oidShareCounts[orderId]>0) ? oidShareCounts[orderId] : 1;
-  // List Price, step 1: Shipping Fee After Discount + Shipping Fee Platform Discount.
-  const shipForList = (shipAfterDiscountRaw + shipPlatformDiscountRaw) / shareCount;
-  // List Price, step 2: SKU Subtotal Before Discount + the step-1 result.
-  const listPrice = Math.round((subtotalBefore + shipForList + Number.EPSILON)*100)/100;
+  const shipAmount = shipCombinedRaw / shareCount;
+  const listPrice = Math.round((subtotalBefore + shipAmount + Number.EPSILON)*100)/100;
   const off = toNum(getFieldLoose(r,['sku seller discount']));
   const paidTime = getFieldLoose(r,['paid time']);
   // Shipping Fee source depends on Shop: Fulfillment by TikTok Shop orders
@@ -3287,7 +3429,7 @@ function processTiktokReportCore(showToast){
   state.tiktok.pendingEdits = {};
   // Count how many "To Ship" lines share each Order ID BEFORE building rows,
   // so tiktokRowFromRaw can split each combined order's repeated Shipping
-  // Fee After Discount and Shipping Fee Platform Discount evenly across its
+  // Fee After Discount + Shipping Fee Platform Discount evenly across its
   // line items.
   const oidShareCounts={};
   state.tiktok.rawRows.forEach(r=>{
@@ -4192,6 +4334,7 @@ function wireGlobal(){
     if(action==='openManualSku') openModal('manualSku');
     if(action==='openProductMapping') openModal('mapping');
     if(action==='openSettings') openModal('settings');
+    if(action==='openInfo') openModal('info');
     if(action==='openFileTiktok') $('#fileInputTiktok').click();
     if(action==='removeReportTiktok') removeReportTiktok();
     if(action==='processReportTiktok') processTiktokReport();
@@ -4207,7 +4350,6 @@ function wireGlobal(){
     if(action==='openManualSkuTiktok') openModal('tiktokManualSku');
     if(action==='openProductMappingTiktok') openModal('tiktokMapping');
     if(action==='showIssuesTiktok') openModal('tiktokIssues');
-    if(action==='openInfo') openModal('info');
   });
 
   // keyboard shortcuts
