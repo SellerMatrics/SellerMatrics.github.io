@@ -324,6 +324,9 @@ a{ color:inherit; }
 .grow{right:auto;}
 .grid-head.tt-grid,.grow.tt-grid{min-width:1352px;width:1352px;}
 .grid-body.tt-grid{min-width:1352px;}
+.grid-head.tm-grid,.grow.tm-grid{min-width:1004px;width:1004px;}
+.grid-body.tm-grid{min-width:1004px;}
+.tm-grid .col-oid{width:210px;}
 .multi-order-cell{background:#dff5e8 !important;}
 .grow .oid.multi .pill{background:#dff5e8;color:#146c43;border:1px solid #9adbb6;}
 
@@ -650,6 +653,7 @@ a{ color:inherit; }
     <div class="platform-toggle" id="platformToggle">
       <button type="button" class="platform-btn active" data-platform="az">Amazon/Walmart</button>
       <button type="button" class="platform-btn" data-platform="tiktok">TikTok</button>
+      <button type="button" class="platform-btn" data-platform="temu">Temu</button>
     </div>
     <button class="icon-btn" id="themeToggleBtn" title="Toggle theme"></button>
     <button class="icon-btn" id="shortcutsBtn" title="Keyboard shortcuts">
@@ -730,6 +734,24 @@ a{ color:inherit; }
       </div>
       <div class="side-hint" id="sideHintTiktok">Drop a TikTok order export anywhere to begin.</div>
      </div>
+     <div id="sidebarTemu" class="hidden">
+      <div class="side-group">
+        <div class="side-group-title">Data</div>
+        <button class="side-btn" data-action="openFileTemu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg><span class="side-label">Upload Report</span></button>
+        <button class="side-btn" data-action="removeReportTemu" id="removeReportTemuBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/></svg><span class="side-label">Remove Report</span></button>
+        <button class="side-btn primary" data-action="processReportTemu" id="processTemuBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg><span class="side-label">Process Report</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Google Sheets</div>
+        <button class="side-btn" data-action="openGoogleSkuTemu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.59 13.41l-7.17 7.17a2 2 0 0 1-2.83 0L2 12V2h10l8.59 8.59a2 2 0 0 1 0 2.82z"/><line x1="7" y1="7" x2="7.01" y2="7"/></svg><span class="side-label">Link SKU / Product Sheet</span><span class="badge" id="temuSkuSheetBadge">Not linked</span></button>
+        <button class="side-btn" data-action="refreshAllGoogleTemu" id="refreshAllGoogleTemuBtn"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20 11a8 8 0 1 0 1 5"/><polyline points="20 4 20 11 13 11"/></svg><span class="side-label">Sync All Sheets</span></button>
+      </div>
+      <div class="side-group">
+        <div class="side-group-title">Export</div>
+        <button class="side-btn" data-action="downloadReportTemu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="side-label">Download Report</span></button>
+      </div>
+      <div class="side-hint" id="sideHintTemu">Drop a Temu order sheet anywhere to begin.</div>
+     </div>
      <div class="side-info">
       <button class="side-btn info-btn" data-action="openInfo" id="openInfoBtn" aria-haspopup="dialog" title="Software information: every calculation, rule and data source explained"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"/><line x1="12" y1="16" x2="12" y2="12"/><line x1="12" y1="8" x2="12.01" y2="8"/></svg><span class="side-label">Information</span><span class="badge">Docs</span></button>
      </div>
@@ -764,6 +786,15 @@ a{ color:inherit; }
       </div>
       <div class="content" id="contentTiktok"><!-- filled by renderContentTiktok() --></div>
     </div>
+    <div class="main hidden" id="mainTemu">
+      <div class="main-toolbar">
+        <div class="filename hidden" id="filenameTagTemu"><span id="filenameTextTemu"></span></div>
+        <span class="chip hidden" id="rowCountChipTemu"></span><button class="btn sm danger hidden issue-btn" id="issueBtnTemu" data-action="showIssuesTemu">Issues <span class="badge" id="issueBadgeTemu">0</span></button>
+        <span class="chip green hidden" id="processedChipTemu">Processed</span><span class="chip hidden" id="temuFormulaNote">List Price = Net sale · Shipping Fee = Seller label cost · only Shipped lines are included</span>
+        <div class="main-toolbar-spacer"></div>
+      </div>
+      <div class="content" id="contentTemu"></div>
+    </div>
   </div>
 
   <!-- ===== STATUS BAR ===== -->
@@ -783,9 +814,17 @@ a{ color:inherit; }
     <div class="statusbar-spacer"></div>
     <span>Data issues: <b id="sbTiktokIssues">0</b></span>
   </div>
+  <div class="statusbar hidden" id="statusBarTemu">
+    <span><b id="sbTemuOrders">0</b> shipped order lines</span>
+    <span class="dot"></span>
+    <span><b id="sbTemuExcluded">0</b> excluded (cancelled / not shipped)</span>
+    <div class="statusbar-spacer"></div>
+    <span>Data issues: <b id="sbTemuIssues">0</b></span>
+  </div>
 
   <input type="file" id="fileInput" class="file-input-hidden" accept=".txt,.csv,.xlsx" multiple>
   <input type="file" id="fileInputTiktok" class="file-input-hidden" accept=".xlsx,.csv,.txt" multiple>
+  <input type="file" id="fileInputTemu" class="file-input-hidden" accept=".xlsx,.csv,.txt" multiple>
   <div id="modalRoot"></div>
   <div class="toast-wrap" id="toastWrap"></div>
 </div>
@@ -849,7 +888,8 @@ const state = {
     // rules differ per platform.
     tiktokSkuUrl:'', tiktokShippingUrl:'', tiktokFbtShippingUrl:'',
     tiktokSkuRows:[], tiktokShippingRows:[], tiktokFbtShippingRows:[],
-    tiktokSkuUpdated:null, tiktokShippingUpdated:null, tiktokFbtShippingUpdated:null
+    tiktokSkuUpdated:null, tiktokShippingUpdated:null, tiktokFbtShippingUpdated:null,
+    temuSkuUrl:'', temuSkuRows:[], temuSkuUpdated:null
   },
   modal:null,
   toasts:[],
@@ -878,7 +918,9 @@ const state = {
     _nextMapId:1,
     editMode:false,
     pendingEdits:{} // key: rowId+'::'+field -> raw typed text, staged until Save is clicked
-  }
+  },
+  // Temu mode — separate pipeline: only Shipped lines, own SKU sheet link.
+  temu:{ rawRows:null, files:[], orders:[], issues:[], isLoading:false, isProcessed:false, search:'', sortBy:'', sortDir:'asc', excludedCount:0, issueCount:0 }
 };
 
 let toastSeq = 1;
@@ -933,7 +975,7 @@ function loadConfig(){
     const saved = JSON.parse(localStorage.getItem(STORAGE_KEY)||'null');
     if(!saved) return;
     if(saved.theme) state.theme = saved.theme;
-    if(saved.platform==='tiktok'||saved.platform==='az') state.platform = saved.platform;
+    if(saved.platform==='tiktok'||saved.platform==='az'||saved.platform==='temu') state.platform = saved.platform;
     if(saved.settings) state.settings = Object.assign(state.settings, saved.settings);
     if(Array.isArray(saved.costMaster)){
       state.costMaster = saved.costMaster.map((c,i)=>({
@@ -996,6 +1038,7 @@ function loadConfig(){
       state.google.tiktokSkuRows = Array.isArray(state.google.tiktokSkuRows)?state.google.tiktokSkuRows:[];
       state.google.tiktokShippingRows = Array.isArray(state.google.tiktokShippingRows)?state.google.tiktokShippingRows:[];
       state.google.tiktokFbtShippingRows = Array.isArray(state.google.tiktokFbtShippingRows)?state.google.tiktokFbtShippingRows:[];
+      state.google.temuSkuUrl = state.google.temuSkuUrl || ''; state.google.temuSkuRows = Array.isArray(state.google.temuSkuRows)?state.google.temuSkuRows:[];
     if(Number.isFinite(saved.nextCostId)) state._nextCostId = saved.nextCostId;
     if(Number.isFinite(saved.nextMapId)) state._nextMapId = saved.nextMapId;
     if(Number.isFinite(saved.nextManualSkuId)) state._nextManualSkuId = saved.nextManualSkuId;
@@ -1216,6 +1259,75 @@ function canonicalColor(v){ return canonicalCatalogKey(v); }
 function isPillowProtectorProduct(...texts){
   const combined = texts.filter(Boolean).join(' ').toLowerCase().replace(/[^a-z0-9]+/g,'');
   return combined.includes('pillowprotector');
+}
+
+// ---- Pillow Protector pack rule ----
+// Pillow Protectors are priced and costed per BASE pack, so a larger pack is
+// converted into a number of base packs:
+//     6P  ->  Product "2P Pillow Protector", QTY x 3
+//     8P  ->  Product "4P Pillow Protector", QTY x 2
+// "2P" and "4P" are the base packs themselves and stay exactly as they are
+// (name and QTY). Any other pack number, a pack that contradicts the Product
+// name, or no pack number at all is NOT guessed: it comes back as an issue so
+// the line shows up in the Issues list (name and QTY left as they were).
+// The pack is read from the SKU FIRST — that is what the customer bought,
+// e.g. "406 - Pillow Enc - 8 pack - White - King - G" — and only then from the
+// product name, size, variant and the marketplace's own product text. Besides
+// "8P" / "8-P" / "8 P" the words "8 pack" / "8-pack" / "8pk" count as a pack
+// marker here ("4PC" and "TXL" still do not).
+// This table is the single source of truth: pillowProtectorPackRule() reads
+// it and so does the Technical Reference (pillowRuleTableHtml), so the code
+// and the documentation can never drift apart.
+const PILLOW_BASE_PACKS = [2, 4];
+const PILLOW_PACK_RULES = { 6:{ base:2, times:3 }, 8:{ base:4, times:2 } };
+const PILLOW_PACK_RE = /\b(\d{1,2})\s*-?\s*(?:P|PACKS?|PKS?)\b/i;
+function pillowPackIn(text){
+  const m = String(text == null ? '' : text).match(PILLOW_PACK_RE);
+  return m ? parseInt(m[1], 10) : null;
+}
+// "2P, 4P, 6P or 8P" — every pack the rule knows, built from the tables above.
+function pillowPackListText(){
+  const all = PILLOW_BASE_PACKS.concat(Object.keys(PILLOW_PACK_RULES).map(Number)).sort((a,b)=>a-b).map(k=>k+'P');
+  return all.length>1 ? all.slice(0,-1).join(', ')+' or '+all[all.length-1] : all.join('');
+}
+// Returns { product, qtyMultiplier, issue, pack, kind } — kind is 'base' | 'converted' | 'issue'.
+// The caller multiplies the raw order quantity by qtyMultiplier and shows `product`.
+function pillowProtectorPackRule(product, productName, sku, size, variant){
+  const shown  = String(product == null ? '' : product);
+  const inName = pillowPackIn(shown);                       // pack written in the Product name
+  let pack = null, from = '';
+  for(const [label, text] of [['SKU',sku],['Product name',shown],['Size',size],['Variant',variant],['marketplace product text',productName]]){
+    const n = pillowPackIn(text);
+    if(n !== null){ pack = n; from = label; break; }
+  }
+  const out = (prod, mult, issue, kind) => ({ product:prod, qtyMultiplier:mult, issue, pack, kind });
+  const clash = () => 'Pillow Protector pack mismatch: '+pack+'P in the '+from+' but the Product name says '+inName+'P';
+  if(pack === null) return out(shown, 1, 'Pillow Protector pack size ('+pillowPackListText()+') not found', 'issue');
+  if(PILLOW_BASE_PACKS.includes(pack)){
+    if(inName !== null && inName !== pack) return out(shown, 1, clash(), 'issue');
+    return out(shown, 1, null, 'base');
+  }
+  const rule = PILLOW_PACK_RULES[pack];
+  if(!rule) return out(shown, 1, 'Pillow Protector pack '+pack+'P not supported (expected '+pillowPackListText()+')', 'issue');
+  if(inName !== null && inName !== rule.base && inName !== pack) return out(shown, 1, clash(), 'issue');
+  let label;
+  if(inName === rule.base)      label = shown;                                   // the sheet already names the base pack
+  else if(inName === pack)      label = shown.replace(PILLOW_PACK_RE, rule.base+'P');                   // "8P ..." / "8 Pack ..." -> "4P ..."
+  else                          label = rule.base+'P '+shown;                    // no pack in the name: put the base pack in front
+  return out(label.trim(), rule.times, null, 'converted');
+}
+// The rule table shown in the Technical Reference — generated from the data above.
+function pillowRuleTableHtml(){
+  const base = PILLOW_BASE_PACKS.map(n=>`<tr><td>${n}P</td><td>${n}P Pillow Protector <i>(unchanged)</i></td><td>raw Qty</td></tr>`).join('');
+  const conv = Object.keys(PILLOW_PACK_RULES).map(Number).sort((a,b)=>a-b).map(n=>{ const r = PILLOW_PACK_RULES[n]; return `<tr class="hl"><td>${n}P</td><td><b>${r.base}P Pillow Protector</b></td><td><b>raw Qty × ${r.times}</b></td></tr>`; }).join('');
+  return `<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Pack found</th><th>Product shown in the report</th><th>QTY</th></tr></thead>
+<tbody>${base}${conv}
+<tr><td>Any other pack, a pack that contradicts the Product name, or none</td><td>Name left as it is</td><td>raw Qty — the line is listed under <b>Issues</b></td></tr>
+</tbody></table></div>`;
+}
+function pillowRuleSummary(){
+  return Object.keys(PILLOW_PACK_RULES).map(Number).sort((a,b)=>a-b).map(n=>n+'P → '+PILLOW_PACK_RULES[n].base+'P × '+PILLOW_PACK_RULES[n].times).join(', ');
 }
 function extractPackMultiplier(...texts){
   for(const t of texts){
@@ -1740,11 +1852,14 @@ function render(){
   renderSidebarStateTiktok();
   renderToolbarTiktok();
   renderStatusBarTiktok();
+  renderSidebarStateTemu();
+  renderToolbarTemu();
+  renderStatusBarTemu();
   // Only the currently visible platform's table is (re)drawn here — the
   // other one is refreshed explicitly by setPlatform() when the person
   // switches tabs, since a table drawn while `display:none` measures a
   // 0px viewport and would otherwise render only a handful of rows.
-  if(state.platform==='tiktok') renderContentTiktok(); else renderContent();
+  if(state.platform==='tiktok') renderContentTiktok(); else if(state.platform==='temu') renderContentTemu(); else renderContent();
   applyPlatformVisibility();
 }
 
@@ -2536,6 +2651,8 @@ function modalBody(kind){
   if(kind==='tiktokMapping') return tiktokMappingModalHtml();
   if(kind==='tiktokIssues') return tiktokIssuesModalHtml();
   if(kind==='tiktokPushSheets') return tiktokPushSheetsModalHtml();
+  if(kind==='temuSku') return temuSkuModalHtml();
+  if(kind==='temuIssues') return temuIssuesModalHtml();
   return '';
 }
 
@@ -2806,14 +2923,17 @@ const INFO_SECTIONS = [
 <tr><td>Amazon / Walmart</td><td>Shipping Fee · FBA Fee</td><td><code>Unit rate × QTY</code> — FBA and WFS lines only</td></tr>
 <tr><td>Amazon / Walmart</td><td>CM</td><td><code>ROUND( List Price − (Ex-WH Cost + Fee + Expense + Shipping Fee + FBA Fee + OFF) , 2 )</code> — FBA and WFS lines only, once every component is resolved</td></tr>
 <tr><td>Amazon / Walmart</td><td>Sale Tax</td><td>Blank by design</td></tr>
+<tr><td>Temu</td><td>List Price</td><td><code>ROUND( Net sale , 2 )</code></td></tr>
+<tr><td>Temu</td><td>Shipping Fee</td><td><code>ROUND( Seller label cost + Cancelled label cost of the Order ID ÷ Shipped lines of the Order ID , 2 )</code></td></tr>
 </tbody></table></div>
 
 <h4>Engines</h4>
 <ul>
 <li><b>TikTok engine</b> — 12-column report: Date, Order ID, Vendor, Status, Shop, Product, Size, Color, QTY, List Price, OFF, Shipping Fee.</li>
 <li><b>Amazon / Walmart engine</b> — 20-column report that adds Ex-WH Cost, Revenue, Net Sale, Sale Tax, Fee, Expense, FBA Fee and CM. Amazon and Walmart reports can be loaded in the same batch; every row is read with its own platform rules.</li>
+<li><b>Temu engine</b> — 8-column report: Date, Order ID, Product, Size, Color, QTY, List Price, Shipping Fee. Only Shipped lines are kept; a line whose Net sale is 0 counts as cancelled.</li>
 </ul>
-<p>The two engines keep separate state, separate Google Sheet links and separate masters. The platform switch in the top bar only changes which one is visible.</p>
+<p>The three engines keep separate state, separate Google Sheet links and separate masters. The platform switch in the top bar only changes which one is visible.</p>
 
 <h4>Runtime &amp; storage</h4>
 <ul>
@@ -2932,7 +3052,13 @@ const INFO_SECTIONS = [
 <p>The percentage column is read from <code>discount-percent</code>, <code>promotion-percent</code>, <code>off-percent</code> or <code>item-discount-percent</code> (spelling variants such as <code>discountpercentage</code> also match). Once it holds a value the amount columns are not consulted, so a <code>0</code> in it means OFF = 0.</p>
 
 <h4>Quantity — pack-size correction</h4>
-<p>Many products are sold as multi-piece packs, and the SKU carries a marker such as <code>4P</code>, <code>5P</code> or <code>6P</code> (a one- or two-digit number followed by <code>P</code>, optionally separated by a space or hyphen: <code>6P</code>, <code>6-P</code> and <code>6 P</code> match; <code>4PC</code> and <code>TXL</code> never do). The marker is searched for in the SKU first, then in Size, Product and the marketplace product name. The cost and fee sheets price a <b>single piece</b>, so the true piece count is <code>pack number × order quantity</code>, and that corrected number is shown in QTY and used for every per-unit calculation below. <b>Pillow Protector</b> products are excluded and always keep the raw quantity. List Price, Revenue, Net Sale and Fee are never affected: they are priced per pack, exactly as the customer paid.</p>
+<p>Many products are sold as multi-piece packs, and the SKU carries a marker such as <code>4P</code>, <code>5P</code> or <code>6P</code> (a one- or two-digit number followed by <code>P</code>, optionally separated by a space or hyphen: <code>6P</code>, <code>6-P</code> and <code>6 P</code> match; <code>4PC</code> and <code>TXL</code> never do). The marker is searched for in the SKU first, then in Size, Product and the marketplace product name. The cost and fee sheets price a <b>single piece</b>, so the true piece count is <code>pack number × order quantity</code>, and that corrected number is shown in QTY and used for every per-unit calculation below. <b>Pillow Protector</b> products are the one exception: they are not multiplied by the pack number but follow their own rule below. List Price, Revenue, Net Sale and Fee are never affected: they are priced per pack, exactly as the customer paid.</p>
+
+<p><b>Pillow Protector — pack rule</b></p>
+<p>Pillow Protectors are priced per <b>base pack</b>: <code>2P</code> and <code>4P</code> are the base packs and are never changed. A larger pack is converted into base packs — the Product is shown as the base pack and QTY is multiplied:</p>
+${pillowRuleTableHtml()}
+<p>Example: an order line with Qty 1 for the SKU “406 - Pillow Enc - 8 pack - White - King - G” is listed as <b>4P Pillow Protector</b> with QTY <b>2</b>; with Qty 3 it is listed with QTY <b>6</b>.</p>
+<div class="info-callout"><p><b>Where the rule runs.</b> It is applied by the <b>Temu engine</b> (see the Temu Engine tab). Amazon / Walmart and TikTok lines are not converted: the Product name is shown exactly as it is resolved from the SKU sources, and Pillow Protectors there keep their raw quantity as before.</p></div>
 
 <h4>Cost columns</h4>
 <div class="info-formula"><span class="k">Ex-WH Cost</span>    = Ex-WH unit cost (linked sheet)                    × QTY
@@ -2953,13 +3079,59 @@ const INFO_SECTIONS = [
 <p><b>Download Report</b> writes <code>USM_&lt;source name&gt;.xlsx</code> with the sheet <i>Processed Orders</i> (the 20 columns, frozen header, money columns formatted as currency) plus supporting sheets: Raw Data (very hidden), Cost Master, Google Ex-WH, Shipping &amp; FBA Fee, Product Mapping and Config. <b>Push to Google Sheets</b> sends the processed rows through your Apps Script.</p>
 `},
 
+{ id:'temu', label:'Temu Engine', html:`
+<h4>Input</h4>
+<p>A Temu <i>order</i> export: <code>.xlsx</code> (the first sheet whose name contains “order”, otherwise the first sheet) or a <code>.csv</code> / <code>.txt</code> export (tab or comma delimiter, detected from the first line). One row is one order line, and several files can be loaded into one batch. Columns are found by name — case, spaces, hyphens and underscores are ignored, and a header that merely <i>starts with</i> the expected name also matches, so <code>Net sale (Temu)</code> is read as <i>Net sale</i>.</p>
+
+<h4>Line selection</h4>
+<p>Only lines whose <b>Status</b> is <code>Shipped</code> (case- and space-insensitive) are kept. Cancelled lines, and every other status, are excluded and counted in the status bar. A line whose <b>Net sale is 0</b> (<code>0</code>, <code>0.00</code>, <code>$0.00</code>) is treated as cancelled too — even when its Status says <code>Shipped</code> — and is excluded the same way; a blank Net sale cell is not read as 0. A cancelled line is not shown, but its label cost is not lost — see <i>Shipping Fee</i> below.</p>
+
+<h4>Column map</h4>
+<div class="info-table-wrap"><table class="info-table">
+<thead><tr><th>Report column</th><th>Source / rule</th></tr></thead>
+<tbody>
+<tr><td>Date</td><td><b>Purchase date</b> — calendar date only (time of day is dropped), shown as <code>DD/Mon/YYYY</code>.</td></tr>
+<tr><td>Order ID</td><td><b>Order ID</b>. Lines sharing an Order ID are kept together and the ID is highlighted as a multi-item order.</td></tr>
+<tr><td>Product · Size · Color</td><td>Resolved from the linked Temu SKU / Product Google Sheet, matched on the line’s <b>SKU</b> (then its <b>SKU ID</b>). With no match, Product is the export’s own Product text (or “Unknown product”), Size is its Variant and Color shows “—”. <b>Pillow Protector</b> products then follow the pack rule below.</td></tr>
+<tr><td>QTY</td><td><b>Qty</b> × pack number (<code>4P</code>, <code>6-P</code> …) — the same pack-size correction as the Amazon / Walmart engine. A value written with an <code>x</code> in the SKU (<code>2x</code>, <code>x2</code>) is the same kind of pack marker — “2x Fitted Sheet - Queen” with Qty 3 gives QTY <b>6</b> — and only one marker is applied per line. Pillow Protectors follow the pack rule below instead (the <code>x</code> rule does not apply to them).</td></tr>
+<tr class="hl"><td>List Price</td><td><b>Net sale</b>, rounded to 2 decimals.</td></tr>
+<tr><td>Shipping Fee</td><td><b>Seller label cost</b> plus a share of the label cost of cancelled lines — formula below.</td></tr>
+</tbody></table></div>
+
+<h4>Shipping Fee — formula</h4>
+<div class="info-formula"><span class="c">// per Shipped line · Shipped = Shipped lines of the Order ID · Cancelled = label cost of its cancelled lines</span>
+<span class="k">Share       </span> = Cancelled label cost ÷ Shipped lines   <span class="c">// 0 when the order has no cancelled line</span>
+<span class="k">Shipping Fee</span> = ROUND( Seller label cost + Share , 2 )</div>
+<p>A cancelled line (including a Shipped line whose Net sale is 0) is not shown, but its label cost is shared equally by the remaining Shipped lines of the same Order ID.</p>
+
+<h4>Pillow Protector — pack rule</h4>
+<p>Pillow Protectors are priced per <b>base pack</b>, so a larger pack is converted into base packs: the Product is shown as the base pack and QTY is the order quantity multiplied by the number of base packs. <code>2P</code> and <code>4P</code> are the base packs and stay exactly as they are.</p>
+${pillowRuleTableHtml()}
+<ul>
+<li><b>Where the pack is read from:</b> the <b>SKU first</b> — for example “406 - Pillow Enc - 8 pack - White - King - G” is an 8-pack — then the Product name, Size, Variant and the export’s own product text. A pack marker is a one- or two-digit number followed by <code>P</code> or by the word <code>pack</code> / <code>pk</code>: <code>8P</code>, <code>8-P</code>, <code>8 P</code>, <code>8 pack</code>, <code>8-pack</code> and <code>8pk</code> match; <code>4PC</code> never does.</li>
+<li><b>The Product name:</b> if the Product from the SKU sheet already names the base pack (“4P Pillow Protector” for an 8-pack SKU) it is kept; a name that carries the larger pack (“8P Pillow Protector”) is rewritten to the base pack; a name with no pack gets the base pack added in front.</li>
+<li><b>Example:</b> Qty 1 on the SKU above is listed as <b>4P Pillow Protector</b> with QTY <b>2</b>; Qty 3 gives QTY <b>6</b>. List Price and Shipping Fee are never touched — they stay exactly as the customer paid.</li>
+<li><b>Searching:</b> the search box matches the name as it is shown, together with the SKU and the Order ID.</li>
+</ul>
+
+<h4>Issue detection</h4>
+<p>A line is listed under <b>Issues</b> when it has: a missing Order ID, a missing SKU, a SKU that the linked SKU sheet does not resolve (every SKU is reported while no sheet is linked), or — for Pillow Protectors — a pack that is not ${pillowPackListText()}, a pack that contradicts the Product name (for example an 8-pack SKU whose Product says 2P), or no pack marker at all. After processing, the red <b>Issues</b> button in the toolbar shows the number of lines and opens the list (Order ID · SKU · Product · Issue); the count is repeated in the status bar. Nothing is guessed: a flagged Pillow Protector keeps its name as it is.</p>
+
+<h4>Output</h4>
+<ul>
+<li><b>Ordering:</b> lines of one Order ID stay together; clicking a column header sorts the table.</li>
+<li><b>Download Report:</b> <code>Temu_&lt;source name&gt;.xlsx</code> (<code>Temu_Combined_&lt;n&gt;_Temu_Reports.xlsx</code> when several files are loaded), sheet <i>Temu Shipped Orders</i>, 8 columns, frozen header with a filter, QTY formatted <code>#,##0</code> and the money columns <code>$#,##0.00</code>. Multi-item Order IDs are highlighted.</li>
+<li>This engine has no Edit Table and no Push to Google Sheets.</li>
+</ul>
+`},
+
 { id:'sources', label:'Data Sources', html:`
 <h4>Linked Google Sheets</h4>
 <p>Each sheet is read over HTTPS from the link you paste (the sheet must be shared or published so the link can be read). The rows are cached locally; if a later sync fails, the previously loaded rows stay in use.</p>
 <div class="info-table-wrap"><table class="info-table">
 <thead><tr><th>Sheet</th><th>Engine</th><th>Provides</th><th>Matching order (first unique hit wins)</th></tr></thead>
 <tbody>
-<tr><td>SKU / Product</td><td>Both (separate links)</td><td>Product, Size and Color for a SKU — the authoritative naming.</td><td>SKU. The Amazon / Walmart engine also falls back to Product + Size + Color.</td></tr>
+<tr><td>SKU / Product</td><td>All engines (separate links)</td><td>Product, Size and Color for a SKU — the authoritative naming.</td><td>SKU. The Temu engine tries the SKU, then the SKU ID. The Amazon / Walmart engine also falls back to Product + Size + Color.</td></tr>
 <tr><td>Ex-WH Cost</td><td>Amazon / Walmart</td><td>Ex-WH unit cost.</td><td>SKU + Size + Color → SKU + Size → SKU → Product + Size + Color → Product + Size → Product.</td></tr>
 <tr><td>Shipping &amp; FBA Fee</td><td>Amazon / Walmart</td><td>Shipping and FBA unit rates in 8 columns: Amazon, Walmart, Canada-Amazon, Canada-Walmart × Shipping / FBA.</td><td>Product + Size + Color → Product + Size → SKU + Size; then the legacy Order-ID layout. FBA Fee alone then falls back to a unique SKU, then a unique Product.</td></tr>
 <tr><td>Shipping Fee</td><td>TikTok · CP TTS</td><td>Shipping cost per order. The Order ID is read from <i>Labels Status</i> (or <i>Order ID</i>); the fee is read from the <i>Shipping provider</i> text — for example <code>USPS Ground Advantage™ $5.70, Sep 11</code> gives 5.70.</td><td>Order ID, normalised (stray spaces and apostrophes removed, scientific notation expanded back to digits, case and punctuation ignored). If a long ID lost its last digits in Sheets, the first 15 digits are compared. A label row listing several Order IDs separated by commas splits its fee evenly between them.</td></tr>
@@ -3003,6 +3175,7 @@ const INFO_SECTIONS = [
 <li>Vendor <b>Cotton Passion</b> (Amazon / Walmart orders detected as Canada use <b>Qatan</b>); Status <b>Sold</b>.</li>
 <li>Marketplace fee: <b>15 %</b> of Net Sale. Sale Tax: intentionally blank.</li>
 <li>TikTok Shop labels: <b>CP TTS</b> (fulfilled by seller) and <b>CP FBT</b> (fulfilled by TikTok Shop).</li>
+<li>Pillow Protector packs (Temu engine): <code>2P</code> and <code>4P</code> stay as they are; ${pillowRuleSummary()}; the Product is shown as the base pack and QTY is multiplied by the factor; any other pack is listed under Issues.</li>
 </ul>
 
 <h4>Keyboard shortcuts</h4>
@@ -3017,6 +3190,33 @@ const INFO_SECTIONS = [
 `},
 
 { id:'changelog', label:'Change Log', html:`
+<h4>Revision 2026-11-18 — Temu: Net sale 0 counts as cancelled</h4>
+<div class="info-before-after">
+<div><div class="lbl">Previous</div><div class="eq">Status “Shipped” → line kept<br>(even when Net sale is 0)</div></div>
+<div class="new"><div class="lbl">Current</div><div class="eq">Net sale = 0 → cancelled, line excluded<br>otherwise Status “Shipped” → line kept</div></div>
+</div>
+<ul>
+<li><b>Net sale 0 = cancelled:</b> a Temu line whose Net sale is 0 is treated exactly like a cancelled line, even when its Status shows Shipped. It is not added to the report and is counted under <i>excluded</i> in the status bar.</li>
+<li><b>Label cost:</b> as for any cancelled line, its Seller label cost is shared equally by the remaining Shipped lines of the same Order ID.</li>
+<li><b>What counts as 0:</b> a Net sale cell that holds a number rounding to 0.00 (<code>0</code>, <code>0.00</code>, <code>$0.00</code>). A blank cell, a missing Net sale column or text without a digit is not read as 0.</li>
+<li><b>Surfaces affected:</b> the Temu table, its search, the <code>.xlsx</code> download, the status bar counts and this reference.</li>
+<li><b>Unchanged:</b> Date, Order ID, Product / Size / Color, QTY and the Pillow Protector rule, List Price, the Shipping Fee formula, Issues, and the Amazon / Walmart and TikTok engines.</li>
+</ul>
+
+<h4>Revision 2026-11-17 — Temu: Pillow Protector pack rule &amp; Issues list</h4>
+<div class="info-before-after">
+<div><div class="lbl">Previous</div><div class="eq">Pack read from the Product name first;<br>only the “8P” spelling recognised;<br>name got a “2x” label and<br>QTY stayed unchanged.</div></div>
+<div class="new"><div class="lbl">Current</div><div class="eq">Pack read from the SKU first (“8 pack” counts)<br>2P / 4P → unchanged<br>${Object.keys(PILLOW_PACK_RULES).map(Number).sort((a,b)=>a-b).map(n=>n+'P → '+PILLOW_PACK_RULES[n].base+'P Pillow Protector, QTY × '+PILLOW_PACK_RULES[n].times).join('<br>')}</div></div>
+</div>
+<ul>
+<li><b>Pillow Protector pack rule:</b> a 6P / 8P line is shown as the 2P / 4P base pack and its QTY is multiplied by 3 / 2. Example: Qty 1 on “406 - Pillow Enc - 8 pack - White - King - G” is listed as 4P Pillow Protector, QTY 2. See <i>Temu Engine</i>; the rule lives in one table in the code and this reference is generated from it.</li>
+<li><b>Pack markers:</b> for Pillow Protectors the words <code>8 pack</code>, <code>8-pack</code> and <code>8pk</code> are recognised as well as <code>8P</code>. Every other product keeps the old marker rules.</li>
+<li><b>Mismatch is flagged:</b> when the SKU’s pack contradicts the Product name (for example an 8-pack SKU whose Product says 2P) the line keeps its name and raw QTY and is listed under Issues.</li>
+<li><b>Issues list for Temu:</b> a red <b>Issues</b> button with a count appears in the toolbar, with the same list as the other engines. Lines are flagged for a missing Order ID, a missing SKU, a SKU not found in the linked sheet, and a Pillow Protector whose pack is not ${pillowPackListText()}, is missing, or contradicts the Product name.</li>
+<li><b>Surfaces affected:</b> the Temu table (Product and QTY), its search, the <code>.xlsx</code> download, the status bar and this reference.</li>
+<li><b>Unchanged:</b> line selection, List Price, Shipping Fee, QTY for every other product, and the Amazon / Walmart and TikTok engines.</li>
+</ul>
+
 <h4>Revision 2026-11-11 — TikTok List Price</h4>
 <div class="info-before-after">
 <div><div class="lbl">Previous</div><div class="eq">List Price =<br>&nbsp;&nbsp;SKU Subtotal Before Discount<br>&nbsp;&nbsp;+ Shipping Fee After Discount</div></div>
@@ -3036,11 +3236,11 @@ const INFO_SECTIONS = [
 ];
 
 function infoModalHtml(){
-  const start = state.platform==='tiktok' ? 'tiktok' : 'overview';
+  const start = state.platform==='tiktok' ? 'tiktok' : (state.platform==='temu' ? 'temu' : 'overview');
   const tabs = INFO_SECTIONS.map(s=>`<button type="button" class="info-tab${s.id===start?' active':''}" role="tab" aria-selected="${s.id===start?'true':'false'}" data-info-tab="${s.id}">${s.label}</button>`).join('');
   const secs = INFO_SECTIONS.map(s=>`<section class="info-sec${s.id===start?' active':''}" role="tabpanel" data-info-sec="${s.id}">${s.html}</section>`).join('');
   return `<div class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
-    <div class="modal-head"><div><h3 id="infoModalTitle">Seller Matrics — Technical Reference</h3><p>How every figure is calculated, what is added to what, and where the data comes from.</p></div><span class="chip">Spec rev. 2026-11-11</span></div>
+    <div class="modal-head"><div><h3 id="infoModalTitle">Seller Matrics — Technical Reference</h3><p>How every figure is calculated, what is added to what, and where the data comes from.</p></div><span class="chip">Spec rev. 2026-11-18</span></div>
     <div class="info-tabs" role="tablist">${tabs}</div>
     <div class="modal-body info-body">${secs}</div>
     <div class="modal-foot"><button class="btn ghost" data-close>Close</button></div>
@@ -3075,6 +3275,7 @@ function wireModal(kind){
   if(kind==='tiktokManualSku') wireTiktokManualSkuModal();
   if(kind==='tiktokMapping') wireTiktokMappingModal();
   if(kind==='tiktokPushSheets') wireTiktokPushSheetsModal();
+  if(kind==='temuSku') wireTemuSkuModal();
 }
 
 /* ---------------------------- DOWNLOAD REPORT ---------------------------- */
@@ -3771,19 +3972,22 @@ function wireTiktokTable(){
 
 /* ---------------------------- TIKTOK: PLATFORM SWITCH ---------------------------- */
 function applyPlatformVisibility(){
-  const isTiktok = state.platform==='tiktok';
-  $('#sidebarAZ').classList.toggle('hidden', isTiktok);
+  const isTiktok = state.platform==='tiktok', isTemu = state.platform==='temu';
+  $('#sidebarAZ').classList.toggle('hidden', isTiktok||isTemu);
   $('#sidebarTikTok').classList.toggle('hidden', !isTiktok);
-  $('#mainAZ').classList.toggle('hidden', isTiktok);
+  $('#sidebarTemu').classList.toggle('hidden', !isTemu);
+  $('#mainAZ').classList.toggle('hidden', isTiktok||isTemu);
   $('#mainTiktok').classList.toggle('hidden', !isTiktok);
-  $('#statusBar').classList.toggle('hidden', isTiktok);
+  $('#mainTemu').classList.toggle('hidden', !isTemu);
+  $('#statusBar').classList.toggle('hidden', isTiktok||isTemu);
   $('#statusBarTiktok').classList.toggle('hidden', !isTiktok);
+  $('#statusBarTemu').classList.toggle('hidden', !isTemu);
   $all('.platform-btn').forEach(b=> b.classList.toggle('active', b.getAttribute('data-platform')===state.platform));
   const search = $('#searchInput');
-  if(search) search.value = isTiktok ? state.tiktok.search : state.search;
+  if(search) search.value = isTiktok ? state.tiktok.search : (isTemu ? state.temu.search : state.search);
 }
 function setPlatform(p){
-  if(p!=='az' && p!=='tiktok') return;
+  if(p!=='az' && p!=='tiktok' && p!=='temu') return;
   if(state.platform===p){ applyPlatformVisibility(); return; }
   state.platform = p;
   persistConfig();
@@ -3791,7 +3995,7 @@ function setPlatform(p){
   // Re-draw the newly visible panel now that it actually has layout
   // dimensions — a table drawn while `display:none` measures a 0px
   // viewport and would otherwise render only a handful of rows.
-  if(p==='tiktok') renderContentTiktok(); else renderContent();
+  if(p==='tiktok') renderContentTiktok(); else if(p==='temu') renderContentTemu(); else renderContent();
 }
 
 /* ---------------------------- TIKTOK: GOOGLE SHEETS ---------------------------- */
@@ -4038,7 +4242,7 @@ let __lastAutoSyncAt = 0;
 const AUTO_SYNC_MIN_GAP_MS = 10000;
 function hasAnyLinkedGoogleSheet(){
   const g = state.google || {};
-  return !!(g.exwhUrl || g.shippingUrl || g.skuUrl || g.tiktokShippingUrl || g.tiktokSkuUrl || g.tiktokFbtShippingUrl);
+  return !!(g.exwhUrl || g.shippingUrl || g.skuUrl || g.tiktokShippingUrl || g.tiktokSkuUrl || g.tiktokFbtShippingUrl || g.temuSkuUrl);
 }
 async function autoSyncOnReturn(){
   if(document.visibilityState === 'hidden') return; // only act when actually visible
@@ -4051,6 +4255,7 @@ async function autoSyncOnReturn(){
   try{
     if(state.google.exwhUrl || state.google.shippingUrl || state.google.skuUrl) await refreshAllGoogle();
     if(state.google.tiktokShippingUrl || state.google.tiktokSkuUrl || state.google.tiktokFbtShippingUrl) await refreshAllGoogleTiktok();
+    if(state.google.temuSkuUrl) await refreshTemuSku(true);
   } finally {
     __autoSyncInFlight = false;
   }
@@ -4274,6 +4479,405 @@ async function downloadReportTiktok(){
   }catch(err){ console.error(err); toast('error','Download failed',String(err.message||err)); }
 }
 
+/* =====================================================================
+   TEMU MODE — separate pipeline, same layout as TikTok mode.
+   Only lines whose Status is "Shipped" are kept (Cancelled and any other
+   status are excluded). A line whose Net sale is 0 is cancelled too, even
+   when its Status says "Shipped" (see temuIsCancelled). Date = Purchase date ·
+   Order ID = Order ID ·
+   List Price = Net sale · Shipping Fee = Seller label cost. A cancelled
+   line is not shown, but its Seller label cost is shared equally by the
+   remaining Shipped lines of the same Order ID. Product / Size / Color
+   come from the linked SKU sheet (matched on SKU). QTY = Qty × pack
+   number ("4P", "6-P"…), the same rule the Amazon/Walmart engine uses; a
+   value written with an x in the SKU ("2x", "x2") is the same kind of pack
+   marker (2x × Qty 3 = 6) — except Pillow Protector (6P → 2P Pillow Protector × 3, 8P → 4P Pillow
+   Protector × 2, read from the SKU first; see pillowProtectorPackRule).
+   ===================================================================== */
+const TEMU_COLS = [
+  {key:'date', label:'Date', cls:'col-date'},
+  {key:'orderId', label:'Order ID', cls:'col-oid'},
+  {key:'product', label:'Product', cls:'col-product'},
+  {key:'size', label:'Size', cls:'col-size'},
+  {key:'color', label:'Color', cls:'col-color'},
+  {key:'qty', label:'QTY', cls:'col-qty', num:true},
+  {key:'listPrice', label:'List Price', cls:'col-list', num:true, money:true},
+  {key:'shippingFee', label:'Shipping Fee', cls:'col-shipfee', num:true, money:true}
+];
+const TEMU_LABEL_KEYS = ['sellerlabelcost','sellerlabel','labelcost'];
+let temuSkuMap = new Map();
+
+// Header lookup: exact (normalised) header first, then "starts with", so
+// "Net sale (Temu)" is found by 'netsale' and "Seller label cost" by 'sellerlabelcost'.
+function temuGet(r, keys){
+  const ks = Object.keys(r||{}).map(k=>[normalizeHeader(k), k]);
+  for(const p of keys){
+    const hit = ks.find(x=>x[0]===p) || ks.find(x=>x[0].startsWith(p));
+    if(hit) return r[hit[1]];
+  }
+  return '';
+}
+// "Nov 13, 2026, 6:33 pm EST" (or 11/13/2026, 2026-11-13) -> "13/Nov/2026"; never the time.
+function temuExtractDate(raw){
+  if(!hasValue(raw)) return '';
+  const s = String(raw).trim(), mons = ['jan','feb','mar','apr','may','jun','jul','aug','sep','oct','nov','dec'];
+  let mo, da, yr, m;
+  if((m = s.match(/^([A-Za-z]{3,9})\.?\s+(\d{1,2})(?:st|nd|rd|th)?,?\s+(\d{4})/))){ mo = mons.indexOf(m[1].slice(0,3).toLowerCase()); da = +m[2]; yr = +m[3]; }
+  else if((m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4}|\d{2})\b/))){ mo = +m[1]-1; da = +m[2]; yr = +m[3]; if(yr<100) yr += 2000; }
+  else if((m = s.match(/^(\d{4})-(\d{1,2})-(\d{1,2})/))){ yr = +m[1]; mo = +m[2]-1; da = +m[3]; }
+  if(m && mo>=0 && mo<12){
+    const d = new Date(Date.UTC(yr, mo, da));
+    if(!isNaN(d.getTime())) return formatDate(d.toISOString());
+  }
+  return formatDate(s);
+}
+// A value written with an x in the SKU ("2x Fitted Sheet - Queen", "Fitted Sheet x2") is a pack
+// marker just like "2P": it multiplies the order quantity (2x with Qty 3 -> 6). The number must
+// be stuck to the x, one or two digits, and must stand alone, so dimensions ("50x60", "50 x 60",
+// "4x4") and sizes ("2XL", "3X-Large" is the only theoretical clash) are never read as a pack.
+function temuExtractX(text){
+  const s = String(text == null ? '' : text);
+  const m = s.match(/(?:^|[^A-Za-z0-9])(\d{1,2})\s?[xX](?!\s*\d)(?![A-Za-z0-9])/)
+         || s.match(/(?:^|[^A-Za-z0-9])[xX](\d{1,2})(?![A-Za-z0-9])/);
+  const n = m ? parseInt(m[1], 10) : 0;
+  return n > 0 ? n : 0;
+}
+function temuSkuLookup(sku, skuId){
+  for(const k of [sku, skuId]){
+    const key = canonicalCatalogKey(k);
+    if(key && temuSkuMap.has(key)) return temuSkuMap.get(key);
+  }
+  return null;
+}
+// A Temu line whose Net sale is 0 is a cancelled line, even when its Status still says "Shipped".
+// "0" means the Net sale cell holds a number that rounds to 0.00 ("0", "0.00", "$0.00"). A blank cell,
+// a missing Net sale column, or text without any digit is NOT read as 0, so a header problem can
+// never turn a whole report into cancelled lines.
+function temuNetSaleIsZero(r){
+  const raw = temuGet(r,['netsale']);
+  if(!hasValue(raw)) return false;
+  let n;
+  if(typeof raw === 'number') n = raw;
+  else {
+    const t = String(raw).trim().replace(/[$£€₨,]/g,'').replace(/[^0-9.\-]/g,'');
+    if(!/\d/.test(t)) return false;
+    n = Number(t);
+  }
+  return Number.isFinite(n) && Math.round(n*100) === 0;
+}
+// Shipped = Status "Shipped" and a Net sale that is not 0.
+function temuIsShipped(r){
+  return normText(temuGet(r,['status'])) === 'shipped' && !temuNetSaleIsZero(r);
+}
+// Cancelled = Status contains "cancel", or Net sale is 0 (whatever the Status says).
+function temuIsCancelled(r){
+  return normText(temuGet(r,['status'])).includes('cancel') || temuNetSaleIsZero(r);
+}
+function temuRowFromRaw(r, live, canc){
+  if(!temuIsShipped(r)) return null;
+  const orderId = String(temuGet(r,['orderid'])||'').trim();
+  const sku = String(temuGet(r,['sku'])||'').trim();
+  const productName = String(temuGet(r,['product'])||'').trim();
+  const variant = String(temuGet(r,['variant'])||'').trim();
+  const hit = temuSkuLookup(sku, String(temuGet(r,['skuid'])||'').trim());
+  const product = (hit && hit.product) || productName || 'Unknown product';
+  const size = hit ? (hit.size||'') : variant;
+  const color = hit ? (hit.color||'') : '';
+  // QTY: pack-size correction, identical to the Amazon/Walmart engine — except
+  // Pillow Protector, which has its own rule (pillowProtectorPackRule): a 6P /
+  // 8P line is shown as the 2P / 4P base pack and its QTY is multiplied by
+  // 3 / 2. The pack is read from the SKU first.
+  // Every other product: Qty x pack number — the "NP" marker, or a value written with an x in the
+  // SKU ("2x Fitted Sheet", 2x with Qty 3 = 6), which is the same kind of marker. A SKU that
+  // carries "NP" keeps using it, and only one marker is ever applied, so nothing is counted twice.
+  const pillow = isPillowProtectorProduct(product, productName)
+    ? pillowProtectorPackRule(product, productName, sku, size, variant) : null;
+  let qty = toNum(temuGet(r,['qty','quantity']));
+  if(pillow){
+    qty = qty * pillow.qtyMultiplier;
+  } else {
+    const xv = temuExtractX(sku || (hit && hit.sku));
+    const pack = (xv && !extractPackMultiplier(sku)) ? xv : extractPackMultiplier(sku, size, variant, product, productName);
+    if(pack) qty = qty * pack;
+  }
+  // Cancelled lines of this Order ID: their label cost is shared by the remaining Shipped lines.
+  const extra = (orderId && live[orderId]>0 && canc[orderId]) ? canc[orderId]/live[orderId] : 0;
+  const issues = [];
+  if(!orderId) issues.push('Missing Order ID');
+  if(!sku) issues.push('Missing SKU'); else if(!hit) issues.push('SKU not found in linked SKU sheet');
+  if(pillow && pillow.issue) issues.push(pillow.issue);
+  const displayProduct = pillow ? pillow.product : product;
+  return {
+    _id:uid(), rawSku:sku, date:temuExtractDate(temuGet(r,['purchasedate','purchase'])), orderId, product:displayProduct, size:size||'—', color:color||'—', qty,
+    listPrice: Math.round((toNum(temuGet(r,['netsale']))+Number.EPSILON)*100)/100,
+    shippingFee: Math.round((toNum(temuGet(r,TEMU_LABEL_KEYS))+extra+Number.EPSILON)*100)/100,
+    skuSource: hit ? 'Google Sheets' : 'Missing', issues
+  };
+}
+function processTemuReport(){
+  if(!state.temu.rawRows){ toast('error','Nothing to process','Upload a Temu order report first.'); return; }
+  state.temu.isLoading = true; render();
+  window.setTimeout(()=>{
+    try{ processTemuReportCore(true); }
+    catch(err){
+      console.error('Temu processing error', err);
+      state.temu.isLoading = false; state.temu.isProcessed = false;
+      render();
+      toast('error','Processing failed', String(err && err.message || err));
+    }
+  }, 50);
+}
+function processTemuReportCore(showToast){
+  const T = state.temu;
+  if(!Array.isArray(T.rawRows)) throw new Error('Loaded report data is invalid.');
+  temuSkuMap = new Map();
+  (state.google.temuSkuRows||[]).forEach(x=>{ const k = canonicalCatalogKey(x.sku); if(k && !temuSkuMap.has(k)) temuSkuMap.set(k, x); });
+  // Pre-pass: Shipped lines per Order ID, and the label cost of its Cancelled lines
+  // (a line whose Net sale is 0 counts as Cancelled, whatever its Status says).
+  const live = {}, canc = {};
+  T.rawRows.forEach(r=>{
+    if(!r || typeof r!=='object') return;
+    const oid = String(temuGet(r,['orderid'])||'').trim(); if(!oid) return;
+    if(temuIsShipped(r)) live[oid] = (live[oid]||0) + 1;
+    else if(temuIsCancelled(r)) canc[oid] = (canc[oid]||0) + toNum(temuGet(r,TEMU_LABEL_KEYS));
+  });
+  const rows = []; let excluded = 0;
+  T.rawRows.forEach(r=>{
+    if(!r || typeof r!=='object') return;
+    const row = temuRowFromRaw(r, live, canc);
+    if(row) rows.push(row); else excluded++;
+  });
+  const cnt = {}; rows.forEach(r=>{ if(r.orderId) cnt[r.orderId] = (cnt[r.orderId]||0) + 1; });
+  rows.forEach(r=>{ r.isMulti = !!(r.orderId && cnt[r.orderId]>1); });
+  T.orders = rows; T.excludedCount = excluded;
+  T.issues = [];
+  rows.forEach(r=>{ if(r.issues.length) T.issues.push({orderId:r.orderId||'(missing)', sku:r.rawSku||'(missing)', product:r.product, issues:r.issues}); });
+  T.issueCount = T.issues.length;
+  T.isProcessed = true; T.isLoading = false;
+  render();
+  if(showToast) toast(T.issueCount?'info':'success','Temu report processed', rows.length+' shipped order line(s) included · '+excluded+' excluded (cancelled / not shipped).'+(T.issueCount?' '+T.issueCount+' line(s) need attention.':''));
+}
+
+/* ---------------------------- TEMU: FILES ---------------------------- */
+function handleFilesTemu(list){ Array.from(list||[]).filter(Boolean).forEach(handleFileTemu); }
+function handleFileTemu(file){
+  if(!/\.(xlsx|csv|txt)$/i.test(file.name)){ toast('error','Unsupported file', file.name+': please upload the Temu order sheet (.xlsx or .csv).'); return; }
+  const isX = /\.xlsx$/i.test(file.name), rd = new FileReader();
+  rd.onerror = ()=> toast('error','Read failed', file.name+' could not be read.');
+  rd.onload = e=>{
+    let rows;
+    try{
+      if(isX){
+        const wb = XLSX.read(new Uint8Array(e.target.result), {type:'array'});
+        const sn = wb.SheetNames.find(n=>/order/i.test(n)) || wb.SheetNames[0];
+        rows = XLSX.utils.sheet_to_json(wb.Sheets[sn], {defval:'', raw:false});
+      } else {
+        const t = String(e.target.result), d = (t.split(/\r?\n/,1)[0]||'').includes('\t') ? '\t' : ',';
+        rows = Papa.parse(t, {header:true, skipEmptyLines:true, delimiter:d}).data;
+      }
+    }catch(err){ toast('error','Could not read file', file.name+': '+String(err.message||err)); return; }
+    if(!rows || !rows.length){ toast('error','Empty report', file.name+': no rows were found in that file.'); return; }
+    const id = uid();
+    rows.forEach(r=>{ if(r && typeof r==='object') r.__tmFileId = id; });
+    state.temu.files.push({ id, name:file.name, rowCount:rows.length });
+    state.temu.rawRows = (state.temu.rawRows||[]).concat(rows);
+    state.temu.isProcessed = false; state.temu.orders = []; state.temu.issues = []; state.temu.issueCount = 0;
+    toast('success','Report loaded', file.name+' — '+rows.length+' line item(s) added. Ready to process.');
+    render();
+  };
+  if(isX) rd.readAsArrayBuffer(file); else rd.readAsText(file);
+}
+function removeFileTemu(id){
+  const t = state.temu, i = t.files.findIndex(f=>f.id===id); if(i===-1) return;
+  const f = t.files.splice(i,1)[0];
+  t.rawRows = (t.rawRows||[]).filter(r=> !r || r.__tmFileId!==id);
+  if(!t.files.length) t.rawRows = null;
+  t.isProcessed = false; t.orders = []; t.issues = []; t.issueCount = 0;
+  render(); toast('info','File removed', f.name+' was removed from the batch.');
+}
+function removeReportTemu(){
+  Object.assign(state.temu, {rawRows:null, files:[], orders:[], issues:[], isProcessed:false, isLoading:false, excludedCount:0, issueCount:0});
+  render(); toast('info','Report removed','The uploaded Temu report(s) were cleared. You can upload new file(s) now.');
+}
+
+/* ---------------------------- TEMU: GOOGLE SKU SHEET ---------------------------- */
+async function refreshTemuSku(silent){
+  const url = state.google.temuSkuUrl;
+  if(!url){ if(!silent) toast('error','No Google Sheet linked','Link the sheet first.'); return false; }
+  try{
+    const rows = normalizeGoogleSkuRows(await fetchGoogleRows(url));
+    state.google.temuSkuRows = rows; state.google.temuSkuUpdated = new Date().toISOString();
+    persistConfig();
+    if(state.temu.rawRows && state.temu.isProcessed) processTemuReportCore(false);
+    render();
+    if(!silent) toast('success','Google Sheet synced', rows.length+' usable row(s) loaded.');
+    return true;
+  }catch(err){
+    console.error('Temu SKU sheet sync failed:', err);
+    render();
+    if(!silent) toast('error','Google Sheet sync failed', String(err && err.message || err));
+    return false;
+  }
+}
+async function refreshAllGoogleTemu(){
+  if(!state.google.temuSkuUrl){ toast('error','No Google Sheets linked','Link the SKU sheet first.'); return; }
+  const b = $('#refreshAllGoogleTemuBtn'); if(b) b.disabled = true;
+  const ok = await refreshTemuSku(true);
+  if(b) b.disabled = false;
+  render();
+  toast(ok?'success':'error','All Sheets sync finished','SKU/Product: '+(ok?'synced':'failed'));
+}
+function temuIssuesModalHtml(){
+  const rows=(state.temu.issues||[]).slice(0,250).map(x=>`<tr><td class="mono">${esc(x.orderId)}</td><td class="mono">${esc(x.sku)}</td><td>${esc(x.product)}</td><td class="source-missing">${esc(x.issues.join(' · '))}</td></tr>`).join('');
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Data Issues (Temu)</h3><p>${state.temu.issueCount} line(s) need attention.</p></div></div><div class="modal-body"><table class="mini-table"><thead><tr><th>Order ID</th><th>SKU</th><th>Product</th><th>Issue</th></tr></thead><tbody>${rows||'<tr><td colspan="4">No issues.</td></tr>'}</tbody></table></div><div class="modal-foot"><button class="btn ghost" data-close>Close</button></div></div>`;
+}
+function temuSkuModalHtml(){
+  const rows = state.google.temuSkuRows||[];
+  const prev = rows.length
+    ? '<div class="section-divider">Preview — '+rows.length+' usable row(s)</div><table class="mini-table"><tr><th>SKU</th><th>Product</th><th>Size</th><th>Color</th></tr>'+rows.slice(0,5).map(r=>'<tr>'+[r.sku,r.product,r.size,r.color].map(v=>'<td class="mono">'+esc(v||'—')+'</td>').join('')+'</tr>').join('')+'</table>'+(rows.length>5?'<div class="help">+ '+(rows.length-5)+' more row(s).</div>':'')
+    : '<div class="help" style="margin-top:8px;">No usable rows detected yet.</div>';
+  return `<div class="modal wide" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Link SKU / Product Google Sheet (Temu)</h3><p>The Temu report\u2019s SKU is matched against this sheet to fill Product, Size and Color.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="temuSkuUrlInput" value="${esc(state.google.temuSkuUrl||'')}" placeholder="https://docs.google.com/spreadsheets/d/..."><div class="help">Required: SKU, Product; Size and Color recommended. Use a normal /edit link with \u201cAnyone with the link \u2192 Viewer\u201d. After editing the sheet, use Sync All Sheets.</div></div><div class="help">Last synced: ${state.google.temuSkuUpdated?new Date(state.google.temuSkuUpdated).toLocaleString():'Never'}</div>${prev}</div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="saveTemuSkuBtn">${ICONS.check} Save & Sync</button></div></div>`;
+}
+function wireTemuSkuModal(){
+  $('#saveTemuSkuBtn').addEventListener('click', async ()=>{
+    const url = $('#temuSkuUrlInput').value.trim();
+    state.google.temuSkuUrl = url; persistConfig();
+    if(!url){
+      state.google.temuSkuRows = []; state.google.temuSkuUpdated = null; persistConfig();
+      if(state.temu.rawRows && state.temu.isProcessed) processTemuReportCore(false);
+      closeModal(); render();
+      toast('info','Google Sheet disconnected','SKU source removed; Product, Size and Color fall back to the report\u2019s own text.');
+      return;
+    }
+    const btn = $('#saveTemuSkuBtn'); btn.disabled = true; btn.innerHTML = ICONS.spinner+' Reading sheet…';
+    const ok = await refreshTemuSku(true);
+    btn.disabled = false; btn.innerHTML = ICONS.check+' Save & Sync';
+    if(ok){ closeModal(); toast('success','Google Sheet connected','The SKU sheet is now live. Sync All Sheets after edits.'); }
+    else { render(); openModal('temuSku'); }
+  });
+}
+
+/* ---------------------------- TEMU: RENDER ---------------------------- */
+function renderSidebarStateTemu(){
+  const t = state.temu;
+  const rb = $('#removeReportTemuBtn'); if(rb) rb.disabled = !t.rawRows || t.isLoading;
+  const pb = $('#processTemuBtn'); if(pb) pb.disabled = !t.rawRows || t.isLoading;
+  const sb = $('#temuSkuSheetBadge'); if(sb){ sb.textContent = state.google.temuSkuUrl ? 'Linked' : 'Not linked'; sb.className = 'badge'+(state.google.temuSkuUrl?' on':''); }
+  const rf = $('#refreshAllGoogleTemuBtn'); if(rf) rf.disabled = !state.google.temuSkuUrl || t.isLoading;
+  const h = $('#sideHintTemu'); if(h) h.textContent = t.orders.length ? t.orders.length+' shipped order line(s) loaded.' : 'Drop a Temu order sheet anywhere to begin.';
+}
+function renderToolbarTemu(){
+  const t = state.temu;
+  const ft = $('#filenameTagTemu'); if(ft) ft.classList.toggle('hidden', !t.files.length);
+  const fx = $('#filenameTextTemu'); if(fx) fx.textContent = t.files.length===1 ? t.files[0].name : (t.files.length ? t.files.length+' files ('+fmtNum((t.rawRows||[]).length)+' rows)' : '');
+  const rc = $('#rowCountChipTemu'); if(rc){ rc.classList.toggle('hidden', !t.orders.length); rc.textContent = t.orders.length+' rows'; }
+  const pc = $('#processedChipTemu'); if(pc) pc.classList.toggle('hidden', !t.isProcessed);
+  const fn = $('#temuFormulaNote'); if(fn) fn.classList.toggle('hidden', !t.isProcessed);
+  const ib = $('#issueBtnTemu'); if(ib) ib.classList.toggle('hidden', !(t.isProcessed && t.issueCount));
+  const ibadge = $('#issueBadgeTemu'); if(ibadge){ ibadge.textContent = t.issueCount ? String(t.issueCount) : 'OK'; ibadge.className = 'badge'+(t.issueCount?' issue':' on'); }
+}
+function renderStatusBarTemu(){
+  const t = state.temu;
+  [['#sbTemuOrders',t.orders.length],['#sbTemuExcluded',t.excludedCount||0],['#sbTemuIssues',t.issueCount||0]].forEach(x=>{ const el = $(x[0]); if(el) el.textContent = fmtNum(x[1]); });
+}
+function visibleTemuOrders(){
+  let rows = state.temu.orders;
+  const q = (state.temu.search||'').toLowerCase();
+  if(q) rows = rows.filter(r=> (r.orderId+r.product+r.rawSku).toLowerCase().includes(q));
+  const dir = state.temu.sortDir==='asc' ? 1 : -1, key = state.temu.sortBy;
+  if(key) rows = rows.slice().sort((a,b)=>{
+    const av = a[key], bv = b[key];
+    if(typeof av==='number' && typeof bv==='number') return (av-bv)*dir;
+    return String(av).localeCompare(String(bv))*dir;
+  });
+  return groupRowsByOrderId(rows);
+}
+function temuRowHtml(r, idx){
+  const cells = TEMU_COLS.map(c=>{
+    const v = r[c.key];
+    if(c.key==='orderId') return `<div class="c ${c.cls} ${r.isMulti?'multi-order-cell':''}"><span class="oid ${r.isMulti?'multi':''}">${r.isMulti?`<span class="pill">${esc(v)}</span>`:esc(v)}</span></div>`;
+    const missing = v===null || v===undefined || v==='';
+    return `<div class="c ${c.cls} ${c.num?'num':''}" title="${esc((r.issues||[]).join(' · '))}">${missing ? '<span class="source-missing">—</span>' : (c.money ? fmtMoney(v) : (c.num ? fmtNum(v) : esc(v)))}</div>`;
+  }).join('');
+  return `<div class="grow tm-grid ${idx%2===0?'even':''}" style="top:${idx*ROW_H}px;height:${ROW_H}px;"><div class="heat" style="background:${r.skuSource==='Missing'?'var(--red)':'var(--green)'}"></div>${cells}</div>`;
+}
+function emptyHtmlTemu(){
+  const t = state.temu, has = t.files.length>0;
+  const list = has ? `<div class="uploaded-files-list" style="width:100%;max-width:440px;margin:14px auto 0;text-align:left;">${t.files.map(f=>`<div class="uploaded-file-row" style="display:flex;align-items:center;gap:8px;padding:7px 10px;border:1px solid var(--border);border-radius:8px;margin-bottom:6px;background:var(--surface-2);"><span style="flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12.5px;">${esc(f.name)}</span><span class="mono" style="color:var(--text-3);font-size:11px;flex:0 0 auto;">${fmtNum(f.rowCount)} rows</span><button type="button" class="icon-btn" data-remove-file-temu="${f.id}" title="Remove this file" style="width:22px;height:22px;flex:0 0 auto;">${ICONS.x}</button></div>`).join('')}</div>` : '';
+  return `<div class="empty-wrap"><div class="dropzone" id="dropzoneTemu"><div class="dropzone-icon">${ICONS.upload.replace('width="15" height="15"','width="26" height="26"')}</div><h2>${has?'Ready to process':'Drop your Temu order sheet here'}</h2><p>${has ? fmtNum((t.rawRows||[]).length)+' rows loaded. Click Process Report in the sidebar to build the table.' : 'Drag & drop the Temu order sheet (.xlsx or .csv) or browse your files. Only Shipped lines are kept — Cancelled (and any other status) is excluded automatically.'}</p>${list}<button class="btn accent" id="browseBtnTemu" style="margin:14px auto 0;">${ICONS.upload} ${has?'Add Another File':'Upload Order Report'}</button><div class="accepts">Accepted formats: .xlsx · .csv — multiple files supported.</div></div></div>`;
+}
+function wireEmptyTemu(){
+  const dz = $('#dropzoneTemu'); if(!dz) return;
+  dz.addEventListener('dragover', e=>{ e.preventDefault(); dz.classList.add('dragging'); });
+  dz.addEventListener('dragleave', ()=> dz.classList.remove('dragging'));
+  dz.addEventListener('drop', e=>{
+    e.preventDefault(); e.stopPropagation(); dz.classList.remove('dragging');
+    if(e.dataTransfer.files && e.dataTransfer.files.length) handleFilesTemu(e.dataTransfer.files);
+  });
+  $('#browseBtnTemu').addEventListener('click', ()=> $('#fileInputTemu').click());
+  $all('[data-remove-file-temu]', dz).forEach(b=> b.addEventListener('click', e=>{ e.stopPropagation(); removeFileTemu(b.getAttribute('data-remove-file-temu')); }));
+}
+function renderContentTemu(){
+  const c = $('#contentTemu'); if(!c) return;
+  if(state.temu.isLoading){ c.innerHTML = loadingHtmlTiktok(); return; }
+  if(!state.temu.orders.length){ c.innerHTML = emptyHtmlTemu(); wireEmptyTemu(); return; }
+  const head = TEMU_COLS.map(k=>`<div class="c ${k.cls}" data-sort="${k.key}">${esc(k.label)} ${state.temu.sortBy===k.key?ICONS.sort:''}</div>`).join('');
+  c.innerHTML = `<div class="table-wrap"><div class="grid-scroll" id="gridScrollTemu"><div class="grid-head tm-grid">${head}</div><div class="grid-body tm-grid" id="gridBodyTemu"></div></div></div>`;
+  const rows = visibleTemuOrders(), sc = $('#gridScrollTemu'), body = $('#gridBodyTemu');
+  body.style.height = (rows.length*ROW_H)+'px';
+  const draw = ()=>{
+    const s = Math.max(0, Math.floor(sc.scrollTop/ROW_H)-6), e = Math.min(rows.length, Math.ceil((sc.scrollTop+sc.clientHeight)/ROW_H)+6);
+    let h = ''; for(let i=s;i<e;i++) h += temuRowHtml(rows[i], i);
+    body.innerHTML = h;
+  };
+  draw();
+  sc.addEventListener('scroll', ()=> window.requestAnimationFrame(draw));
+  $all('#contentTemu .grid-head .c').forEach(el=> el.addEventListener('click', ()=>{
+    const k = el.getAttribute('data-sort');
+    if(state.temu.sortBy===k) state.temu.sortDir = state.temu.sortDir==='asc' ? 'desc' : 'asc';
+    else { state.temu.sortBy = k; state.temu.sortDir = 'asc'; }
+    renderContentTemu();
+  }));
+}
+
+/* ---------------------------- TEMU: DOWNLOAD ---------------------------- */
+async function downloadReportTemu(){
+  if(!state.temu.orders.length){ toast('error','Nothing to download','Process a report first.'); return; }
+  const header = TEMU_COLS.map(c=>c.label), rows = groupRowsByOrderId(state.temu.orders), data = rows.map(r=>TEMU_COLS.map(c=>r[c.key]));
+  const fs = state.temu.files;
+  const name = 'Temu_'+(fs.length===1 ? fs[0].name.replace(/\.[^.]+$/,'') : 'Combined_'+fs.length+'_Temu_Reports')+'.xlsx';
+  try{
+    if(typeof ExcelJS==='undefined'){
+      if(typeof XLSX==='undefined') throw new Error('Excel export libraries are not available.');
+      const ws = XLSX.utils.aoa_to_sheet([header,...data]);
+      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, 'Temu Shipped Orders');
+      XLSX.writeFile(wb, name);
+      toast('success','Downloaded','Report file created successfully.'); return;
+    }
+    const wb = new ExcelJS.Workbook(); wb.creator = 'USM'; wb.created = new Date();
+    const ws = wb.addWorksheet('Temu Shipped Orders', {views:[{state:'frozen',ySplit:1}]});
+    ws.addRow(header); ws.getRow(1).height = 22;
+    ws.autoFilter = {from:{row:1,column:1}, to:{row:1,column:header.length}};
+    for(let i=1;i<=header.length;i++){
+      const c = ws.getRow(1).getCell(i);
+      c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFF2762E'}};
+      c.font = {bold:true,color:{argb:'FFFFFFFF'}};
+      c.alignment = {vertical:'middle'};
+    }
+    data.forEach((d,i)=>{
+      const er = ws.addRow(d);
+      if(rows[i].isMulti){ const c = er.getCell(2); c.fill = {type:'pattern',pattern:'solid',fgColor:{argb:'FFC6EFCE'}}; c.font = {bold:true,color:{argb:'FF006100'}}; }
+    });
+    ws.columns = TEMU_COLS.map(c=>({width:c.key==='orderId'?28:Math.max(10,Math.min(28,c.label.length+6))}));
+    ws.getColumn(6).numFmt = '#,##0';
+    [7,8].forEach(ci=> ws.getColumn(ci).numFmt = '"$"#,##0.00');
+    const buffer = await wb.xlsx.writeBuffer();
+    const url = URL.createObjectURL(new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}));
+    const a = document.createElement('a'); a.href = url; a.download = name; document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    toast('success','Downloaded', name+' saved to your device.');
+  }catch(err){ console.error(err); toast('error','Download failed', String(err.message||err)); }
+}
+
 /* ---------------------------- GLOBAL EVENTS ---------------------------- */
 function wireGlobal(){
   $('#themeToggleBtn').addEventListener('click', toggleTheme);
@@ -4294,8 +4898,13 @@ function wireGlobal(){
     if(e.target.files && e.target.files.length) handleFilesTiktok(e.target.files);
     e.target.value = '';
   });
+  $('#fileInputTemu').addEventListener('change', e=>{
+    if(e.target.files && e.target.files.length) handleFilesTemu(e.target.files);
+    e.target.value = '';
+  });
   $('#searchInput').addEventListener('input', e=>{
     if(state.platform==='tiktok'){ state.tiktok.search = e.target.value; renderContentTiktok(); }
+    else if(state.platform==='temu'){ state.temu.search = e.target.value; renderContentTemu(); }
     else { state.search = e.target.value; renderContent(); }
   });
   $('#statusFilter').addEventListener('change', e=>{ state.statusFilter = e.target.value; renderContent(); });
@@ -4311,6 +4920,7 @@ function wireGlobal(){
     e.preventDefault();
     if(e.dataTransfer.files && e.dataTransfer.files.length){
       if(state.platform==='tiktok') handleFilesTiktok(e.dataTransfer.files);
+      else if(state.platform==='temu') handleFilesTemu(e.dataTransfer.files);
       else handleFiles(e.dataTransfer.files);
     }
   });
@@ -4350,15 +4960,22 @@ function wireGlobal(){
     if(action==='openManualSkuTiktok') openModal('tiktokManualSku');
     if(action==='openProductMappingTiktok') openModal('tiktokMapping');
     if(action==='showIssuesTiktok') openModal('tiktokIssues');
+    if(action==='openFileTemu') $('#fileInputTemu').click();
+    if(action==='removeReportTemu') removeReportTemu();
+    if(action==='processReportTemu') processTemuReport();
+    if(action==='openGoogleSkuTemu') openModal('temuSku');
+    if(action==='refreshAllGoogleTemu') refreshAllGoogleTemu();
+    if(action==='downloadReportTemu') downloadReportTemu();
+    if(action==='showIssuesTemu') openModal('temuIssues');
   });
 
   // keyboard shortcuts
   window.addEventListener('keydown', e=>{
     const mod = e.metaKey || e.ctrlKey;
-    if(mod && e.key.toLowerCase()==='o'){ e.preventDefault(); (state.platform==='tiktok'?$('#fileInputTiktok'):$('#fileInput')).click(); }
+    if(mod && e.key.toLowerCase()==='o'){ e.preventDefault(); (state.platform==='tiktok'?$('#fileInputTiktok'):(state.platform==='temu'?$('#fileInputTemu'):$('#fileInput'))).click(); }
     if(mod && e.key.toLowerCase()==='k'){ e.preventDefault(); $('#searchInput').focus(); }
-    if(mod && e.key.toLowerCase()==='e'){ e.preventDefault(); if(state.platform==='tiktok') downloadReportTiktok(); else downloadReport(); }
-    if(mod && e.key==='Enter'){ e.preventDefault(); if(state.platform==='tiktok') processTiktokReport(); else processReport(); }
+    if(mod && e.key.toLowerCase()==='e'){ e.preventDefault(); if(state.platform==='tiktok') downloadReportTiktok(); else if(state.platform==='temu') downloadReportTemu(); else downloadReport(); }
+    if(mod && e.key==='Enter'){ e.preventDefault(); if(state.platform==='tiktok') processTiktokReport(); else if(state.platform==='temu') processTemuReport(); else processReport(); }
     if(e.key==='Escape' && state.modal){ closeModal(); }
   });
 
