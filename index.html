@@ -749,6 +749,7 @@ a{ color:inherit; }
       <div class="side-group">
         <div class="side-group-title">Export</div>
         <button class="side-btn" data-action="downloadReportTemu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg><span class="side-label">Download Report</span></button>
+        <button class="side-btn" data-action="openPushSheetsTemu"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 10h-1.26A8 8 0 1 0 9 20h9a5 5 0 0 0 0-10z"/><polyline points="12 12 12 20"/><polyline points="9 15 12 12 15 15"/></svg><span class="side-label">Push to Google Sheets</span></button>
       </div>
       <div class="side-hint" id="sideHintTemu">Drop a Temu order sheet anywhere to begin.</div>
      </div>
@@ -875,7 +876,7 @@ const state = {
   costMaster:[],
   productMapping:[],
   manualSkuRows:[], // user-entered SKU/Product/Size/Color rows — a fallback when a SKU isn't worth adding to the Google SKU sheet
-  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Cotton Passion', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'', tiktokSheetsWebAppUrl:'', tiktokTargetSheetUrl:'' },
+  settings:{ referralPercent:15, fallbackTaxPercent:15, vendorName:'Cotton Passion', currency:'$', sheetsWebAppUrl:'', targetSheetUrl:'', tiktokSheetsWebAppUrl:'', tiktokTargetSheetUrl:'', temuSheetsWebAppUrl:'', temuTargetSheetUrl:'' },
   google:{
     exwhUrl:'', shippingUrl:'', fbaUrl:'', skuUrl:'',
     exwhRows:[], shippingRows:[], fbaRows:[], skuRows:[],
@@ -2653,6 +2654,7 @@ function modalBody(kind){
   if(kind==='tiktokPushSheets') return tiktokPushSheetsModalHtml();
   if(kind==='temuSku') return temuSkuModalHtml();
   if(kind==='temuIssues') return temuIssuesModalHtml();
+  if(kind==='temuPushSheets') return temuPushSheetsModalHtml();
   return '';
 }
 
@@ -3276,6 +3278,7 @@ function wireModal(kind){
   if(kind==='tiktokMapping') wireTiktokMappingModal();
   if(kind==='tiktokPushSheets') wireTiktokPushSheetsModal();
   if(kind==='temuSku') wireTemuSkuModal();
+  if(kind==='temuPushSheets') wireTemuPushSheetsModal();
 }
 
 /* ---------------------------- DOWNLOAD REPORT ---------------------------- */
@@ -4757,6 +4760,56 @@ function wireTemuSkuModal(){
   });
 }
 
+/* ---------------------------- TEMU: PUSH TO GOOGLE SHEETS ---------------------------- */
+function temuPushSheetsModalHtml(){return `<div class="modal" role="dialog" aria-modal="true"><div class="modal-head"><div><h3>Push to Google Sheets</h3><p>Send the processed Temu report to a selected Google Sheet.</p></div></div><div class="modal-body"><div class="field"><label>Google Sheet URL</label><input type="text" id="temuTargetSheetUrlInput" placeholder="https://docs.google.com/spreadsheets/d/..." value="${esc(state.settings.temuTargetSheetUrl||'')}"><div class="help">Paste the destination Google Sheet sharing URL.</div></div><div class="field"><label>Google Apps Script Web App URL</label><input type="text" id="temuSheetsUrlInput" placeholder="https://script.google.com/macros/s/…/exec" value="${esc(state.settings.temuSheetsWebAppUrl||'')}"><div class="help">The Sheet URL identifies the destination; the Apps Script /exec URL is the secure write bridge.</div></div><div class="section-divider">Apps Script bridge</div><div class="code-block">function doPost(e) {
+  var out = ContentService.createTextOutput().setMimeType(ContentService.MimeType.JSON);
+  try {
+    var raw = (e && e.postData && e.postData.contents) ? e.postData.contents
+            : ((e && e.parameter && e.parameter.payload) ? e.parameter.payload : '');
+    if (!raw) throw new Error('No push payload received.');
+    var p = JSON.parse(raw);
+    if (!p.sheetUrl || !Array.isArray(p.values) || !p.values.length) {
+      throw new Error('Payload missing sheetUrl or values.');
+    }
+    var ss = SpreadsheetApp.openByUrl(p.sheetUrl);
+    var sh = ss.getSheets()[0];
+    sh.clearContents();
+    sh.getRange(1, 1, p.values.length, p.values[0].length).setValues(p.values);
+    out.setContent(JSON.stringify({ success: true, rows: p.values.length }));
+  } catch (err) {
+    out.setContent(JSON.stringify({ success: false, error: String(err && err.message || err) }));
+  }
+  return out;
+}</div><div class="help"><b>Deploy → Web app → Execute as: Me → Who has access: Anyone</b>, then paste its <code>/exec</code> URL above. If you've deployed before and just changed the code, you must create a <b>new deployment version</b> — saving the script alone does not update the live /exec endpoint.</div></div><div class="modal-foot"><button class="btn ghost" data-close>Cancel</button><button class="btn accent" id="doTemuPushBtn">${state.temu.orders.length?ICONS.check+' Push now':'No data to push'}</button></div></div>`;}
+function wireTemuPushSheetsModal(){
+  $('#doTemuPushBtn').addEventListener('click', async () => {
+    const sheetUrl = $('#temuTargetSheetUrlInput').value.trim();
+    const url = $('#temuSheetsUrlInput').value.trim();
+    if(!sheetUrl){ toast('error','Google Sheet URL required','Paste the destination Google Sheet sharing URL.'); return; }
+    if(!url){ toast('error','Apps Script URL required','Paste the deployed Google Apps Script /exec URL.'); return; }
+    if(!state.temu.orders.length){ toast('error','No data','Process a report before pushing.'); return; }
+    state.settings.temuTargetSheetUrl = sheetUrl;
+    state.settings.temuSheetsWebAppUrl = url;
+    persistConfig();
+    const payload = { sheetUrl, values: [TEMU_COLS.map(c=>c.label), ...state.temu.orders.map(r=>TEMU_COLS.map(c=>r[c.key]))] };
+    const btn = $('#doTemuPushBtn');
+    btn.disabled = true; btn.innerHTML = ICONS.spinner+' Pushing…';
+    try{
+      const res = await fetch(url, { method:'POST', headers:{ 'Content-Type':'text/plain;charset=utf-8' }, body: JSON.stringify(payload) });
+      const text = await res.text();
+      let data = null; try{ data = JSON.parse(text); }catch(parseErr){}
+      if(data && data.success){ closeModal(); toast('success','Pushed to Google Sheets', data.rows+' row(s) written to the sheet.'); }
+      else if(data && data.success===false){ toast('error','Push failed — Apps Script reported an error', String(data.error||'Unknown error from the script.')); }
+      else if(!res.ok){ toast('error','Push failed', 'The Apps Script responded with HTTP '+res.status+'. Check that the /exec URL is correct and the deployment is live.'); }
+      else { toast('error','Push may have failed', 'The Apps Script did not return a recognized response. Update it to the code shown in this dialog, redeploy as a NEW version, then try again.'); }
+    }catch(err){
+      toast('error','Push failed — could not reach the Apps Script', 'This usually means the Web App is not deployed with "Execute as: Me" and "Who has access: Anyone", or the URL is not the /exec link from your latest deployment. ('+String(err.message||err)+')');
+    }finally{
+      btn.disabled = false; btn.innerHTML = ICONS.check+' Push now';
+    }
+  });
+}
+
 /* ---------------------------- TEMU: RENDER ---------------------------- */
 function renderSidebarStateTemu(){
   const t = state.temu;
@@ -4966,6 +5019,7 @@ function wireGlobal(){
     if(action==='openGoogleSkuTemu') openModal('temuSku');
     if(action==='refreshAllGoogleTemu') refreshAllGoogleTemu();
     if(action==='downloadReportTemu') downloadReportTemu();
+    if(action==='openPushSheetsTemu') openModal('temuPushSheets');
     if(action==='showIssuesTemu') openModal('temuIssues');
   });
 
