@@ -2912,7 +2912,7 @@ const INFO_SECTIONS = [
 <div class="info-table-wrap"><table class="info-table">
 <thead><tr><th>Engine</th><th>Column</th><th>Calculation</th></tr></thead>
 <tbody>
-<tr class="hl"><td>TikTok</td><td>List Price</td><td><code>ROUND( SKU Subtotal Before Discount + Shipping Fee After Discount ÷ N + Shipping Fee Platform Discount , 2 )</code> — the Platform Discount counts on the first line of the Order ID only and as 0 on its other lines</td></tr>
+<tr class="hl"><td>TikTok</td><td>List Price</td><td><code>ROUND( SKU Subtotal Before Discount + Shipping Fee After Discount + Platform Discount Used , 2 )</code> — <i>Platform Discount Used</i> is the Shipping Fee Platform Discount on the first qualifying line of the Order ID and <code>0</code> on every later line of that Order ID</td></tr>
 <tr><td>TikTok</td><td>OFF</td><td><code>SKU Seller Discount</code></td></tr>
 <tr><td>TikTok</td><td>Shipping Fee · CP TTS</td><td>Order total from the linked Shipping Fee sheet <code>÷ N</code>, rounded to 2 decimals</td></tr>
 <tr><td>TikTok</td><td>Shipping Fee · CP FBT</td><td>FBT rate per piece <code>× QTY</code>, rounded to 2 decimals</td></tr>
@@ -2957,15 +2957,15 @@ const INFO_SECTIONS = [
 <p>Pending, On hold, Canceled, Shipped, Delivered and In transit lines — and any “To ship” line that is not “Awaiting collection” (FBT excepted) — are excluded and counted in the status bar.</p>
 
 <h4>List Price — formula</h4>
-<div class="info-formula"><span class="c">// evaluated per source line · N = qualifying lines sharing the Order ID (N = 1 for a single-line order)</span>
-<span class="k">Shipping Share </span> = Shipping Fee After Discount ÷ N
-<span class="k">Platform Part  </span> = Shipping Fee Platform Discount   <span class="c">// first line of the order only · 0 on the others</span>
-<span class="k">Shipping Amount</span> = Shipping Share + Platform Part
-<span class="k">List Price     </span> = ROUND( SKU Subtotal Before Discount + Shipping Amount , 2 )</div>
+<div class="info-formula"><span class="c">// evaluated per source line · “first line” = the first qualifying line of the Order ID in the source file</span>
+<span class="k">Platform Discount Used</span> = Shipping Fee Platform Discount   // first qualifying line of the Order ID
+<span class="k">Platform Discount Used</span> = 0                                // every later line of the same Order ID
+<span class="k">Shipping Amount       </span> = Shipping Fee After Discount + Platform Discount Used
+<span class="k">List Price            </span> = ROUND( SKU Subtotal Before Discount + Shipping Amount , 2 )</div>
 <p><b>Order of operations</b></p>
 <ol>
-<li>The <b>Shipping Fee After Discount</b> is divided evenly across the qualifying lines of the Order ID, and the <b>Shipping Fee Platform Discount</b> is added to it in full on the <b>first</b> qualifying line of that order only — every later line of the order counts the Platform Discount as 0. For a single-line order this is simply After Discount + Platform Discount. The result is the shipping amount that line carries.</li>
-<li>That shipping amount is added to <b>SKU Subtotal Before Discount</b> (TikTok defines it as SKU Unit Original Price × Quantity).</li>
+<li>The <b>Shipping Fee Platform Discount</b> is added to the <b>Shipping Fee After Discount</b>. The Shipping Fee After Discount is used in full on every line; the Platform Discount is counted only once per Order ID — on its first qualifying line — and counts as 0 on every later line of that Order ID.</li>
+<li>That sum is added to <b>SKU Subtotal Before Discount</b> (TikTok defines it as SKU Unit Original Price × Quantity).</li>
 <li>The result, rounded to 2 decimals, is the <b>List Price</b> shown in the report.</li>
 </ol>
 <div class="info-callout"><p>TikTok defines <i>Shipping Fee After Discount = Original Shipping Fee − Shipping Fee Seller Discount − Shipping Fee Platform Discount</i>. Adding the Platform Discount back therefore gives <i>Original Shipping Fee − Seller Discount</i>, so the List Price no longer depends on how much of the shipping TikTok happened to subsidise on a given order.</p></div>
@@ -2977,10 +2977,10 @@ const INFO_SECTIONS = [
 <tr><td>Shipping carried by the order</td><td class="num">26.99</td><td class="num">6.89</td><td class="num">0.00</td><td class="num">6.89</td><td class="num"><b>33.88</b></td></tr>
 <tr><td>Shipping fully subsidised by TikTok</td><td class="num">26.99</td><td class="num">0.00</td><td class="num">6.89</td><td class="num">6.89</td><td class="num"><b>33.88</b></td></tr>
 <tr><td>Shipping partly subsidised</td><td class="num">26.99</td><td class="num">0.26</td><td class="num">2.73</td><td class="num">2.99</td><td class="num"><b>29.98</b></td></tr>
-<tr><td>Two lines on one order (N = 2) — first line</td><td class="num">26.99</td><td class="num">1.00</td><td class="num">5.90</td><td class="num">1.00 ÷ 2 + 5.90 = 6.40</td><td class="num"><b>33.39</b></td></tr>
-<tr><td>Two lines on one order (N = 2) — second line</td><td class="num">26.99</td><td class="num">1.00</td><td class="num">5.90 → 0</td><td class="num">1.00 ÷ 2 + 0 = 0.50</td><td class="num"><b>27.49</b></td></tr>
+<tr><td>Two lines on one order (N = 2) — first line</td><td class="num">26.99</td><td class="num">2.00</td><td class="num">4.90</td><td class="num">2.00 + 4.90 = 6.90</td><td class="num"><b>33.89</b></td></tr>
+<tr><td>Two lines on one order (N = 2) — second line</td><td class="num">26.99</td><td class="num">2.00</td><td class="num">4.90 → 0.00</td><td class="num">2.00 + 0.00 = 2.00</td><td class="num"><b>28.99</b></td></tr>
 </tbody></table></div>
-<p>A combined order repeats the whole order’s Shipping Fee After Discount on every one of its lines in TikTok’s export, so it is divided evenly across the qualifying lines of that Order ID instead of being counted once per line. The Shipping Fee Platform Discount is not divided: it is taken once, from the first qualifying line of the Order ID in the report, and the other lines of that order count it as 0. In the two-line example the order carries 6.40 + 0.50 = 6.90 of shipping in total.</p>
+<p>A combined order repeats the whole order’s shipping amounts on every one of its lines in TikTok’s export. The Shipping Fee After Discount is used in full on every line, while the Shipping Fee Platform Discount is added only once: on the first qualifying line of the Order ID. Any value it carries on a later line of the same Order ID is treated as 0.</p>
 
 <h4>Column map</h4>
 <div class="info-table-wrap"><table class="info-table">
@@ -3194,17 +3194,17 @@ ${pillowRuleTableHtml()}
 `},
 
 { id:'changelog', label:'Change Log', html:`
-<h4>Revision 2026-11-18 — TikTok: Shipping Fee Platform Discount on multi-line orders</h4>
+<h4>Revision 2026-11-19 — TikTok: Platform Discount counted once per Order ID, After Discount not divided</h4>
 <div class="info-before-after">
-<div><div class="lbl">Previous</div><div class="eq">( After Discount + Platform Discount ) ÷ N<br>on every line of the order</div></div>
-<div class="new"><div class="lbl">Current</div><div class="eq">After Discount ÷ N on every line<br>+ Platform Discount on the first line only<br>(0 on the other lines)</div></div>
+<div><div class="lbl">Previous</div><div class="eq">( Shipping Fee After Discount<br>&nbsp;&nbsp;+ Shipping Fee Platform Discount ) ÷ N<br>on every line of the order</div></div>
+<div class="new"><div class="lbl">Current</div><div class="eq">Shipping Fee After Discount in full on every line<br>+ Platform Discount on the first line only<br>(0 on later lines of the same Order ID)</div></div>
 </div>
 <ul>
-<li><b>Platform Discount:</b> for an Order ID with more than one qualifying line, the Shipping Fee Platform Discount of the first qualifying line (the first one in the report) is used in full and every other line of that order counts it as 0. Example: Order ID 454545 with three lines — only the first line carries the discount.</li>
-<li><b>Shipping Fee After Discount:</b> still divided evenly across the qualifying lines of the Order ID, exactly as before.</li>
-<li><b>Single-line orders:</b> unchanged — After Discount + Platform Discount, as before.</li>
-<li><b>Surfaces affected:</b> TikTok List Price in the table, the <code>.xlsx</code> download, Push to Google Sheets and this reference.</li>
-<li><b>Unchanged:</b> line selection, the Order-ID Shipping Fee split, OFF, Product / Size / Color, QTY, Issues, and the Amazon / Walmart and Temu engines.</li>
+<li><b>Platform Discount once:</b> on a multi-line order the Shipping Fee Platform Discount is added a single time, on the first qualifying line of that Order ID. Whatever value the same column holds on a later line of the same Order ID is treated as 0.</li>
+<li><b>List Price:</b> SKU Subtotal Before Discount + Shipping Fee After Discount + Platform Discount Used, rounded to 2 decimals. The Shipping Fee After Discount is no longer divided by the number of lines: every line of the order uses it in full. A single-line order is calculated exactly as before.</li>
+<li><b>First line:</b> the first line of the Order ID, in the order of the source file, that passes line selection. Lines that are excluded (not To ship / not Awaiting collection) never count as the first line.</li>
+<li><b>Surfaces affected:</b> the TikTok table, the <code>.xlsx</code> download, the Push to Google Sheets payload (all read the same List Price value) and this reference.</li>
+<li><b>Unchanged:</b> line selection, OFF, the Shipping Fee (cost) lookups (the sheet value is still divided by <code>N</code>), Product / Size / Color resolution, issue detection, the Amazon / Walmart and Temu engines and every other calculation.</li>
 </ul>
 
 <h4>Revision 2026-11-18 — Temu: Net sale 0 counts as cancelled</h4>
@@ -3257,7 +3257,7 @@ function infoModalHtml(){
   const tabs = INFO_SECTIONS.map(s=>`<button type="button" class="info-tab${s.id===start?' active':''}" role="tab" aria-selected="${s.id===start?'true':'false'}" data-info-tab="${s.id}">${s.label}</button>`).join('');
   const secs = INFO_SECTIONS.map(s=>`<section class="info-sec${s.id===start?' active':''}" role="tabpanel" data-info-sec="${s.id}">${s.html}</section>`).join('');
   return `<div class="modal info-modal" role="dialog" aria-modal="true" aria-labelledby="infoModalTitle">
-    <div class="modal-head"><div><h3 id="infoModalTitle">Seller Matrics — Technical Reference</h3><p>How every figure is calculated, what is added to what, and where the data comes from.</p></div><span class="chip">Spec rev. 2026-11-18</span></div>
+    <div class="modal-head"><div><h3 id="infoModalTitle">Seller Matrics — Technical Reference</h3><p>How every figure is calculated, what is added to what, and where the data comes from.</p></div><span class="chip">Spec rev. 2026-11-19</span></div>
     <div class="info-tabs" role="tablist">${tabs}</div>
     <div class="modal-body info-body">${secs}</div>
     <div class="modal-foot"><button class="btn ghost" data-close>Close</button></div>
@@ -3559,7 +3559,7 @@ function tiktokLineShouldInclude(r){
   if(tiktokShopFromFulfillmentType(fulfillmentTypeRaw) === 'CP FBT') return true;
   return normText(getFieldLoose(r,['order substatus'])) === 'awaiting collection';
 }
-function tiktokRowFromRaw(r, oidShareCounts, oidFirstRow){
+function tiktokRowFromRaw(r, oidShareCounts, oidPlatformDiscountSeen){
   if(!tiktokLineShouldInclude(r)) return null;
   const fulfillmentTypeRaw = getFieldLoose(r,['fulfillment type','fulfillment-type','fulfillmenttype','fulfilment type']);
   const shop = tiktokShopFromFulfillmentType(fulfillmentTypeRaw) || 'CP TTS';
@@ -3573,23 +3573,27 @@ function tiktokRowFromRaw(r, oidShareCounts, oidFirstRow){
   const subtotalBefore = toNum(getFieldLoose(r,['sku subtotal before discount']));
   const shipAfterDiscountRaw = toNum(getFieldLoose(r,['shipping fee after discount']));
   // "Shipping Fee Platform Discount" (the part of the shipping fee that TikTok
-  // itself covered) is added to "Shipping Fee After Discount"; that shipping
-  // amount is then added to SKU Subtotal Before Discount to give the List
-  // Price below. A blank / missing platform-discount column reads as 0, so a
-  // report without that column behaves exactly as before.
+  // itself covered) is added to the shipping amount below, which is then added
+  // to SKU Subtotal Before Discount to give the List Price. A blank / missing
+  // platform-discount column reads as 0, so a report without that column
+  // behaves exactly as before.
   const shipPlatformDiscountRaw = toNum(getFieldLoose(r,['shipping fee platform discount']));
-  // A combined order's per-line "Shipping Fee After Discount" repeats the WHOLE
-  // order's amount on every line item in TikTok's own export, so it is split
-  // evenly across however many "To Ship" lines share this Order ID.
+  // Number of "To Ship" lines that share this Order ID. It is only used further
+  // down to split the order-level Shipping Fee (cost) from the linked sheet
+  // across the lines — the List Price below does not divide anything by it.
   const shareCount = (orderId && oidShareCounts && oidShareCounts[orderId]>0) ? oidShareCounts[orderId] : 1;
-  // The Platform Discount is NOT split. For an Order ID with several "To Ship"
-  // lines it is taken ONCE — from the first of those lines in the report
-  // (oidFirstRow, built by the same pre-pass as oidShareCounts) — and every
-  // later line of that order counts it as 0. A single-line order, or a line
-  // without an Order ID, is always its own first line.
-  const isFirstLine = !(orderId && oidFirstRow && oidFirstRow[orderId] && oidFirstRow[orderId] !== r);
-  const shipPlatformDiscount = isFirstLine ? shipPlatformDiscountRaw : 0;
-  const shipAmount = shipAfterDiscountRaw / shareCount + shipPlatformDiscount;
+  // "Shipping Fee After Discount" is used in full on every line of the order.
+  // The Platform Discount is NOT added on every line: for an Order ID that
+  // appears on more than one line it is added only ONCE, on the FIRST included
+  // line of that Order ID (file order). Whatever value the column holds on any
+  // later line of the same Order ID is counted as 0. A line without an Order ID
+  // is never matched with another line, so it keeps its own value.
+  let shipPlatformDiscountUsed = shipPlatformDiscountRaw;
+  if(orderId && oidPlatformDiscountSeen){
+    if(oidPlatformDiscountSeen.has(orderId)) shipPlatformDiscountUsed = 0;
+    else oidPlatformDiscountSeen.add(orderId);
+  }
+  const shipAmount = shipAfterDiscountRaw + shipPlatformDiscountUsed;
   const listPrice = Math.round((subtotalBefore + shipAmount + Number.EPSILON)*100)/100;
   const off = toNum(getFieldLoose(r,['sku seller discount']));
   const paidTime = getFieldLoose(r,['paid time']);
@@ -3652,25 +3656,23 @@ function processTiktokReportCore(showToast){
   // rather than leave orphaned entries behind.
   state.tiktok.pendingEdits = {};
   // Count how many "To Ship" lines share each Order ID BEFORE building rows,
-  // so tiktokRowFromRaw can split each combined order's repeated Shipping
-  // Fee After Discount evenly across its line items — and remember which raw
-  // line comes FIRST for each Order ID (oidFirstRow), because that is the only
-  // line of the order that carries the Shipping Fee Platform Discount.
+  // so tiktokRowFromRaw can split the order-level Shipping Fee (cost) from the
+  // linked sheet across its line items. (The List Price does not use this
+  // count: Shipping Fee After Discount is used in full on every line, and the
+  // Shipping Fee Platform Discount is counted once per Order ID, on the first
+  // line, tracked by oidPlatformDiscountSeen below.)
   const oidShareCounts={};
-  const oidFirstRow=Object.create(null);
   state.tiktok.rawRows.forEach(r=>{
     if(!r || typeof r!=='object') return;
     if(!tiktokLineShouldInclude(r)) return;
     const oid=String(getFieldLoose(r,['order id'])||'').trim();
-    if(oid){
-      oidShareCounts[oid]=(oidShareCounts[oid]||0)+1;
-      if(!oidFirstRow[oid]) oidFirstRow[oid]=r;
-    }
+    if(oid) oidShareCounts[oid]=(oidShareCounts[oid]||0)+1;
   });
+  const oidPlatformDiscountSeen = new Set();
   const rows=[]; let excluded=0;
   state.tiktok.rawRows.forEach(r=>{
     if(!r || typeof r!=='object') return;
-    const row = tiktokRowFromRaw(r, oidShareCounts, oidFirstRow);
+    const row = tiktokRowFromRaw(r, oidShareCounts, oidPlatformDiscountSeen);
     if(!row){ excluded++; return; }
     rows.push(row);
   });
